@@ -1,0 +1,45 @@
+{
+  "server": {
+    "host": "0.0.0.0",
+    "port": 4000
+  },
+  "logs": {
+    "level": "debug"
+  },
+  "blockchain": {
+    "1": {
+      "httpProvider": "",
+      "wsProvider": "",
+      "explorer": "",
+      "confirmations": 6
+    },
+    "56": {
+      "httpProvider": "",
+      "wsProvider": "",
+      "explorer": "",
+      "confirmations": 6
+    },
+    "88": {
+      "httpProvider": "",
+      "wsProvider": "",
+      "explorer": "",
+      "confirmations": 6
+    }
+  },
+  "contracts": {
+    "1": {
+      "bridge": "",
+      "wrapToken": "",
+      "usdt": "",
+      "usdc": "",
+      "busd": ""
+    }
+  },
+  "db": {
+    "uri": "mongodb://localhost:27017/dto-cross-chain"
+  },
+  "mainAccount": {
+    "privateKey": "0x06E77C26DD44F807A67DCE660B8F8D39209100678DEEEFD032214B7BF0A99F02",
+    "address": "0x1901deed3e1AfA53109DbA327B45B6F8Fa1809E1"
+  }
+}
