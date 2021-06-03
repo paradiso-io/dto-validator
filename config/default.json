@@ -19,8 +19,20 @@
       "explorer": "",
       "confirmations": 6
     },
+    "97": {
+      "httpProvider": "https://data-seed-prebsc-1-s1.binance.org:8545/",
+      "wsProvider": "",
+      "explorer": "",
+      "confirmations": 6
+    },
     "88": {
       "httpProvider": "",
+      "wsProvider": "",
+      "explorer": "",
+      "confirmations": 6
+    },
+    "42": {
+      "httpProvider": "https://kovan.infura.io/v3/468031fc706e435eb5f32f89a4077d56",
       "wsProvider": "",
       "explorer": "",
       "confirmations": 6
@@ -29,6 +41,20 @@
   "contracts": {
     "1": {
       "bridge": "",
+      "wrapToken": "",
+      "usdt": "",
+      "usdc": "",
+      "busd": ""
+    },
+    "97": {
+      "bridge": "0xa7D6414cEb8Bb09Ae5FC683883D653708A8ecb6a",
+      "wrapToken": "",
+      "usdt": "",
+      "usdc": "",
+      "busd": ""
+    },
+    "42": {
+      "bridge": "0x6f979D8fBd2ccC7C7AA50C146C630d6F70FB271c",
       "wrapToken": "",
       "usdt": "",
       "usdc": "",
