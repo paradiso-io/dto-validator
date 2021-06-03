@@ -51,7 +51,7 @@ async function getPastEvent(networkId, bridgeAddress, step) {
     const confirmations = config.get('blockchain')[networkId].confirmations
     let lastBlock = await web3.eth.getBlockNumber()
     let setting = await db.Setting.findOne({networkId: networkId})
-    let lastCrawl = 5890000
+    let lastCrawl = 25235750
     if (setting) {
         lastCrawl = setting.lastBlockClaim
     }
@@ -66,7 +66,7 @@ async function getPastEvent(networkId, bridgeAddress, step) {
         }
         const contract = new web3.eth.Contract(GenericBridge, bridgeAddress)
         logger.info('Get Past Event from block %s to %s', lastCrawl + 1, toBlock)
-        contract.getPastEvents('RequestBridge', {fromBlock: lastCrawl + 1, toBlock: toBlock}, async (err, evts) => {
+        contract.getPastEvents('ClaimToken', {fromBlock: lastCrawl + 1, toBlock: toBlock}, async (err, evts) => {
             if (!err) {
                 logger.info(`there are ${evts.length} events from ${lastCrawl + 1} to ${toBlock}`)
                 if (evts.length === 0 && lastBlock - toBlock > confirmations) {
@@ -104,7 +104,7 @@ let watch = async () => {
     await getPastEvent(networkId, bridgeAddress, step)
 
     setInterval(async () => {
-        await getPastEvent(bridgeAddress, step);
+        await getPastEvent(networkId, bridgeAddress, step);
     }, 10000);
 
 }

@@ -72,7 +72,7 @@ async function getPastEvent(networkId, bridgeAddress, step) {
     const confirmations = config.get('blockchain')[networkId].confirmations
     let lastBlock = await web3.eth.getBlockNumber()
     let setting = await db.Setting.findOne({networkId: networkId})
-    let lastCrawl = 5890000
+    let lastCrawl = 9394711
     if (setting) {
         lastCrawl = setting.lastBlockRequest
     }
@@ -114,7 +114,7 @@ async function getPastEvent(networkId, bridgeAddress, step) {
 }
 
 let watch = async () => {
-    if (process.argv.length <= 2) {
+    if (process.argv.length <= 3) {
         logger.error('Missing instance address')
         process.exit(1)
     }
@@ -125,7 +125,7 @@ let watch = async () => {
     await getPastEvent(networkId, bridgeAddress, step)
 
     setInterval(async () => {
-        await getPastEvent(bridgeAddress, step);
+        await getPastEvent(networkId, bridgeAddress, step);
     }, 10000);
 
 }
