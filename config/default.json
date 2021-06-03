@@ -8,21 +8,21 @@
   },
   "blockchain": {
     "1": {
-      "httpProvider": "",
+      "httpProvider": "https://infura.io/v3/468031fc706e435eb5f32f89a4077d56",
       "wsProvider": "",
-      "explorer": "",
+      "explorer": "https://etherscan.io",
+      "confirmations": 6
+    },
+    "42": {
+      "httpProvider": "https://kovan.infura.io/v3/468031fc706e435eb5f32f89a4077d56",
+      "wsProvider": "",
+      "explorer": "https://kovan.etherscan.io",
       "confirmations": 6
     },
     "56": {
       "httpProvider": "",
       "wsProvider": "",
-      "explorer": "",
-      "confirmations": 6
-    },
-    "97": {
-      "httpProvider": "https://data-seed-prebsc-1-s1.binance.org:8545/",
-      "wsProvider": "",
-      "explorer": "",
+      "explorer": "https://bscscan.com",
       "confirmations": 6
     },
     "88": {
@@ -31,9 +31,9 @@
       "explorer": "",
       "confirmations": 6
     },
-    "42": {
-      "httpProvider": "https://kovan.infura.io/v3/468031fc706e435eb5f32f89a4077d56",
-      "wsProvider": "",
+    "97": {
+      "httpProvider": "https://data-seed-prebsc-1-s1.binance.org:8545/",
+      "wsProvider": "https://testnet.bscscan.com",
       "explorer": "",
       "confirmations": 6
     }
@@ -41,13 +41,7 @@
   "contracts": {
     "1": {
       "bridge": "",
-      "wrapToken": "",
-      "usdt": "",
-      "usdc": "",
-      "busd": ""
-    },
-    "97": {
-      "bridge": "0xa7D6414cEb8Bb09Ae5FC683883D653708A8ecb6a",
+      "firstBlockCrawl": 1,
       "wrapToken": "",
       "usdt": "",
       "usdc": "",
@@ -55,10 +49,39 @@
     },
     "42": {
       "bridge": "0x6f979D8fBd2ccC7C7AA50C146C630d6F70FB271c",
+      "firstBlockCrawl": 25229032,
       "wrapToken": "",
       "usdt": "",
       "usdc": "",
       "busd": ""
+    },
+    "89": {
+      "bridge": "0x294Ad30d97ec0EE58C532F8053e58A6B2177e89e",
+      "firstBlockCrawl": 8109511
+    },
+    "97": {
+      "bridge": "0xa7D6414cEb8Bb09Ae5FC683883D653708A8ecb6a",
+      "firstBlockCrawl": null,
+      "wrapToken": "",
+      "usdt": "",
+      "usdc": "",
+      "busd": ""
+    },
+    "1287": {
+      "bridge": "0xC82104afCdD565B1861FC00E1B1A45Ab9b6752eb",
+      "firstBlockCrawl": 883327
+    },
+    "4002": {
+      "bridge": "0x52810aC61d1fd106AeFc8a6d7F1898ffCb86f5F5",
+      "firstBlockCrawl": 51868
+    },
+    "43113": {
+      "bridge": "0x6D4d29Ae926a2Dd64b35790F83DAFBe9ACCB723b",
+      "firstBlockCrawl": 268489
+    },
+    "80001": {
+      "bridge": "0x3139157E3891af67926ab069B8631Fed7DD7dC25",
+      "firstBlockCrawl": null
     }
   },
   "db": {
