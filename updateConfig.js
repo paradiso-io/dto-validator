@@ -3,9 +3,9 @@ const path = require('path')
 const config = require('config')
 
 
-const contract_dirname = 'contracts'
+const contract_dirname = 'dto-contracts'
 
-fs.readdirSync(path.resolve(__dirname, '..', 'contracts/deployments'))
+fs.readdirSync(path.resolve(__dirname, '..', `${contract_dirname}/deployments`))
     .filter(function (file) {
         return (file.indexOf('.') !== 0) && (file !== 'index.js')
     })
