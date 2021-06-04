@@ -1,124 +1,145 @@
 {
-  "server": {
-    "host": "0.0.0.0",
-    "port": 4000
-  },
-  "logs": {
-    "level": "debug"
-  },
-  "blockchain": {
-    "1": {
-      "httpProvider": "https://infura.io/v3/468031fc706e435eb5f32f89a4077d56",
-      "wsProvider": "",
-      "explorer": "https://etherscan.io",
-      "confirmations": 6
-    },
-    "42": {
-      "httpProvider": "https://kovan.infura.io/v3/468031fc706e435eb5f32f89a4077d56",
-      "wsProvider": "",
-      "explorer": "https://kovan.etherscan.io",
-      "confirmations": 6
-    },
-    "56": {
-      "httpProvider": "https://bsc-dataseed.binance.org",
-      "wsProvider": "wss://bsc-ws-node.nariox.org:443",
-      "explorer": "https://bscscan.com",
-      "confirmations": 6
-    },
-    "88": {
-      "httpProvider": "https://rpc.tomochain.com",
-      "wsProvider": "wss://ws.tomochain.com",
-      "explorer": "https://scan.tomochain.com",
-      "confirmations": 6
-    },
-    "89": {
-      "httpProvider": "https://rpc.testnet.tomochain.com",
-      "wsProvider": "wss://rpc.testnet.tomochain.com",
-      "explorer": "https://scan.testnet.tomochain.com",
-      "confirmations": 6
-    },
-    "97": {
-      "httpProvider": "https://data-seed-prebsc-1-s1.binance.org:8545/",
-      "wsProvider": "",
-      "explorer": "https://testnet.bscscan.com",
-      "confirmations": 6
-    },
-    "1287": {
-      "httpProvider": "https://rpc.testnet.moonbeam.network",
-      "wsProvider": "",
-      "explorer": "https://moonbeam-explorer.netlify.app/",
-      "confirmations": 6
-    },
-    "4002": {
-      "httpProvider": "https://rpc.testnet.fantom.network/",
-      "wsProvider": "",
-      "explorer": "https://testnet.ftmscan.com/",
-      "confirmations": 6
-    },
-    "43113": {
-      "httpProvider": "https://api.avax-test.network/ext/bc/C/rpc",
-      "wsProvider": "",
-      "explorer": "https://cchain.explorer.avax-test.network/",
-      "confirmations": 6
-    },
-    "80001": {
-      "httpProvider": "https://rpc-mumbai.maticvigil.com/",
-      "wsProvider": "",
-      "explorer": "https://explorer-mumbai.maticvigil.com/",
-      "confirmations": 6
-    }
-  },
-  "contracts": {
-    "1": {
-      "bridge": "",
-      "firstBlockCrawl": 1,
-      "wrapToken": "",
-      "usdt": "",
-      "usdc": "",
-      "busd": ""
-    },
-    "42": {
-      "bridge": "0x6f979D8fBd2ccC7C7AA50C146C630d6F70FB271c",
-      "firstBlockCrawl": 25229032,
-      "wrapToken": "",
-      "usdt": "",
-      "usdc": "",
-      "busd": ""
-    },
-    "89": {
-      "bridge": "0x294Ad30d97ec0EE58C532F8053e58A6B2177e89e",
-      "firstBlockCrawl": 8109511
-    },
-    "97": {
-      "bridge": "0xa7D6414cEb8Bb09Ae5FC683883D653708A8ecb6a",
-      "firstBlockCrawl": null,
-      "wrapToken": "",
-      "usdt": "",
-      "usdc": "",
-      "busd": ""
-    },
-    "1287": {
-      "bridge": "0xC82104afCdD565B1861FC00E1B1A45Ab9b6752eb",
-      "firstBlockCrawl": 883327
-    },
-    "4002": {
-      "bridge": "0x52810aC61d1fd106AeFc8a6d7F1898ffCb86f5F5",
-      "firstBlockCrawl": 51868
-    },
-    "43113": {
-      "bridge": "0x6D4d29Ae926a2Dd64b35790F83DAFBe9ACCB723b",
-      "firstBlockCrawl": 268489
-    },
-    "80001": {
-      "bridge": "0x3139157E3891af67926ab069B8631Fed7DD7dC25",
-      "firstBlockCrawl": null
-    }
-  },
-  "db": {
-    "uri": "mongodb://localhost:27017/dto-cross-chain"
-  },
-  "mainAccount": {
-    "privateKey": "0x06E77C26DD44F807A67DCE660B8F8D39209100678DEEEFD032214B7BF0A99F02",
-    "address": "0x1901deed3e1AfA53109DbA327B45B6F8Fa1809E1"
-  }
+	"server": {
+		"host": "0.0.0.0",
+		"port": 4000
+	},
+	"nativeAddress": "0x1111111111111111111111111111111111111111",
+	"logs": {
+		"level": "debug"
+	},
+	"blockchain": {
+		"1": {
+			"httpProvider": "https://infura.io/v3/468031fc706e435eb5f32f89a4077d56",
+			"wsProvider": "",
+			"explorer": "https://etherscan.io",
+			"confirmations": 6,
+			"nativeName": "Ethereum",
+			"nativeSymbol": "ETH"
+		},
+		"42": {
+			"httpProvider": "https://kovan.infura.io/v3/468031fc706e435eb5f32f89a4077d56",
+			"wsProvider": "",
+			"explorer": "https://kovan.etherscan.io",
+			"confirmations": 6,
+			"nativeName": "Kethereum",
+			"nativeSymbol": "KETH"
+		},
+		"56": {
+			"httpProvider": "https://bsc-dataseed.binance.org",
+			"wsProvider": "wss://bsc-ws-node.nariox.org:443",
+			"explorer": "https://bscscan.com",
+			"confirmations": 6,
+			"nativeName": "Binance",
+			"nativeSymbol": "BNB"
+		},
+		"88": {
+			"httpProvider": "https://rpc.tomochain.com",
+			"wsProvider": "wss://ws.tomochain.com",
+			"explorer": "https://scan.tomochain.com",
+			"confirmations": 6,
+			"nativeName": "TomoChain",
+			"nativeSymbol": "TOMO"
+		},
+		"89": {
+			"httpProvider": "https://rpc.testnet.tomochain.com",
+			"wsProvider": "wss://rpc.testnet.tomochain.com",
+			"explorer": "https://scan.testnet.tomochain.com",
+			"confirmations": 6,
+			"nativeName": "TomoChain Faucet",
+			"nativeSymbol": "fTOMO"
+		},
+		"80001": {
+			"httpProvider": "https://rpc-mumbai.maticvigil.com/",
+			"wsProvider": "",
+			"explorer": "https://explorer-mumbai.maticvigil.com/",
+			"confirmations": 6,
+			"nativeName": "Mumbai Matic",
+			"nativeSymbol": "fMatic"
+		},
+		"97": {
+			"httpProvider": "https://data-seed-prebsc-1-s1.binance.org:8545/",
+			"wsProvider": "",
+			"explorer": "https://testnet.bscscan.com",
+			"confirmations": 6,
+			"nativeName": "Binance Testnet",
+			"nativeSymbol": "fBNB"
+		},
+		"4002": {
+			"httpProvider": "https://rpc.testnet.fantom.network/",
+			"wsProvider": "",
+			"explorer": "https://testnet.ftmscan.com/",
+			"confirmations": 6,
+			"nativeName": "Fantom Testnet",
+			"nativeSymbol": "fFTM"
+		},
+		"1287": {
+			"httpProvider": "https://rpc.testnet.moonbeam.network",
+			"wsProvider": "",
+			"explorer": "https://moonbeam-explorer.netlify.app/",
+			"confirmations": 6,
+			"nativeName": "MoonBeam Testnet",
+			"nativeSymbol": "DEV"
+		},
+		"43113": {
+			"httpProvider": "https://api.avax-test.network/ext/bc/C/rpc",
+			"wsProvider": "",
+			"explorer": "https://cchain.explorer.avax-test.network/",
+			"confirmations": 6,
+			"nativeName": "Avalanche Testnet",
+			"nativeSymbol": "fAVAX"
+		}
+	},
+	"contracts": {
+		"1": {
+			"bridge": "",
+			"firstBlockCrawl": 1,
+			"wrapToken": "",
+			"usdt": "",
+			"usdc": "",
+			"busd": ""
+		},
+		"42": {
+			"bridge": "0xA73EfffAeB7DAE47ff894401c3398BD13cD2915B",
+			"firstBlockCrawl": 25256976,
+			"wrapToken": "",
+			"usdt": "",
+			"usdc": "",
+			"busd": ""
+		},
+		"89": {
+			"bridge": "0x74344790f493F31f66C4a69E14BA5779EC397DEA",
+			"firstBlockCrawl": 8167724
+		},
+		"97": {
+			"bridge": "0x52B12486944b56cDdb27b700e1B080264Fa5dBC5",
+			"firstBlockCrawl": 9434428,
+			"wrapToken": "",
+			"usdt": "",
+			"usdc": "",
+			"busd": ""
+		},
+		"1287": {
+			"bridge": "0x0bb20dc9D6fEE2E8bd291842EFf7f34AbdcEE451",
+			"firstBlockCrawl": 61818
+		},
+		"4002": {
+			"bridge": "0xCE0E6bACEcE7Aa5fb13CF072d5CD8E4D082830f3",
+			"firstBlockCrawl": 886343
+		},
+		"43113": {
+			"bridge": "0x7Af638f257bCd0DA8F095f07bD6617c55FffaD8b",
+			"firstBlockCrawl": 270994
+		},
+		"80001": {
+			"bridge": "0x74344790f493F31f66C4a69E14BA5779EC397DEA",
+			"firstBlockCrawl": 14674742
+		}
+	},
+	"db": {
+		"uri": "mongodb://localhost:27017/dto-cross-chain"
+	},
+	"mainAccount": {
+		"privateKey": "0x06E77C26DD44F807A67DCE660B8F8D39209100678DEEEFD032214B7BF0A99F02",
+		"address": "0x1901deed3e1AfA53109DbA327B45B6F8Fa1809E1"
+	}
 }
