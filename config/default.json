@@ -31,6 +31,12 @@
       "explorer": "",
       "confirmations": 6
     },
+    "89": {
+      "httpProvider": "https://rpc.testnet.tomochain.com",
+      "wsProvider": "",
+      "explorer": "",
+      "confirmations": 6
+    },
     "97": {
       "httpProvider": "https://data-seed-prebsc-1-s1.binance.org:8545/",
       "wsProvider": "https://testnet.bscscan.com",
