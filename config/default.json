@@ -20,27 +20,51 @@
       "confirmations": 6
     },
     "56": {
-      "httpProvider": "",
-      "wsProvider": "",
+      "httpProvider": "https://bsc-dataseed.binance.org",
+      "wsProvider": "wss://bsc-ws-node.nariox.org:443",
       "explorer": "https://bscscan.com",
       "confirmations": 6
     },
     "88": {
-      "httpProvider": "",
-      "wsProvider": "",
-      "explorer": "",
+      "httpProvider": "https://rpc.tomochain.com",
+      "wsProvider": "wss://ws.tomochain.com",
+      "explorer": "https://scan.tomochain.com",
       "confirmations": 6
     },
     "89": {
       "httpProvider": "https://rpc.testnet.tomochain.com",
-      "wsProvider": "",
-      "explorer": "",
+      "wsProvider": "wss://rpc.testnet.tomochain.com",
+      "explorer": "https://scan.testnet.tomochain.com",
       "confirmations": 6
     },
     "97": {
       "httpProvider": "https://data-seed-prebsc-1-s1.binance.org:8545/",
-      "wsProvider": "https://testnet.bscscan.com",
-      "explorer": "",
+      "wsProvider": "",
+      "explorer": "https://testnet.bscscan.com",
+      "confirmations": 6
+    },
+    "1287": {
+      "httpProvider": "https://rpc.testnet.moonbeam.network",
+      "wsProvider": "",
+      "explorer": "https://moonbeam-explorer.netlify.app/",
+      "confirmations": 6
+    },
+    "4002": {
+      "httpProvider": "https://rpc.testnet.fantom.network/",
+      "wsProvider": "",
+      "explorer": "https://testnet.ftmscan.com/",
+      "confirmations": 6
+    },
+    "43113": {
+      "httpProvider": "https://api.avax-test.network/ext/bc/C/rpc",
+      "wsProvider": "",
+      "explorer": "https://cchain.explorer.avax-test.network/",
+      "confirmations": 6
+    },
+    "80001": {
+      "httpProvider": "https://rpc-mumbai.maticvigil.com/",
+      "wsProvider": "",
+      "explorer": "https://explorer-mumbai.maticvigil.com/",
       "confirmations": 6
     }
   },
