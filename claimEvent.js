@@ -51,7 +51,10 @@ async function getPastEvent(networkId, bridgeAddress, step) {
     const confirmations = config.get('blockchain')[networkId].confirmations
     let lastBlock = await web3.eth.getBlockNumber()
     let setting = await db.Setting.findOne({networkId: networkId})
-    let lastCrawl = 25235750
+    let lastCrawl = config.contracts[networkId].firstBlockCrawl
+    if (lastBlock === null) {
+        lastBlock = 9394711
+    }
     if (setting) {
         lastCrawl = setting.lastBlockClaim
     }
@@ -65,10 +68,12 @@ async function getPastEvent(networkId, bridgeAddress, step) {
             toBlock = 'latest'
         }
         const contract = new web3.eth.Contract(GenericBridge, bridgeAddress)
-        logger.info('Get Past Event from block %s to %s', lastCrawl + 1, toBlock)
+        logger.info('Network %s: Get Past Event from block %s to %s', networkId, lastCrawl + 1, toBlock)
         contract.getPastEvents('ClaimToken', {fromBlock: lastCrawl + 1, toBlock: toBlock}, async (err, evts) => {
             if (!err) {
-                logger.info(`there are ${evts.length} events from ${lastCrawl + 1} to ${toBlock}`)
+                if (evts.length > 0) {
+                    logger.info(`network ${networkId}: there are ${evts.length} events from ${lastCrawl + 1} to ${toBlock}`)
+                }
                 if (evts.length === 0 && lastBlock - toBlock > confirmations) {
                     await db.Setting.updateOne({networkId: networkId}, {$set: {lastBlockClaim: toBlock}}, {
                         upsert: true,
@@ -92,14 +97,7 @@ async function getPastEvent(networkId, bridgeAddress, step) {
 
 }
 
-let watch = async () => {
-    if (process.argv.length <= 2) {
-        logger.error('Missing instance address')
-        process.exit(1)
-    }
-    let networkId = process.argv[2]
-    let bridgeAddress = process.argv[3].toLowerCase()
-
+let watch = async (networkId, bridgeAddress) => {
     let step = 3000
     await getPastEvent(networkId, bridgeAddress, step)
 
@@ -109,4 +107,15 @@ let watch = async () => {
 
 }
 
-watch()
+function main() {
+    let contracts = config.contracts
+    let networks = Object.keys(contracts)
+    networks.forEach(networkId => {
+        let contractAddress = contracts[networkId].bridge
+        if (contractAddress !== '') {
+            watch(networkId, contractAddress)
+        }
+    })
+}
+
+main()

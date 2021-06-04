@@ -2,9 +2,9 @@ const mongoose = require('mongoose')
 const Schema = mongoose.Schema
 
 const Transaction = new Schema({
-    requestHash: { type: String, unique: true },
+    requestHash: { type: String, index: true },
     requestBlock: {type: Number, index: true},
-    claimHash: { type: String, unique: true },
+    claimHash: { type: String, index: true },
     claimBlock: Number,
     account: { type: String, index: true },
     originToken: { type: String, index: true },

@@ -72,7 +72,10 @@ async function getPastEvent(networkId, bridgeAddress, step) {
     const confirmations = config.get('blockchain')[networkId].confirmations
     let lastBlock = await web3.eth.getBlockNumber()
     let setting = await db.Setting.findOne({networkId: networkId})
-    let lastCrawl = 9394711
+    let lastCrawl = config.contracts[networkId].firstBlockCrawl
+    if (lastBlock === null) {
+        lastBlock = 9394711
+    }
     if (setting) {
         lastCrawl = setting.lastBlockRequest
     }
@@ -86,10 +89,12 @@ async function getPastEvent(networkId, bridgeAddress, step) {
             toBlock = 'latest'
         }
         const contract = new web3.eth.Contract(GenericBridge, bridgeAddress)
-        logger.info('Get Past Event from block %s to %s', lastCrawl + 1, toBlock)
+        logger.info('Network %s: Get Past Event from block %s to %s', networkId, lastCrawl + 1, toBlock)
         contract.getPastEvents('RequestBridge', {fromBlock: lastCrawl + 1, toBlock: toBlock}, async (err, evts) => {
             if (!err) {
-                logger.info(`there are ${evts.length} events from ${lastCrawl + 1} to ${toBlock}`)
+                if (evts.length > 0) {
+                    logger.info(`network ${networkId}: there are ${evts.length} events from ${lastCrawl + 1} to ${toBlock}`)
+                }
                 if (evts.length === 0 && lastBlock - toBlock > confirmations) {
                     await db.Setting.updateOne({networkId: networkId}, {$set: {lastBlockRequest: toBlock}}, {
                         upsert: true,
@@ -104,7 +109,7 @@ async function getPastEvent(networkId, bridgeAddress, step) {
                 logger.error('error', err)
             }
         })
-        console.log('sleep 2 seconds and wait to continue')
+        // console.log('sleep 2 seconds and wait to continue')
         await sleep(1000)
 
         lastBlock = await web3.eth.getBlockNumber()
@@ -113,14 +118,7 @@ async function getPastEvent(networkId, bridgeAddress, step) {
 
 }
 
-let watch = async () => {
-    if (process.argv.length <= 3) {
-        logger.error('Missing instance address')
-        process.exit(1)
-    }
-    let networkId = process.argv[2]
-    let bridgeAddress = process.argv[3].toLowerCase()
-
+async function watch(networkId, bridgeAddress) {
     let step = 3000
     await getPastEvent(networkId, bridgeAddress, step)
 
@@ -130,4 +128,16 @@ let watch = async () => {
 
 }
 
-watch()
+function main() {
+    let contracts = config.contracts
+    let networks = Object.keys(contracts)
+    networks.forEach(networkId => {
+        let contractAddress = contracts[networkId].bridge
+        if (contractAddress !== '') {
+            watch(networkId, contractAddress)
+        }
+    })
+}
+
+main()
+
