@@ -106,7 +106,7 @@ async function getPastEvent(networkId, bridgeAddress, step) {
 }
 
 let watch = async (networkId, bridgeAddress) => {
-    let step = 3000
+    let step = 1000
     await getPastEvent(networkId, bridgeAddress, step)
 
     setInterval(async () => {

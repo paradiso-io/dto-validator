@@ -4,12 +4,28 @@ const db = require('../models')
 const { check, validationResult, query } = require('express-validator')
 
 
-router.get('/:account',[
-    check('account').exists().isLength({ min: 42, max: 42 }).withMessage('address is incorrect.')
+router.get('/:account/:networkId',[
+    check('account').exists().isLength({ min: 42, max: 42 }).withMessage('address is incorrect.'),
+    check('networkId').exists().isNumeric({ no_symbols: true }).withMessage('networkId is incorrect.'),
+    query('limit').isInt({ min: 0, max: 200 }).optional().withMessage('limit should greater than 0 and less than 200'),
+    query('page').isNumeric({ no_symbols: true }).optional().withMessage('page must be number')
 ], async function (req, res, next) {
+    const errors = validationResult(req)
+    if (!errors.isEmpty()) {
+        return next(errors.array())
+    }
+    let limit = (req.query.limit) ? parseInt(req.query.limit) : 20
+    let page = req.query.page || 1
+    let skip = limit * (page - 1)
     let account = req.params.account
-    let transactions = await db.Transaction.find({account: account})
-    return res.json({error: 0, transactions: transactions})
+    let networkId = req.params.networkId
+    let query = {account: account, $or: [{fromChainId: networkId}, {toChainId: networkId}]}
+    let total = await db.Transaction.countDocuments(query)
+    let transactions = await db.Transaction.find(query).sort({requestTime: -1}).limit(limit).skip(skip)
+    return res.json({transactions: transactions,
+        page: page,
+        limit: limit,
+        total: total})
 })
 
 

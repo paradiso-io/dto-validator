@@ -36,11 +36,15 @@ async function processEvent(event, bridgeAddress, networkId, lastBlock, confirma
             await setting.save()
         }
     }
+    let originChainId = event.returnValues._originChainId
     let tokenAddress = event.returnValues._token.toLowerCase()
-    let token = await tokenHelper.getToken(tokenAddress, networkId)
+    let token = await tokenHelper.getToken(tokenAddress, originChainId)
 
     let amount = event.returnValues._amount
-    let amountNumber = new BigNumber(amount).div(10**token.decimals).toNumber()
+    let amountNumber = new BigNumber(amount).div(10 ** token.decimals).toNumber()
+
+    let web3 = await Web3Utils.getWeb3(networkId)
+    let block = await web3.eth.getBlock(event.blockNumber)
 
     // event RequestBridge(address indexed _token, address indexed _addr, uint256 _amount, uint256 _originChainId, uint256 _fromChainId, uint256 _toChainId, uint256 _index);
     await db.Transaction.updateOne({
@@ -60,8 +64,9 @@ async function processEvent(event, bridgeAddress, networkId, lastBlock, confirma
                 originChainId: event.returnValues._originChainId,
                 toChainId: event.returnValues._toChainId,
                 amount: amount,
-                amountNumber: amountNumber,
+                // amountNumber: amountNumber, // TODO: get token from chain detail
                 index: event.returnValues._index,
+                requestTime: block.timestamp
             }
         }, {upsert: true, new: true})
 
@@ -120,7 +125,7 @@ async function getPastEvent(networkId, bridgeAddress, step) {
 }
 
 async function watch(networkId, bridgeAddress) {
-    let step = 3000
+    let step = 1000
     await getPastEvent(networkId, bridgeAddress, step)
 
     setInterval(async () => {
