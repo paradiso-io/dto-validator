@@ -46,7 +46,8 @@ async function processEvent(event, bridgeAddress, networkId, lastBlock, confirma
         {
             $set: {
                 claimHash: event.transactionHash,
-                claimBlock: event.blockNumber, isClaim: true,
+                claimBlock: event.blockNumber,
+                claimed: true,
                 claimId: event.returnValues._claimId
             }
         }, {upsert: true, new: true})

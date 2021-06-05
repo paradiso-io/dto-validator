@@ -10,7 +10,7 @@ const Transaction = new Schema({
     originToken: { type: String, index: true },
     fromToken: { type: String, index: true },
     toToken: { type: String, index: true },
-    isClaim: { type: Boolean, index: true },
+    claimed: { type: Boolean, index: true },
     originSymbol: String,
     fromSymbol: String,
     toSymbol: String,

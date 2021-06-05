@@ -58,7 +58,6 @@ async function processEvent(event, bridgeAddress, networkId, lastBlock, confirma
                 requestBlock: event.blockNumber,
                 account: event.returnValues._addr.toLowerCase(),
                 originToken: token.hash,
-                isClaim: false,
                 originSymbol: token.symbol,
                 fromChainId: event.returnValues._fromChainId,
                 originChainId: event.returnValues._originChainId,
