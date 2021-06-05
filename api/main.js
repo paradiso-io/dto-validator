@@ -4,7 +4,7 @@ const db = require('../models')
 const { check, validationResult, query } = require('express-validator')
 
 
-router.get('/:account/:networkId',[
+router.get('/transactions/:account/:networkId',[
     check('account').exists().isLength({ min: 42, max: 42 }).withMessage('address is incorrect.'),
     check('networkId').exists().isNumeric({ no_symbols: true }).withMessage('networkId is incorrect.'),
     query('limit').isInt({ min: 0, max: 200 }).optional().withMessage('limit should greater than 0 and less than 200'),
@@ -26,6 +26,19 @@ router.get('/:account/:networkId',[
         page: page,
         limit: limit,
         total: total})
+})
+
+
+router.post('/request-withdraw',[
+    check('account').exists().isLength({ min: 42, max: 42 }).withMessage('address is incorrect'),
+    check('signature').exists().withMessage('signature is require'),
+    check('message').exists().withMessage('message is incorrect')
+], async function (req, res, next) {
+    const errors = validationResult(req)
+    if (!errors.isEmpty()) {
+        return next(errors.array())
+    }
+
 })
 
 

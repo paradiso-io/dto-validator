@@ -22,6 +22,6 @@ const Transaction = new Schema({
     index: { type: Number, index: true},
     claimId: String,
     requestTime: { type: Number, index: true}
-}, { timestamps: false, v: false })
+}, { timestamps: false, versionKey: false })
 
 module.exports = mongoose.model('Transaction', Transaction)
