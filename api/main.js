@@ -3,7 +3,7 @@ const router = express.Router()
 const db = require('../models')
 const Web3Utils = require('../helpers/web3')
 const { check, validationResult, query } = require('express-validator')
-const PrivateKeyProvider = require('truffle-privatekey-provider')
+require('dotenv').config()
 
 
 router.get('/transactions/:account/:networkId',[
@@ -63,11 +63,9 @@ router.post('/request-withdraw',[
         return res.status(400).json({errors: 'Signer is incorrect'})
     }
 
-    let web3key = await Web3Utils.getWeb3WithPrivateKey(fromChainId)
-    let coinbase = (await web3key.eth.getCoinbase()).toLowerCase()
-    let managerSignature = await web3key.eth.sign(requestHash, coinbase)
+    let data = web3.eth.accounts.sign(requestHash, process.env.PRIVATE_KEY)
 
-    return res.json({manager: coinbase, signature: managerSignature, message: requestHash})
+    return res.json(data)
 
 
 })
