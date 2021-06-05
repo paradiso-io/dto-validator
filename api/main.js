@@ -67,7 +67,7 @@ router.post('/request-withdraw',[
     let coinbase = (await web3key.eth.getCoinbase()).toLowerCase()
     let managerSignature = await web3key.eth.sign(requestHash, coinbase)
 
-    return res.json({manager: coinbase, signature: managerSignature})
+    return res.json({manager: coinbase, signature: managerSignature, message: requestHash})
 
 
 })
