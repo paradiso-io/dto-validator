@@ -136,7 +136,7 @@
 		}
 	},
 	"db": {
-		"uri": "mongodb://localhost:27017/dto-cross-chain"
+		"uri": "mongodb://localhost:27017/dtoCrossChain"
 	},
 	"mainAccount": {
 		"privateKey": "0x06E77C26DD44F807A67DCE660B8F8D39209100678DEEEFD032214B7BF0A99F02",
