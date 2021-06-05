@@ -18,8 +18,7 @@ process.setMaxListeners(1000)
 let sleep = (time) => new Promise((resolve) => setTimeout(resolve, time))
 
 async function processEvent(event, bridgeAddress, networkId, lastBlock, confirmations) {
-    let eventName = event.event
-    logger.info('New event %s at block %s', eventName, event.blockNumber)
+    logger.info('New event at block %s', event.blockNumber)
 
     if (lastBlock - event.blockNumber < confirmations) {
         return
@@ -39,9 +38,18 @@ async function processEvent(event, bridgeAddress, networkId, lastBlock, confirma
     }
 
     // event ClaimToken(address indexed _token, address indexed _addr, uint256 _amount, uint256 _originChainId, uint256 _fromChainId, uint256 _toChainId, uint256 _index, bytes32 _claimId);
-    await db.Transaction.updateOne({index: event.returnValues._index, sourceChainId: event.returnValues._fromChainId}, {
-        $set: {claimHash: event.transactionHash, claimBlock: event.blockNumber, isClaim: true, claimId: event.returnValues._claimId}
-    })
+    await db.Transaction.updateOne({
+            index: event.returnValues._index,
+            fromChainId: event.returnValues._fromChainId,
+            toChainId: event.returnValues._toChainId
+        },
+        {
+            $set: {
+                claimHash: event.transactionHash,
+                claimBlock: event.blockNumber, isClaim: true,
+                claimId: event.returnValues._claimId
+            }
+        }, {upsert: true, new: true})
 
 
 }
@@ -55,7 +63,7 @@ async function getPastEvent(networkId, bridgeAddress, step) {
     if (lastBlock === null) {
         lastBlock = 9394711
     }
-    if (setting) {
+    if (setting && setting.lastBlockClaim) {
         lastCrawl = setting.lastBlockClaim
     }
     lastCrawl = parseInt(lastCrawl)
@@ -88,7 +96,7 @@ async function getPastEvent(networkId, bridgeAddress, step) {
                 logger.error('error', err)
             }
         })
-        console.log('sleep 2 seconds and wait to continue')
+        // console.log('sleep 2 seconds and wait to continue')
         await sleep(1000)
 
         lastBlock = await web3.eth.getBlockNumber()
