@@ -4,10 +4,12 @@ const db = require('../models')
 const { check, validationResult, query } = require('express-validator')
 
 
-router.get('/:account/:networkId',[
-    check('candidate').exists().isLength({ min: 42, max: 42 }).withMessage('Candidate address is incorrect.')
+router.get('/:account',[
+    check('account').exists().isLength({ min: 42, max: 42 }).withMessage('address is incorrect.')
 ], async function (req, res, next) {
-
+    let account = req.params.account
+    let transactions = await db.Transaction.find({account: account})
+    return res.json({error: 0, transactions: transactions})
 })
 
 
