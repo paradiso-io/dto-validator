@@ -51,7 +51,6 @@ router.post('/request-withdraw',[
     let fromChainId = req.body.fromChainId
     let toChainId = req.body.toChainId
     let index = req.body.index
-
     let transaction = await db.Transaction.findOne({ requestHash: requestHash, fromChainId: fromChainId, toChainId: toChainId, index: index})
     if (!transaction) {
         return res.status(400).json({errors: 'Transaction does not exist'})
@@ -96,7 +95,8 @@ router.post('/request-withdraw',[
         symbol = config.get(`blockchain.${data.originChainId}.nativeSymbol`)
         decimals = 18
     } else {
-        let  originTokenContract = await new web3.eth.Contract(IERC20ABI, transaction.originToken)
+        let web3Origin = await Web3Utils.getWeb3(transaction.originChainId)
+        let  originTokenContract = await new web3Origin.eth.Contract(IERC20ABI, transaction.originToken)
         name = await originTokenContract.methods.name().call()
         decimals = await originTokenContract.methods.decimals().call()
         symbol = await originTokenContract.methods.symbol().call()
