@@ -84,6 +84,11 @@ router.post('/request-withdraw',[
         return res.status(400).json({errors: 'transaction invalid, fork happened'})
     }
 
+    //is it necessary? check whether tx included in the block
+    if (txBlock.transactions.length <= parseInt(onChainTx.transactionIndex) || txBlock.transactions[parseInt(onChainTx.transactionIndex)].toLowerCase() != transaction.requestHash.toLowerCase()) {
+        return res.status(400).json({errors: 'transaction not found, fork happened'})  
+    }
+
     const nativeAddress = config.get('nativeAddress')
     let name, decimals, symbol
     if (transaction.originToken.toLowerCase() == nativeAddress.toLowerCase()) {
