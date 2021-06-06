@@ -4,6 +4,10 @@ const db = require('../models')
 const Web3Utils = require('../helpers/web3')
 const { check, validationResult, query } = require('express-validator')
 require('dotenv').config()
+const signer = require('./signer')
+const config = require('config')
+const { on } = require('../helpers/logger')
+const IERC20ABI = require('../contracts/ERC20.json')
 
 
 router.get('/transactions/:account/:networkId',[
@@ -32,7 +36,7 @@ router.get('/transactions/:account/:networkId',[
 
 
 router.post('/request-withdraw',[
-    check('signature').exists().withMessage('signature is require'),
+    //check('signature').exists().withMessage('signature is require'),
     check('requestHash').exists().withMessage('message is require'),
     check('fromChainId').exists().isNumeric({ no_symbols: true }).withMessage('fromChainId is incorrect'),
     check('toChainId').exists().isNumeric({ no_symbols: true }).withMessage('fromChainId is incorrect'),
@@ -42,7 +46,7 @@ router.post('/request-withdraw',[
     if (!errors.isEmpty()) {
         return res.status(400).json({ errors: errors.array() })
     }
-    let signature = req.body.signature
+    //let signature = req.body.signature
     let requestHash = req.body.requestHash
     let fromChainId = req.body.fromChainId
     let toChainId = req.body.toChainId
@@ -58,16 +62,53 @@ router.post('/request-withdraw',[
 
     let web3 = await Web3Utils.getWeb3(fromChainId)
 
-    const signer = await web3.eth.accounts.recover(requestHash, signature)
-    if (signer.toLowerCase() !== transaction.account) {
-        return res.status(400).json({errors: 'Signer is incorrect'})
+    //const signer = await web3.eth.accounts.recover(requestHash, signature)
+    if (transaction.claimed) {
+        return res.status(400).json({errors: 'already claimed'})
     }
 
-    let data = web3.eth.accounts.sign(requestHash, process.env.PRIVATE_KEY)
+    //re-verify whether tx still in the chain and confirmed (enough confirmation)
+    let onChainTx = await web3.eth.getTransaction(transaction.requestHash)
+    if (!onChainTx) {
+        return res.status(400).json({errors: 'invalid transaction hash'})
+    }
 
-    return res.json(data)
+    let latestBlockNumber = await web3.eth.getBlockNumber()
+    let confirmations = config.get(`blockchain.${fromChainId}.confirmations`)
+    if (parseInt(latestBlockNumber) < parseInt(confirmations) + parseInt(transaction.requestBlock)) {
+        return res.status(400).json({errors: 'transaction not fully confirmed'})
+    }
 
+    let txBlock = await web3.eth.getBlock(transaction.requestBlock)
+    if (!txBlock || parseInt(txBlock.number) != parseInt(onChainTx.blockNumber)) {
+        return res.status(400).json({errors: 'transaction invalid, fork happened'})
+    }
 
+    const nativeAddress = config.get('nativeAddress')
+    let name, decimals, symbol
+    if (transaction.originToken.toLowerCase() == nativeAddress.toLowerCase()) {
+        name = config.get(`blockchain.${data.originChainId}.nativeName`)
+        symbol = config.get(`blockchain.${data.originChainId}.nativeSymbol`)
+        decimals = 18
+    } else {
+        let  originTokenContract = await new web3.eth.Contract(IERC20ABI, transaction.originToken)
+        name = await originTokenContract.methods.name().call()
+        decimals = await originTokenContract.methods.decimals().call()
+        symbol = await originTokenContract.methods.symbol().call()
+    }
+    //signing
+    let sig = signer.signClaim(
+        transaction.originToken, 
+        transaction.account,
+        transaction.amount, 
+        [transaction.originChainId, transaction.fromChainId, transaction.toChainId, transaction.index],
+        transaction.requestHash,
+        name, 
+        symbol,
+        decimals
+    )
+
+    return res.json({r: sig.r, s: sig.s, v: sig.v, msgHash: sig.msgHash, name: name, symbol: symbol, decimals: decimals})
 })
 
 
