@@ -138,8 +138,5 @@
 	"db": {
 		"uri": "mongodb://localhost:27017/dtoCrossChain"
 	},
-	"mainAccount": {
-		"privateKey": "0x06E77C26DD44F807A67DCE660B8F8D39209100678DEEEFD032214B7BF0A99F02",
-		"address": "0x1901deed3e1AfA53109DbA327B45B6F8Fa1809E1"
-	}
+	"signer": ""
 }

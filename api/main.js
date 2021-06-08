@@ -46,25 +46,20 @@ router.post('/request-withdraw',[
     if (!errors.isEmpty()) {
         return res.status(400).json({ errors: errors.array() })
     }
-    //let signature = req.body.signature
     let requestHash = req.body.requestHash
     let fromChainId = req.body.fromChainId
     let toChainId = req.body.toChainId
     let index = req.body.index
     let transaction = await db.Transaction.findOne({ requestHash: requestHash, fromChainId: fromChainId, toChainId: toChainId, index: index})
+
     if (!transaction) {
         return res.status(400).json({errors: 'Transaction does not exist'})
     }
     if (transaction.claimed) {
-        return res.status(400).json({errors: 'Transaction was claimed'})
+        return res.status(400).json({errors: 'Transaction claimed'})
     }
 
     let web3 = await Web3Utils.getWeb3(fromChainId)
-
-    //const signer = await web3.eth.accounts.recover(requestHash, signature)
-    if (transaction.claimed) {
-        return res.status(400).json({errors: 'already claimed'})
-    }
 
     //re-verify whether tx still in the chain and confirmed (enough confirmation)
     let onChainTx = await web3.eth.getTransaction(transaction.requestHash)
@@ -74,25 +69,25 @@ router.post('/request-withdraw',[
 
     let latestBlockNumber = await web3.eth.getBlockNumber()
     let confirmations = config.get(`blockchain.${fromChainId}.confirmations`)
-    if (parseInt(latestBlockNumber) < parseInt(confirmations) + parseInt(transaction.requestBlock)) {
+    if (latestBlockNumber - transaction.requestBlock < confirmations) {
         return res.status(400).json({errors: 'transaction not fully confirmed'})
     }
 
     let txBlock = await web3.eth.getBlock(transaction.requestBlock)
-    if (!txBlock || parseInt(txBlock.number) != parseInt(onChainTx.blockNumber)) {
+    if (!txBlock || txBlock.number !== onChainTx.blockNumber) {
         return res.status(400).json({errors: 'transaction invalid, fork happened'})
     }
 
     //is it necessary? check whether tx included in the block
-    if (txBlock.transactions.length <= parseInt(onChainTx.transactionIndex) || txBlock.transactions[parseInt(onChainTx.transactionIndex)].toLowerCase() != transaction.requestHash.toLowerCase()) {
-        return res.status(400).json({errors: 'transaction not found, fork happened'})  
+    if (txBlock.transactions.length <= onChainTx.transactionIndex || txBlock.transactions[onChainTx.transactionIndex].toLowerCase() !== transaction.requestHash.toLowerCase()) {
+        return res.status(400).json({errors: 'transaction not found, fork happened'})
     }
 
     const nativeAddress = config.get('nativeAddress')
     let name, decimals, symbol
-    if (transaction.originToken.toLowerCase() == nativeAddress.toLowerCase()) {
-        name = config.get(`blockchain.${data.originChainId}.nativeName`)
-        symbol = config.get(`blockchain.${data.originChainId}.nativeSymbol`)
+    if (transaction.originToken.toLowerCase() === nativeAddress.toLowerCase()) {
+        name = config.blockchain[data.originChainId].nativeName
+        symbol = config.blockchain[data.originChainId].nativeSymbol
         decimals = 18
     } else {
         let web3Origin = await Web3Utils.getWeb3(transaction.originChainId)
@@ -103,12 +98,12 @@ router.post('/request-withdraw',[
     }
     //signing
     let sig = signer.signClaim(
-        transaction.originToken, 
+        transaction.originToken,
         transaction.account,
-        transaction.amount, 
+        transaction.amount,
         [transaction.originChainId, transaction.fromChainId, transaction.toChainId, transaction.index],
         transaction.requestHash,
-        name, 
+        name,
         symbol,
         decimals
     )
