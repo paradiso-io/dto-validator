@@ -7,6 +7,7 @@ require('dotenv').config()
 const signer = require('./signer')
 const config = require('config')
 const { on } = require('../helpers/logger')
+const eventHelper = require('../helpers/event')
 const IERC20ABI = require('../contracts/ERC20.json')
 
 
@@ -50,7 +51,14 @@ router.post('/request-withdraw',[
     let fromChainId = req.body.fromChainId
     let toChainId = req.body.toChainId
     let index = req.body.index
-    let transaction = await db.Transaction.findOne({ requestHash: requestHash, fromChainId: fromChainId, toChainId: toChainId, index: index})
+
+    let web3 = await Web3Utils.getWeb3(fromChainId)
+    let transaction = {}
+    if (!config.checkTxOnChain) {
+        transaction = await db.Transaction.findOne({ requestHash: requestHash, fromChainId: fromChainId, toChainId: toChainId, index: index})
+    } else {
+        transaction = await eventHelper.getRequestEvent(fromChainId, requestHash, index)
+    }
 
     if (!transaction) {
         return res.status(400).json({errors: 'Transaction does not exist'})
@@ -59,8 +67,6 @@ router.post('/request-withdraw',[
         return res.status(400).json({errors: 'Transaction claimed'})
     }
 
-    let web3 = await Web3Utils.getWeb3(fromChainId)
-
     //re-verify whether tx still in the chain and confirmed (enough confirmation)
     let onChainTx = await web3.eth.getTransaction(transaction.requestHash)
     if (!onChainTx) {
@@ -68,7 +74,7 @@ router.post('/request-withdraw',[
     }
 
     let latestBlockNumber = await web3.eth.getBlockNumber()
-    let confirmations = config.get(`blockchain.${fromChainId}.confirmations`)
+    let confirmations = config.blockchain[fromChainId].confirmations
     if (latestBlockNumber - transaction.requestBlock < confirmations) {
         return res.status(400).json({errors: 'transaction not fully confirmed'})
     }
