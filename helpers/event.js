@@ -17,15 +17,15 @@ const EventHelper = {
           for (let i = 0; i < data.length / 64; i++) {
             params.push(data.substr(i * 64, 64))
           }
-          let originToken = log.topics[1].replace('000000000000000000000000', '0x').toLowerCase()
-          let account = log.topics[2].replace('000000000000000000000000', '0x').toLowerCase()
+          let originToken = log.topics[1].replace('0x000000000000000000000000', '0x').toLowerCase()
+          let account = log.topics[2].replace('0x000000000000000000000000', '0x').toLowerCase()
           let amount = web3.utils.hexToNumberString('0x' + params[0])
           let originChainId = web3.utils.hexToNumber('0x' + params[1])
           let fromChainId = web3.utils.hexToNumber('0x' + params[2])
           let toChainId = web3.utils.hexToNumber('0x' + params[3])
           let index = web3.utils.hexToNumber('0x' + params[4])
 
-          if (index === txIndex) {
+          if (index === parseInt(txIndex)) {
             result = {
               requestHash: txHash,
               requestBlock: log.blockNumber,
