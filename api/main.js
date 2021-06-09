@@ -64,9 +64,9 @@ router.post('/request-withdraw',[
     if (!transaction) {
         return res.status(400).json({errors: 'Transaction does not exist'})
     }
-    // if (transaction.claimed) {
-    //     return res.status(400).json({errors: 'Transaction claimed'})
-    // }
+    if (transaction.claimed === true) {
+        return res.status(400).json({errors: 'Transaction claimed'})
+    }
 
     //re-verify whether tx still in the chain and confirmed (enough confirmation)
     let onChainTx = await web3.eth.getTransaction(transaction.requestHash)
