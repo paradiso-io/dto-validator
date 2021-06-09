@@ -9,6 +9,7 @@ const config = require('config')
 const { on } = require('../helpers/logger')
 const eventHelper = require('../helpers/event')
 const IERC20ABI = require('../contracts/ERC20.json')
+const axios = require('axios')
 
 
 router.get('/transactions/:account/:networkId',[
@@ -63,9 +64,9 @@ router.post('/request-withdraw',[
     if (!transaction) {
         return res.status(400).json({errors: 'Transaction does not exist'})
     }
-    if (transaction.claimed) {
-        return res.status(400).json({errors: 'Transaction claimed'})
-    }
+    // if (transaction.claimed) {
+    //     return res.status(400).json({errors: 'Transaction claimed'})
+    // }
 
     //re-verify whether tx still in the chain and confirmed (enough confirmation)
     let onChainTx = await web3.eth.getTransaction(transaction.requestHash)
@@ -87,6 +88,30 @@ router.post('/request-withdraw',[
     //is it necessary? check whether tx included in the block
     if (txBlock.transactions.length <= onChainTx.transactionIndex || txBlock.transactions[onChainTx.transactionIndex].toLowerCase() !== transaction.requestHash.toLowerCase()) {
         return res.status(400).json({errors: 'transaction not found, fork happened'})
+    }
+    let otherSignature = []
+    if (config.signatureServer.length > 0) {
+        try {
+            let body = {
+                requestHash: req.body.requestHash,
+                fromChainId: req.body.fromChainId,
+                toChainId: req.body.toChainId,
+                index: req.body.index
+            }
+            if (config.signatureServer.length >= 2) {
+                const responses = await Promise.all([
+                    await axios.post(config.signatureServer[0] + '/request-withdraw', body),
+                    await axios.post(config.signatureServer[1] + '/request-withdraw', body)
+                ])
+                otherSignature.push(responses[0].data)
+                otherSignature.push(responses[1].data)
+            } else {
+                let res = await axios.post(config.signatureServer[0] + '/request-withdraw', body)
+                otherSignature.push(res.data)
+            }
+        } catch (e) {
+            console.log(e)
+        }
     }
 
     const nativeAddress = config.get('nativeAddress')
@@ -113,8 +138,21 @@ router.post('/request-withdraw',[
         symbol,
         decimals
     )
+    let r =[sig.r]
+    let s =[sig.s]
+    let v =[sig.v]
+    if (otherSignature.length > 0) {
+        r.push(otherSignature[0].r[0])
+        s.push(otherSignature[0].s[0])
+        v.push(otherSignature[0].v[0])
+    }
+    if (otherSignature.length > 1) {
+        r.push(otherSignature[1].r[0])
+        s.push(otherSignature[1].s[0])
+        v.push(otherSignature[1].v[0])
+    }
 
-    return res.json({r: sig.r, s: sig.s, v: sig.v, msgHash: sig.msgHash, name: name, symbol: symbol, decimals: decimals})
+    return res.json({r: r, s: s, v: v, msgHash: sig.msgHash, name: name, symbol: symbol, decimals: decimals})
 })
 
 
