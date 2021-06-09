@@ -25,7 +25,7 @@ router.get('/transactions/:account/:networkId',[
     let limit = (req.query.limit) ? parseInt(req.query.limit) : 20
     let page = req.query.page || 1
     let skip = limit * (page - 1)
-    let account = req.params.account
+    let account = req.params.account.toLowerCase()
     let networkId = req.params.networkId
     let query = {account: account, $or: [{fromChainId: networkId}, {toChainId: networkId}]}
     let total = await db.Transaction.countDocuments(query)

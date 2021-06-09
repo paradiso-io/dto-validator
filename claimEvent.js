@@ -61,8 +61,8 @@ async function getPastEvent(networkId, bridgeAddress, step) {
     let lastBlock = await web3.eth.getBlockNumber()
     let setting = await db.Setting.findOne({networkId: networkId})
     let lastCrawl = config.contracts[networkId].firstBlockCrawl
-    if (lastBlock === null) {
-        lastBlock = 9394711
+    if (lastCrawl === null) {
+        lastCrawl = 9394711
     }
     if (setting && setting.lastBlockClaim) {
         lastCrawl = setting.lastBlockClaim
