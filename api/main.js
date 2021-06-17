@@ -98,17 +98,18 @@ router.post('/request-withdraw',[
                 toChainId: req.body.toChainId,
                 index: req.body.index
             }
-            if (config.signatureServer.length >= 2) {
-                const responses = await Promise.all([
-                    await axios.post(config.signatureServer[0] + '/request-withdraw', body),
-                    await axios.post(config.signatureServer[1] + '/request-withdraw', body)
-                ])
-                otherSignature.push(responses[0].data)
-                otherSignature.push(responses[1].data)
-            } else {
-                let res = await axios.post(config.signatureServer[0] + '/request-withdraw', body)
-                otherSignature.push(res.data)
+            let r = []
+            console.log(111, new Date())
+            for (let i = 0; i < config.signatureServer.length; i++) {
+                r.push(axios.post(config.signatureServer[i] + '/request-withdraw', body))
             }
+
+            const responses = await Promise.all(r)
+
+            for (let i = 0; i < config.signatureServer.length; i++) {
+                otherSignature.push(responses[i].data)
+            }
+
         } catch (e) {
             console.log(e)
         }
@@ -142,14 +143,11 @@ router.post('/request-withdraw',[
     let s =[sig.s]
     let v =[sig.v]
     if (otherSignature.length > 0) {
-        r.push(otherSignature[0].r[0])
-        s.push(otherSignature[0].s[0])
-        v.push(otherSignature[0].v[0])
-    }
-    if (otherSignature.length > 1) {
-        r.push(otherSignature[1].r[0])
-        s.push(otherSignature[1].s[0])
-        v.push(otherSignature[1].v[0])
+        for (let i = 0; i < otherSignature.length; i++) {
+            r.push(otherSignature[i].r[0])
+            s.push(otherSignature[i].s[0])
+            v.push(otherSignature[i].v[0])
+        }
     }
 
     return res.json({r: r, s: s, v: v, msgHash: sig.msgHash, name: name, symbol: symbol, decimals: decimals})
