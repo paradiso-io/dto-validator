@@ -34,13 +34,13 @@ async function requestBridge() {
 
 		//approve
 		console.log('approving')
-		if (erc20Address != nativeAddress) 
+		if (erc20Address !== nativeAddress)
 			await token.methods.approve(bridge.options.address, new BN('100000e18').toFixed(0)).send({chainId: web3.utils.toHex(fromChainId), from: mainAccount, gas: 1000000, gasPrice: gasPrice})
 
 		console.log('requesting')
 		let value = 0
 		let amountInWei = new BN(amount).multipliedBy(new BN('1e18')).toFixed(0)
-		if (erc20Address == nativeAddress) {
+		if (erc20Address === nativeAddress) {
 			value = amountInWei
 		}
 
