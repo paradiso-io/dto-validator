@@ -128,6 +128,9 @@ router.post('/request-withdraw',[
         decimals = await originTokenContract.methods.decimals().call()
         symbol = await originTokenContract.methods.symbol().call()
     }
+    if (transaction.toChainId != transaction.originChainId) {
+        name = "dto" + name
+    }
     //signing
     let sig = signer.signClaim(
         transaction.originToken,
