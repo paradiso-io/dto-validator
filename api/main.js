@@ -4,9 +4,7 @@ const db = require('../models')
 const Web3Utils = require('../helpers/web3')
 const { check, validationResult, query } = require('express-validator')
 require('dotenv').config()
-const signer = require('./signer')
 const config = require('config')
-const { on } = require('../helpers/logger')
 const eventHelper = require('../helpers/event')
 const IERC20ABI = require('../contracts/ERC20.json')
 const axios = require('axios')
@@ -132,7 +130,7 @@ router.post('/request-withdraw',[
         name = "dto" + name
     }
     //signing
-    let sig = signer.signClaim(
+    let sig = Web3Utils.signClaim(
         transaction.originToken,
         transaction.account,
         transaction.amount,

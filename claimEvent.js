@@ -4,7 +4,6 @@ const config = require('config')
 
 const logger = require('./helpers/logger')
 const Web3Utils = require('./helpers/web3')
-const tokenHelper = require('./helpers/token')
 const GenericBridge = require('./contracts/GenericBridge')
 const db = require('./models')
 

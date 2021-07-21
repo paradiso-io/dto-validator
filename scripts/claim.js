@@ -24,7 +24,7 @@ const nativeAddress = config.get('nativeAddress')
 
 
 async function readingAllEvents(ctr, fromBlock, endBlock) {
-	let from = fromBlock 
+	let from = fromBlock
 	let eventList = []
 	while(from < endBlock) {
 		let to = from + 4999
@@ -74,7 +74,7 @@ async function requestBridge() {
 			let rpcOrigin = config.get(`blockchain.${data._originChainId}.httpProvider`)
 			let web3Origin = new Web3(new PrivateKeyProvider(privateKey, rpcOrigin))
 			let name, decimals, symbol
-			if (originToken == nativeAddress) {
+			if (originToken === nativeAddress) {
 				name = config.get(`blockchain.${data._originChainId}.nativeName`)
 				symbol = config.get(`blockchain.${data._originChainId}.nativeSymbol`)
 				decimals = 18
@@ -86,7 +86,7 @@ async function requestBridge() {
 			}
 
 			let chainIdData = [data._originChainId, data._fromChainId, data._toChainId, data._index]
-			if (data._fromChainId != fromChainId || data._toChainId != toChainId) {
+			if (data._fromChainId !== fromChainId || data._toChainId !== toChainId) {
 				continue
 			}
 			console.log('chainIdData:', chainIdData)
@@ -101,7 +101,7 @@ async function requestBridge() {
 				console.log('already claim')
 			}
 			let bridgeToken = await bridgeTo.methods.tokenMap(data._originChainId, data._token).call()
-			if (data._originChainId == data._toChainId) {
+			if (data._originChainId === data._toChainId) {
 				bridgeToken = data._token
 				console.log('done, claimed token:', bridgeToken)
 			} else {
@@ -110,7 +110,7 @@ async function requestBridge() {
 		} catch(e) {
 			console.log('e:', e)
 		}
-		
+
 	}
 	console.log('finish')
 }
