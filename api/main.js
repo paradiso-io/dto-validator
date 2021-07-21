@@ -10,6 +10,10 @@ const IERC20ABI = require('../contracts/ERC20.json')
 const axios = require('axios')
 
 
+router.get('/status',[], async function (req, res) {
+    return res.json({status: 'ok'})
+})
+
 router.get('/transactions/:account/:networkId',[
     check('account').exists().isLength({ min: 42, max: 42 }).withMessage('address is incorrect.'),
     check('networkId').exists().isNumeric({ no_symbols: true }).withMessage('networkId is incorrect'),
@@ -97,7 +101,6 @@ router.post('/request-withdraw',[
                 index: req.body.index
             }
             let r = []
-            console.log(111, new Date())
             for (let i = 0; i < config.signatureServer.length; i++) {
                 r.push(axios.post(config.signatureServer[i] + '/request-withdraw', body))
             }
