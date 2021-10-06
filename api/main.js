@@ -119,8 +119,8 @@ router.post('/request-withdraw',[
     const nativeAddress = config.get('nativeAddress')
     let name, decimals, symbol
     if (transaction.originToken.toLowerCase() === nativeAddress.toLowerCase()) {
-        name = config.blockchain[data.originChainId].nativeName
-        symbol = config.blockchain[data.originChainId].nativeSymbol
+        name = config.blockchain[transaction.originChainId].nativeName
+        symbol = config.blockchain[transaction.originChainId].nativeSymbol
         decimals = 18
     } else {
         let web3Origin = await Web3Utils.getWeb3(transaction.originChainId)
