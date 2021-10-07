@@ -116,7 +116,7 @@
     },
     "97": {
       "bridge": "0x5920F911F724308814EC8e69f9a8f744Aa2BDf1b",
-      "firstBlockCrawl": null,
+      "firstBlockCrawl": 13005906,
       "wrapToken": "",
       "usdt": "",
       "usdc": "",
@@ -124,7 +124,7 @@
     },
     "1287": {
       "bridge": "0x7b987AFce3db7A3F551435Bf2b7f43BcCE69737f",
-      "firstBlockCrawl": null
+      "firstBlockCrawl": 912512
     },
     "4002": {
       "bridge": "0x51c87aBA0AD711331bB4d09AE314a10E93aaa7eb",
@@ -136,7 +136,7 @@
     },
     "80001": {
       "bridge": "0x7Af638f257bCd0DA8F095f07bD6617c55FffaD8b",
-      "firstBlockCrawl": null
+      "firstBlockCrawl": 19862185
     }
   },
   "db": {
