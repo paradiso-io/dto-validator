@@ -1,6 +1,6 @@
 const express = require('express')
 const router = express.Router()
-const Web3Utils = require('../helpers/web3')
+const Web3 = require('web3')
 const airdropDistribution = require('../contracts/airdropDistribution.json')
 const { check, validationResult, query } = require('express-validator')
 require('dotenv').config()
@@ -520,13 +520,13 @@ router.get('/:address/request-claim',[
         return res.status(400).json({ errors: errors.array() })
     }
     let time = 1
-    let address = req.body.address.toLowerCase()
+    let address = req.params.address.toLowerCase()
     let amount = '0'
     if (airdropList.hasOwnProperty(address)) {
         amount = new BigNumber(airdropList[address] / 2).multipliedBy(1e18).toString()
     }
 
-    let web3 = await Web3Utils.getWeb3()
+    let web3 = await new Web3(await new Web3.providers.HttpProvider('https://nd-225-117-177.p2pify.com/13ec66f9986adaa76424bfb89cb7d441'))
     let msg = web3.eth.abi.encodeParameters(
         ['address', 'uint256', 'uint256'],
         [address, time, amount]
