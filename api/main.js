@@ -121,7 +121,7 @@ router.post('/request-withdraw',[
     if (transaction.originToken.toLowerCase() === nativeAddress.toLowerCase()) {
         name = config.blockchain[transaction.originChainId].nativeName
         symbol = config.blockchain[transaction.originChainId].nativeSymbol
-        decimals = 18
+        decimals = 18                               
     } else {
         let web3Origin = await Web3Utils.getWeb3(transaction.originChainId)
         let  originTokenContract = await new web3Origin.eth.Contract(IERC20ABI, transaction.originToken)
@@ -130,7 +130,8 @@ router.post('/request-withdraw',[
         symbol = await originTokenContract.methods.symbol().call()
     }
     if (transaction.toChainId !== transaction.originChainId) {
-        name = "dto" + name
+        name = "DTO Wrapped " + name
+        symbol = "d" + symbol
     }
     //signing
     let sig = Web3Utils.signClaim(
