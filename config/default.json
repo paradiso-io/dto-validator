@@ -103,39 +103,39 @@
       "busd": ""
     },
     "42": {
-      "bridge": "0x106F6E9Ba8A93297b0a94A75BB7863e37a663A80",
-      "firstBlockCrawl": 27548181,
+      "bridge": "0x020D6695754058CE52E98E21Fd00238513CD8699",
+      "firstBlockCrawl": 28794342,
       "wrapToken": "",
       "usdt": "",
       "usdc": "",
       "busd": ""
     },
     "89": {
-      "bridge": "0x9BF336e66D3E93B8692be57e2C96AC65900EAaf8",
-      "firstBlockCrawl": 13437296
+      "bridge": "0x77D77774fC52577a1111D90ADF29F6a7CD62E70f",
+      "firstBlockCrawl": 16420039
     },
     "97": {
-      "bridge": "0x5920F911F724308814EC8e69f9a8f744Aa2BDf1b",
-      "firstBlockCrawl": 13005906,
+      "bridge": "0x138f1950da0f3bF8C95fe143f2Ddf62d09BEbe29",
+      "firstBlockCrawl": 15017535,
       "wrapToken": "",
       "usdt": "",
       "usdc": "",
       "busd": ""
     },
     "1287": {
-      "bridge": "0x7b987AFce3db7A3F551435Bf2b7f43BcCE69737f",
-      "firstBlockCrawl": 912512
+      "bridge": "0xdF888794Ea0a4E57A0fa05ee721D4Ba890f071f1",
+      "firstBlockCrawl": 1360108
     },
     "4002": {
-      "bridge": "0x51c87aBA0AD711331bB4d09AE314a10E93aaa7eb",
-      "firstBlockCrawl": 3832322
+      "bridge": "0xE9047b356ad96E537848FC656A2631F9d586fDe5",
+      "firstBlockCrawl": 5934008
     },
     "43113": {
-      "bridge": "0x9BF336e66D3E93B8692be57e2C96AC65900EAaf8",
+      "bridge": "0x45059438CF1215A027D8Fc668fbd0e7f3685a625",
       "firstBlockCrawl": 1947163
     },
     "80001": {
-      "bridge": "0x7Af638f257bCd0DA8F095f07bD6617c55FffaD8b",
+      "bridge": "0xa6f8eB1f92e6e20b6F634dD2d1CB125aCBf85155",
       "firstBlockCrawl": 19862185
     }
   },
