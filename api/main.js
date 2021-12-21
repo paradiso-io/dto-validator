@@ -133,29 +133,40 @@ router.post('/request-withdraw',[
         name = "DTO Wrapped " + name
         symbol = "d" + symbol
     }
-    //signing
-    let sig = Web3Utils.signClaim(
-        transaction.originToken,
-        transaction.account,
-        transaction.amount,
-        [transaction.originChainId, transaction.fromChainId, transaction.toChainId, transaction.index],
-        transaction.requestHash,
-        name,
-        symbol,
-        decimals
-    )
-    let r =[sig.r]
-    let s =[sig.s]
-    let v =[sig.v]
-    if (otherSignature.length > 0) {
-        for (let i = 0; i < otherSignature.length; i++) {
-            r.push(otherSignature[i].r[0])
-            s.push(otherSignature[i].s[0])
-            v.push(otherSignature[i].v[0])
-        }
-    }
 
-    return res.json({r: r, s: s, v: v, msgHash: sig.msgHash, name: name, symbol: symbol, decimals: decimals})
+    let r = []
+    let s = []
+    let v = []
+    if (config.proxy) {
+        //dont sign
+        if (otherSignature.length > 0) {
+            for (let i = 0; i < otherSignature.length; i++) {
+                r.push(otherSignature[i].r[0])
+                s.push(otherSignature[i].s[0])
+                v.push(otherSignature[i].v[0])
+            }
+        }
+
+        return res.json({r: r, s: s, v: v, msgHash: otherSignature[0].msgHash, name: name, symbol: symbol, decimals: decimals})
+    } else {
+        let sig = Web3Utils.signClaim(
+            transaction.originToken,
+            transaction.account,
+            transaction.amount,
+            [transaction.originChainId, transaction.fromChainId, transaction.toChainId, transaction.index],
+            transaction.requestHash,
+            name,
+            symbol,
+            decimals
+        )
+
+        let r =[sig.r]
+        let s =[sig.s]
+        let v =[sig.v]
+        
+
+        return res.json({r: r, s: s, v: v, msgHash: sig.msgHash, name: name, symbol: symbol, decimals: decimals})
+    }
 })
 
 
