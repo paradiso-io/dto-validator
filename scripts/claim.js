@@ -71,6 +71,7 @@ async function requestBridge() {
 			console.log('trying to claim')
 			let data = e.returnValues
 			let originToken = data._token
+			let toAddr = data._toAddr
 			let rpcOrigin = config.get(`blockchain.${data._originChainId}.httpProvider`)
 			let web3Origin = new Web3(new PrivateKeyProvider(privateKey, rpcOrigin))
 			let name, decimals, symbol
@@ -90,12 +91,12 @@ async function requestBridge() {
 				continue
 			}
 			console.log('chainIdData:', chainIdData)
-			let sig = singer.signClaim(originToken, mainAccount, data._amount, chainIdData, e.transactionHash, name, symbol, decimals)
+			let sig = singer.signClaim(originToken, toAddr, data._amount, chainIdData, e.transactionHash, name, symbol, decimals)
 			const bridgeTo = await new web3To.eth.Contract(GenericBridgeABI, bridgeAddressTo)
 			let alreadyClaim = await bridgeTo.methods.alreadyClaims(sig.msgHash).call()
 			if (!alreadyClaim) {
 				//making claim tx
-				await bridgeTo.methods.claimToken(originToken, mainAccount, data._amount, chainIdData, e.transactionHash, sig.r, sig.s, sig.v, name, symbol, decimals)
+				await bridgeTo.methods.claimToken(originToken, toAddr, data._amount, chainIdData, e.transactionHash, sig.r, sig.s, sig.v, name, symbol, decimals)
 					.send({chainId: web3To.utils.toHex(toChainId), from: mainAccount, gasPrice: gasPrice, gas: 5000000})
 			} else {
 				console.log('already claim')
