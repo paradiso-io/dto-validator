@@ -12,6 +12,7 @@ const erc20Address = args[0]
 const fromChainId = args[1]
 const toChainId = args[2]
 const amount = args[3]
+const toAddr = args[4]
 console.log('to:', erc20Address)
 const privateKey = process.env.PRIVATE_KEY
 const rpc = config.get(`blockchain.${fromChainId}.httpProvider`)
@@ -44,7 +45,7 @@ async function requestBridge() {
 			value = amountInWei
 		}
 
-		await bridge.methods.requestBridge(erc20Address, amountInWei, toChainId).send({chainId: web3.utils.toHex(fromChainId), from: mainAccount, gas: 1000000, gasPrice: gasPrice, value: value})
+		await bridge.methods.requestBridge(erc20Address, toAddr, amountInWei, toChainId).send({chainId: web3.utils.toHex(fromChainId), from: mainAccount, gas: 1000000, gasPrice: gasPrice, value: value})
 		console.log('done')
 		}catch (e) {
 		console.log(e)
