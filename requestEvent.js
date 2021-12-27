@@ -56,7 +56,7 @@ async function processEvent(event, bridgeAddress, networkId, lastBlock, confirma
             $set: {
                 requestHash: event.transactionHash,
                 requestBlock: event.blockNumber,
-                account: event.returnValues._addr.toLowerCase(),
+                account: event.returnValues._toAddr.toLowerCase(),
                 originToken: token.hash,
                 originSymbol: token.symbol,
                 fromChainId: event.returnValues._fromChainId,
