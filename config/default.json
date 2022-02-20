@@ -91,6 +91,18 @@
       "confirmations": 6,
       "nativeName": "Mumbai Matic",
       "nativeSymbol": "fMatic"
+    },
+    "96945816564243": {
+      "confirmations": 15,
+      "notEVM": true,
+      "nativeName": "Casper Testnet",
+      "nativeSymbol": "fCSPR"
+    },
+    "131614895977472": {
+      "confirmations": 15,
+      "notEVM": true,
+      "nativeName": "Casper Mainnet",
+      "nativeSymbol": "CSPR"
     }
   },
   "contracts": {
@@ -141,6 +153,27 @@
   },
   "db": {
     "uri": "mongodb://localhost:27017/dtoCrossChain"
+  },
+  "caspernetwork": "testnet",
+  "testnet": {
+    "fromBlock": 546200,
+    "tokens": [
+      {
+        "name": "abc",
+        "decimals": 18,
+        "origin_chainid": 1,
+        "origin_contract_address": "ajsd",
+        "contractHash": "90971834805286b054b5c3665d60d752ab494610efdf909fb1c8b6aa4e113368"
+      }
+    ],
+    "rpc": "http://3.136.227.9:7777/rpc",
+    "eventStream": "http://16.162.124.124:9999/events/main"
+  },
+  "mainnet": {
+    "fromBlock": 546089,
+    "tokens": [],
+    "rpc": "http://3.136.227.9:7777/rpc",
+    "eventStream": "http://16.162.124.124:9999/events/main"
   },
   "signer": "",
   "checkTxOnChain": false,
