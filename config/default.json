@@ -21,7 +21,7 @@
       "nativeSymbol": "ETH"
     },
     "42": {
-      "httpProvider": "https://kovan.infura.io/v3/468031fc706e435eb5f32f89a4077d56",
+      "httpProvider": "https://speedy-nodes-nyc.moralis.io/6f1c50d092cad31805b2371f/eth/kovan",
       "wsProvider": "",
       "explorer": "https://kovan.etherscan.io",
       "confirmations": 6,
@@ -77,9 +77,9 @@
       "nativeSymbol": "fFTM"
     },
     "43113": {
-      "httpProvider": "https://api.avax-test.network/ext/bc/C/rpc",
+      "httpProvider": "https://speedy-nodes-nyc.moralis.io/6f1c50d092cad31805b2371f/avalanche/testnet",
       "wsProvider": "",
-      "explorer": "https://cchain.explorer.avax-test.network/",
+      "explorer": "https://testnet.snowtrace.io/",
       "confirmations": 6,
       "nativeName": "Avalanche Testnet",
       "nativeSymbol": "fAVAX"
