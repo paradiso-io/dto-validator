@@ -8,8 +8,8 @@ const config = require('config')
 const eventHelper = require('../helpers/event')
 const IERC20ABI = require('../contracts/ERC20.json')
 const axios = require('axios')
-
-
+const CasperHelper = require('../helpers/casper')
+const casperConfig = CasperHelper.getConfigInfo()
 router.get('/status',[], async function (req, res) {
     return res.json({status: 'ok'})
 })
@@ -132,6 +132,10 @@ router.post('/request-withdraw',[
     if (transaction.toChainId !== transaction.originChainId) {
         name = "DTO Wrapped " + name
         symbol = "d" + symbol
+    }
+
+    if (transaction.toChainId == casperConfig.networkId) {
+        return res.status(400).json({errors: 'Dont manually claim on casper chain'})
     }
 
     let r = []
