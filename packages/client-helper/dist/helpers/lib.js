@@ -66,7 +66,7 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
 };
 var _this = this;
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.contractCallFn = exports.contractSimpleGetter = exports.setClient = exports.installContract = exports.fromCLMap = exports.toCLMap = exports.createRecipientAddress = void 0;
+exports.appendSignatureToUnsignedDeployAndSend = exports.createUnsignedContractCallFn = exports.contractCallFn = exports.contractSimpleGetter = exports.setClient = exports.installContract = exports.fromCLMap = exports.toCLMap = exports.createRecipientAddress = void 0;
 var casper_js_sdk_1 = require("casper-js-sdk");
 var utils = __importStar(require("./utils"));
 var createRecipientAddress = function (recipient) {
@@ -117,7 +117,7 @@ var installContract = function (chainName, nodeAddress, keys, runtimeArgs, payme
                     return [2, deployHash];
                 }
                 else {
-                    throw Error("Problem with installation");
+                    throw Error('Problem with installation');
                 }
                 return [2];
         }
@@ -164,7 +164,7 @@ var contractSimpleGetter = function (nodeAddress, contractHash, key) { return __
                     return [2, clValue.CLValue.value()];
                 }
                 else {
-                    throw Error("Invalid stored value");
+                    throw Error('Invalid stored value');
                 }
                 return [2];
         }
@@ -180,7 +180,9 @@ var contractCallFn = function (_a) {
                 case 0:
                     client = new casper_js_sdk_1.CasperClient(nodeAddress);
                     contractHashAsByteArray = utils.contractHashToByteArray(contractHash);
-                    dependenciesBytes = dependencies.map(function (d) { return Uint8Array.from(Buffer.from(d, "hex")); });
+                    dependenciesBytes = dependencies.map(function (d) {
+                        return Uint8Array.from(Buffer.from(d, 'hex'));
+                    });
                     deploy = casper_js_sdk_1.DeployUtil.makeDeploy(new casper_js_sdk_1.DeployUtil.DeployParams(keys.publicKey, chainName, 1, ttl, dependenciesBytes), casper_js_sdk_1.DeployUtil.ExecutableDeployItem.newStoredContractByHash(contractHashAsByteArray, entryPoint, runtimeArgs), casper_js_sdk_1.DeployUtil.standardPayment(paymentAmount));
                     deploy = client.signDeploy(deploy, keys);
                     return [4, client.putDeploy(deploy)];
@@ -192,4 +194,46 @@ var contractCallFn = function (_a) {
     });
 };
 exports.contractCallFn = contractCallFn;
+var createUnsignedContractCallFn = function (_a) {
+    var nodeAddress = _a.nodeAddress, publicKey = _a.publicKey, chainName = _a.chainName, contractHash = _a.contractHash, entryPoint = _a.entryPoint, runtimeArgs = _a.runtimeArgs, paymentAmount = _a.paymentAmount, ttl = _a.ttl, _b = _a.dependencies, dependencies = _b === void 0 ? [] : _b;
+    return __awaiter(_this, void 0, void 0, function () {
+        var client, contractHashAsByteArray, dependenciesBytes, deploy;
+        return __generator(this, function (_c) {
+            client = new casper_js_sdk_1.CasperClient(nodeAddress);
+            contractHashAsByteArray = utils.contractHashToByteArray(contractHash);
+            dependenciesBytes = dependencies.map(function (d) {
+                return Uint8Array.from(Buffer.from(d, 'hex'));
+            });
+            deploy = casper_js_sdk_1.DeployUtil.makeDeploy(new casper_js_sdk_1.DeployUtil.DeployParams(publicKey, chainName, 1, ttl, dependenciesBytes), casper_js_sdk_1.DeployUtil.ExecutableDeployItem.newStoredContractByHash(contractHashAsByteArray, entryPoint, runtimeArgs), casper_js_sdk_1.DeployUtil.standardPayment(paymentAmount));
+            return [2, deploy];
+        });
+    });
+};
+exports.createUnsignedContractCallFn = createUnsignedContractCallFn;
+var appendSignatureToUnsignedDeployAndSend = function (_a) {
+    var publicKey = _a.publicKey, deploy = _a.deploy, signature = _a.signature, nodeAddress = _a.nodeAddress;
+    return __awaiter(_this, void 0, void 0, function () {
+        var client, approval, deployHash;
+        return __generator(this, function (_b) {
+            switch (_b.label) {
+                case 0:
+                    client = new casper_js_sdk_1.CasperClient(nodeAddress);
+                    approval = new casper_js_sdk_1.DeployUtil.Approval();
+                    approval.signer = publicKey.toHex();
+                    if (publicKey.isEd25519()) {
+                        approval.signature = casper_js_sdk_1.Keys.Ed25519.accountHex(signature);
+                    }
+                    else {
+                        approval.signature = casper_js_sdk_1.Keys.Secp256K1.accountHex(signature);
+                    }
+                    deploy.approvals.push(approval);
+                    return [4, client.putDeploy(deploy)];
+                case 1:
+                    deployHash = _b.sent();
+                    return [2, [deploy, deployHash]];
+            }
+        });
+    });
+};
+exports.appendSignatureToUnsignedDeployAndSend = appendSignatureToUnsignedDeployAndSend;
 //# sourceMappingURL=lib.js.map

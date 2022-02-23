@@ -15,30 +15,37 @@ import {
   EventStream,
   Keys,
   RuntimeArgs,
-} from "casper-js-sdk";
-import { Some, None } from "ts-results";
-import { DEFAULT_TTL } from "./constants";
-import * as utils from "./helpers/utils";
+} from 'casper-js-sdk'
+import { Some, None } from 'ts-results'
+import { DEFAULT_TTL } from './constants'
+import * as utils from './helpers/utils'
 import {
   toCLMap,
   installContract,
   setClient,
   contractSimpleGetter,
   contractCallFn,
-} from "./helpers/lib";
-import { RecipientType, IPendingDeploy, IClassContractCallParams } from "./types";
+  createUnsignedContractCallFn,
+} from './helpers/lib'
+import {
+  RecipientType,
+  IPendingDeploy,
+  IClassContractCallParams,
+  IClassContractCallParamsUnsigned,
+  IAppendSignature,
+} from './types'
 
 class ContractClient {
-  public contractHash?: string;
-  public contractPackageHash?: string;
-  protected namedKeys?: any;
-  protected isListening = false;
-  protected pendingDeploys: IPendingDeploy[] = [];
+  public contractHash?: string
+  public contractPackageHash?: string
+  protected namedKeys?: any
+  protected isListening = false
+  protected pendingDeploys: IPendingDeploy[] = []
 
   constructor(
     public nodeAddress: string,
     public chainName: string,
-    public eventStreamAddress?: string
+    public eventStreamAddress?: string,
   ) {}
 
   public async contractCall({
@@ -48,7 +55,7 @@ class ContractClient {
     runtimeArgs,
     cb,
     ttl = DEFAULT_TTL,
-    dependencies = []
+    dependencies = [],
   }: IClassContractCallParams) {
     const deployHash = await contractCallFn({
       chainName: this.chainName,
@@ -59,19 +66,66 @@ class ContractClient {
       keys: keys,
       runtimeArgs,
       ttl,
-      dependencies
-    });
+      dependencies,
+    })
 
     if (deployHash !== null) {
-      cb && cb(deployHash);
-      return deployHash;
+      cb && cb(deployHash)
+      return deployHash
     } else {
-      throw Error("Invalid Deploy");
+      throw Error('Invalid Deploy')
     }
   }
 
+  public async createUnsignedContractCall({
+    publicKey,
+    paymentAmount,
+    entryPoint,
+    runtimeArgs,
+    cb,
+    ttl = DEFAULT_TTL,
+    dependencies = [],
+  }: IClassContractCallParamsUnsigned) {
+    const deploy = await createUnsignedContractCallFn({
+      chainName: this.chainName,
+      contractHash: this.contractHash!,
+      entryPoint,
+      paymentAmount,
+      nodeAddress: this.nodeAddress,
+      publicKey: publicKey,
+      runtimeArgs,
+      ttl,
+      dependencies,
+    })
+
+    return deploy
+  }
+
+  public async putSignatureAndSend({
+    publicKey,
+    deploy,
+    signature,
+    nodeAddress,
+  }: IAppendSignature) {
+    const client = new CasperClient(nodeAddress)
+    const approval = new DeployUtil.Approval()
+    console.log('public key', publicKey, deploy, signature, nodeAddress)
+    approval.signer = publicKey.toHex()
+    if (publicKey.isEd25519()) {
+      approval.signature = Keys.Ed25519.accountHex(signature)
+    } else {
+      approval.signature = Keys.Secp256K1.accountHex(signature)
+    }
+
+    deploy.approvals.push(approval)
+
+    const deployHash = await client.putDeploy(deploy)
+
+    return [deploy, deployHash]
+  }
+
   protected addPendingDeploy(deployType: any, deployHash: string) {
-    this.pendingDeploys = [...this.pendingDeploys, { deployHash, deployType }];
+    this.pendingDeploys = [...this.pendingDeploys, { deployHash, deployType }]
   }
 
   public handleEvents(
@@ -79,39 +133,43 @@ class ContractClient {
     callback: (
       eventName: any,
       deployStatus: {
-        deployHash: string;
-        success: boolean;
-        error: string | null;
+        deployHash: string
+        success: boolean
+        error: string | null
       },
-      result: any | null
-    ) => void
+      result: any | null,
+    ) => void,
   ): any {
     if (!this.eventStreamAddress) {
-      throw Error("Please set eventStreamAddress before!");
+      throw Error('Please set eventStreamAddress before!')
     }
     if (this.isListening) {
       throw Error(
-        "Only one event listener can be create at a time. Remove the previous one and start new."
-      );
+        'Only one event listener can be create at a time. Remove the previous one and start new.',
+      )
     }
-    const es = new EventStream(this.eventStreamAddress);
-    this.isListening = true;
+    const es = new EventStream(this.eventStreamAddress)
+    this.isListening = true
 
     es.subscribe(EventName.DeployProcessed, (value: any) => {
-      const deployHash = value.body.DeployProcessed.deploy_hash;
+      const deployHash = value.body.DeployProcessed.deploy_hash
 
       const pendingDeploy = this.pendingDeploys.find(
-        (pending) => pending.deployHash === deployHash
-      );
+        (pending) => pending.deployHash === deployHash,
+      )
 
       if (!pendingDeploy) {
-        return;
+        return
       }
 
       const parsedEvent = utils.parseEvent(
-        { contractPackageHash: this.contractPackageHash!, eventNames, eventsURef: this.namedKeys!.events },
-        value
-      );
+        {
+          contractPackageHash: this.contractPackageHash!,
+          eventNames,
+          eventsURef: this.namedKeys!.events,
+        },
+        value,
+      )
 
       if (parsedEvent.error !== null) {
         callback(
@@ -121,35 +179,34 @@ class ContractClient {
             error: parsedEvent.error,
             success: false,
           },
-          null
-        );
+          null,
+        )
       } else {
         parsedEvent.data.forEach((d: any) =>
           callback(
             d.name,
             { deployHash, error: null, success: true },
-            d.clValue
-          )
-        );
+            d.clValue,
+          ),
+        )
       }
 
       this.pendingDeploys = this.pendingDeploys.filter(
-        (pending) => pending.deployHash !== deployHash
-      );
-    });
+        (pending) => pending.deployHash !== deployHash,
+      )
+    })
 
-    es.start();
+    es.start()
 
     return {
       stopListening: () => {
-        es.unsubscribe(EventName.DeployProcessed);
-        es.stop();
-        this.isListening = false;
-        this.pendingDeploys = [];
+        es.unsubscribe(EventName.DeployProcessed)
+        es.stop()
+        this.isListening = false
+        this.pendingDeploys = []
       },
-    };
+    }
   }
 }
 
-export default ContractClient;
-
+export default ContractClient

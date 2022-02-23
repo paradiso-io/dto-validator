@@ -1,148 +1,203 @@
-const events = require('events')
-const BigNumber = require('bignumber.js')
-const config = require('config')
+const events = require("events");
+const BigNumber = require("bignumber.js");
+const config = require("config");
 
-const logger = require('./helpers/logger')
-const Web3Utils = require('./helpers/web3')
-const tokenHelper = require('./helpers/token')
-const GenericBridge = require('./contracts/GenericBridge')
-const db = require('./models')
-
-BigNumber.config({EXPONENTIAL_AT: [-100, 100]})
-const baseUnit = 10 ** 18
-
+const logger = require("./helpers/logger");
+const Web3Utils = require("./helpers/web3");
+const tokenHelper = require("./helpers/token");
+const GenericBridge = require("./contracts/GenericBridge");
+const db = require("./models");
+const CasperHelper = require("./helpers/casper");
+const CasperConfig = CasperHelper.getConfigInfo();
+BigNumber.config({ EXPONENTIAL_AT: [-100, 100] });
+const baseUnit = 10 ** 18;
 
 // fix warning max listener
-events.EventEmitter.defaultMaxListeners = 1000
-process.setMaxListeners(1000)
-let sleep = (time) => new Promise((resolve) => setTimeout(resolve, time))
+events.EventEmitter.defaultMaxListeners = 1000;
+process.setMaxListeners(1000);
+let sleep = (time) => new Promise((resolve) => setTimeout(resolve, time));
 
-async function processEvent(event, bridgeAddress, networkId, lastBlock, confirmations) {
-    logger.info('New event at block %s', event.blockNumber)
+async function processEvent(
+  event,
+  bridgeAddress,
+  networkId,
+  lastBlock,
+  confirmations
+) {
+  logger.info("New event at block %s", event.blockNumber);
 
-    if (lastBlock - event.blockNumber < confirmations) {
-        return
+  if (lastBlock - event.blockNumber < confirmations) {
+    return;
+  }
+
+  let setting = await db.Setting.findOne({ networkId: networkId });
+  if (!setting) {
+    await db.Setting.updateOne(
+      { networkId: networkId },
+      { $set: { lastBlockRequest: event.blockNumber } },
+      {
+        upsert: true,
+        new: true,
+      }
+    );
+  } else {
+    if (event.blockNumber > setting.lastBlockRequest) {
+      setting.lastBlockRequest = event.blockNumber;
+      await setting.save();
     }
+  }
+  let originChainId = event.returnValues._originChainId;
+  let tokenAddress = event.returnValues._token.toLowerCase();
+  let token = await tokenHelper.getToken(tokenAddress, originChainId);
 
-    let setting = await db.Setting.findOne({networkId: networkId})
-    if (!setting) {
-        await db.Setting.updateOne({networkId: networkId}, {$set: {lastBlockRequest: event.blockNumber}}, {
-            upsert: true,
-            new: true
-        })
-    } else {
-        if (event.blockNumber > setting.lastBlockRequest) {
-            setting.lastBlockRequest = event.blockNumber
-            await setting.save()
-        }
-    }
-    let originChainId = event.returnValues._originChainId
-    let tokenAddress = event.returnValues._token.toLowerCase()
-    let token = await tokenHelper.getToken(tokenAddress, originChainId)
+  let amount = event.returnValues._amount;
+  let amountNumber = new BigNumber(amount).div(10 ** token.decimals).toNumber();
 
-    let amount = event.returnValues._amount
-    let amountNumber = new BigNumber(amount).div(10 ** token.decimals).toNumber()
+  let web3 = await Web3Utils.getWeb3(networkId);
+  let block = await web3.eth.getBlock(event.blockNumber);
 
-    let web3 = await Web3Utils.getWeb3(networkId)
-    let block = await web3.eth.getBlock(event.blockNumber)
-
-    // event RequestBridge(address indexed _token, address indexed _addr, uint256 _amount, uint256 _originChainId, uint256 _fromChainId, uint256 _toChainId, uint256 _index);
-    await db.Transaction.updateOne({
-            index: event.returnValues._index,
-            fromChainId: event.returnValues._fromChainId,
-            toChainId: event.returnValues._toChainId
-        },
-        {
-            $set: {
-                requestHash: event.transactionHash,
-                requestBlock: event.blockNumber,
-                account: event.returnValues._toAddr.toLowerCase(),
-                originToken: token.hash,
-                originSymbol: token.symbol,
-                fromChainId: event.returnValues._fromChainId,
-                originChainId: event.returnValues._originChainId,
-                toChainId: event.returnValues._toChainId,
-                amount: amount,
-                // amountNumber: amountNumber, // TODO: get token from chain detail
-                index: event.returnValues._index,
-                requestTime: block.timestamp
-            }
-        }, {upsert: true, new: true})
-
-
+  // event RequestBridge(address indexed _token, bytes indexed _addr, uint256 _amount, uint256 _originChainId, uint256 _fromChainId, uint256 _toChainId, uint256 _index);
+  let toAddrBytes = event.returnValues._toAddr;
+  let decoded;
+  try {
+    decoded = web3.eth.abi.decodeParameters(
+      [{ type: "string", name: "decodedAddress" }],
+      toAddrBytes
+    );
+  } catch (e) {
+    logger.error("cannot decode recipient address");
+    return;
+  }
+  let decodedAddress = decoded.decodedAddress;
+  let casperChainId = CasperConfig.networkId;
+  if (parseInt(event.returnValues._toChainId) == casperChainId) {
+    logger.info("bridging to casper network %s", decodedAddress);
+  }
+  await db.Transaction.updateOne(
+    {
+      index: event.returnValues._index,
+      fromChainId: event.returnValues._fromChainId,
+      toChainId: event.returnValues._toChainId,
+    },
+    {
+      $set: {
+        requestHash: event.transactionHash,
+        requestBlock: event.blockNumber,
+        account: decodedAddress.toLowerCase(),
+        originToken: token.hash,
+        originSymbol: token.symbol,
+        fromChainId: event.returnValues._fromChainId,
+        originChainId: event.returnValues._originChainId,
+        toChainId: event.returnValues._toChainId,
+        amount: amount,
+        // amountNumber: amountNumber, // TODO: get token from chain detail
+        index: event.returnValues._index,
+        requestTime: block.timestamp,
+      },
+    },
+    { upsert: true, new: true }
+  );
 }
 
 async function getPastEvent(networkId, bridgeAddress, step) {
-    let web3 = await Web3Utils.getWeb3(networkId)
-    const confirmations = config.get('blockchain')[networkId].confirmations
-    let lastBlock = await web3.eth.getBlockNumber()
-    let setting = await db.Setting.findOne({networkId: networkId})
-    let lastCrawl = config.contracts[networkId].firstBlockCrawl
+  try {
+    let web3 = await Web3Utils.getWeb3(networkId);
+    const confirmations = config.get("blockchain")[networkId].confirmations;
+    let lastBlock = await web3.eth.getBlockNumber();
+    let setting = await db.Setting.findOne({ networkId: networkId });
+    let lastCrawl = config.contracts[networkId].firstBlockCrawl;
     if (lastCrawl === null) {
-        lastCrawl = 9394711
+      lastCrawl = 9394711;
     }
     if (setting && setting.lastBlockRequest) {
-        lastCrawl = setting.lastBlockRequest
+      lastCrawl = setting.lastBlockRequest;
     }
-    lastCrawl = parseInt(lastCrawl)
+    lastCrawl = parseInt(lastCrawl);
 
     while (lastBlock - lastCrawl > 5) {
-        let toBlock
-        if (lastBlock - lastCrawl > step) {
-            toBlock = lastCrawl + step
-        } else {
-            toBlock = 'latest'
-        }
-        const contract = new web3.eth.Contract(GenericBridge, bridgeAddress)
-        logger.info('Network %s: Get Past Event from block %s to %s', networkId, lastCrawl + 1, toBlock)
-        contract.getPastEvents('RequestBridge', {fromBlock: lastCrawl + 1, toBlock: toBlock}, async (err, evts) => {
-            if (!err) {
-                if (evts.length > 0) {
-                    logger.info(`network ${networkId}: there are ${evts.length} events from ${lastCrawl + 1} to ${toBlock}`)
-                }
-                if (evts.length === 0 && lastBlock - toBlock > confirmations) {
-                    await db.Setting.updateOne({networkId: networkId}, {$set: {lastBlockRequest: toBlock}}, {
-                        upsert: true,
-                        new: true
-                    })
-                }
-                for (let i = 0; i < evts.length; i++) {
-                    let event = evts[i]
-                    await processEvent(event, bridgeAddress, networkId, lastBlock, confirmations)
-                }
-            } else {
-                logger.error('error', err)
-            }
-        })
-        // console.log('sleep 2 seconds and wait to continue')
-        await sleep(1000)
+      let toBlock;
+      if (lastBlock - lastCrawl > step) {
+        toBlock = lastCrawl + step;
+      } else {
+        toBlock = lastBlock;
+      }
+      const contract = new web3.eth.Contract(GenericBridge, bridgeAddress);
+      if (networkId == 97) {
+        logger.info(
+          "Network %s: Get Past Event from block %s to %s, lastblock %s",
+          networkId,
+          lastCrawl + 1,
+          toBlock,
+          lastBlock
+        );
 
-        lastBlock = await web3.eth.getBlockNumber()
-        lastCrawl = toBlock
+      }
+      let evts = await contract.getPastEvents("RequestBridge", {
+        fromBlock: lastCrawl + 1,
+        toBlock: toBlock,
+      });
+
+      if (evts.length > 0) {
+        logger.info(
+          `network ${networkId}: there are ${evts.length} events from ${lastCrawl + 1
+          } to ${toBlock}`
+        );
+      }
+
+      for (let i = 0; i < evts.length; i++) {
+        let event = evts[i];
+        await processEvent(
+          event,
+          bridgeAddress,
+          networkId,
+          lastBlock,
+          confirmations
+        );
+      }
+
+      if (lastBlock - toBlock > confirmations) {
+        await db.Setting.updateOne(
+          { networkId: networkId },
+          { $set: { lastBlockRequest: toBlock } },
+          {
+            upsert: true,
+            new: true,
+          }
+        );
+      }
+
+      // console.log('sleep 2 seconds and wait to continue')
+      await sleep(1000);
+
+      lastBlock = await web3.eth.getBlockNumber();
+      lastCrawl = toBlock;
     }
-
+  } catch (e) {
+    console.log(e);
+    await sleep(10000);
+  }
 }
 
 async function watch(networkId, bridgeAddress) {
-    let step = 1000
-    await getPastEvent(networkId, bridgeAddress, step)
+  console.log("network", networkId, config.blockchain[networkId].notEVM);
+  if (config.blockchain[networkId].notEVM) return;
+  let step = 1000;
+  await getPastEvent(networkId, bridgeAddress, step);
 
-    setInterval(async () => {
-        await getPastEvent(networkId, bridgeAddress, step);
-    }, 10000);
-
+  setInterval(async () => {
+    await getPastEvent(networkId, bridgeAddress, step);
+  }, 10000);
 }
 
 function main() {
-    let contracts = config.contracts
-    let networks = Object.keys(contracts)
-    networks.forEach(networkId => {
-        let contractAddress = contracts[networkId].bridge
-        if (contractAddress !== '') {
-            watch(networkId, contractAddress)
-        }
-    })
+  let contracts = config.contracts;
+  let networks = Object.keys(contracts);
+  networks.forEach((networkId) => {
+    let contractAddress = contracts[networkId].bridge;
+    if (contractAddress !== "") {
+      watch(networkId, contractAddress);
+    }
+  });
 }
 
-main()
-
+main();

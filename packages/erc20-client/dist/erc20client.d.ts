@@ -1,5 +1,5 @@
-import { Keys } from "casper-js-sdk";
-import { CasperContractClient, types } from "casper-js-client-helper";
+import { CLPublicKey, DeployUtil, Keys } from 'casper-js-sdk';
+import { CasperContractClient, types } from 'casper-js-client-helper';
 declare type RecipientType = types.RecipientType;
 declare class ERC20Client extends CasperContractClient {
     protected namedKeys?: {
@@ -23,6 +23,7 @@ declare class ERC20Client extends CasperContractClient {
     balanceOf(account: RecipientType): Promise<any>;
     allowances(owner: RecipientType, spender: RecipientType): Promise<any>;
     mint(keys: Keys.AsymmetricKey, recipient: RecipientType, transferAmount: string, mintid: string, paymentAmount: string, ttl?: number): Promise<string>;
+    createUnsignedMint(publicKey: CLPublicKey, recipient: RecipientType, transferAmount: string, mintid: string, paymentAmount: string, ttl?: number): Promise<DeployUtil.Deploy>;
     changeMinter(keys: Keys.AsymmetricKey, minter: RecipientType, paymentAmount: string, ttl?: number): Promise<string>;
     changeDev(keys: Keys.AsymmetricKey, dev: RecipientType, paymentAmount: string, ttl?: number): Promise<string>;
     changeSwapFee(keys: Keys.AsymmetricKey, swapFee: string, paymentAmount: string, ttl?: number): Promise<string>;

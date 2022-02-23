@@ -96,7 +96,7 @@ var ERC20Client = (function (_super) {
                             swap_fee: casper_js_sdk_1.CLValueBuilder.u256(swap_fee),
                             dev: casper_js_sdk_1.CLValueBuilder.string(dev),
                             origin_chainid: casper_js_sdk_1.CLValueBuilder.u256(origin_chainid),
-                            origin_contract_address: casper_js_sdk_1.CLValueBuilder.string(origin_contract_address)
+                            origin_contract_address: casper_js_sdk_1.CLValueBuilder.string(origin_contract_address),
                         });
                         return [4, installContract(this.chainName, this.nodeAddress, keys, runtimeArgs, paymentAmount, wasmPath)];
                     case 1: return [2, _a.sent()];
@@ -110,11 +110,8 @@ var ERC20Client = (function (_super) {
             return __generator(this, function (_b) {
                 switch (_b.label) {
                     case 0:
-                        properHash = hash.startsWith("hash-") ? hash.slice(5) : hash;
-                        return [4, setClient(this.nodeAddress, properHash, [
-                                "balances",
-                                "allowances"
-                            ])];
+                        properHash = hash.startsWith('hash-') ? hash.slice(5) : hash;
+                        return [4, setClient(this.nodeAddress, properHash, ['balances', 'allowances'])];
                     case 1:
                         _a = _b.sent(), contractPackageHash = _a.contractPackageHash, namedKeys = _a.namedKeys;
                         this.contractHash = hash;
@@ -129,7 +126,9 @@ var ERC20Client = (function (_super) {
         return __awaiter(this, void 0, void 0, function () {
             return __generator(this, function (_a) {
                 switch (_a.label) {
-                    case 0: return [4, contractSimpleGetter(this.nodeAddress, this.contractHash, ["name"])];
+                    case 0: return [4, contractSimpleGetter(this.nodeAddress, this.contractHash, [
+                            'name',
+                        ])];
                     case 1: return [2, _a.sent()];
                 }
             });
@@ -139,7 +138,9 @@ var ERC20Client = (function (_super) {
         return __awaiter(this, void 0, void 0, function () {
             return __generator(this, function (_a) {
                 switch (_a.label) {
-                    case 0: return [4, contractSimpleGetter(this.nodeAddress, this.contractHash, ["symbol"])];
+                    case 0: return [4, contractSimpleGetter(this.nodeAddress, this.contractHash, [
+                            'symbol',
+                        ])];
                     case 1: return [2, _a.sent()];
                 }
             });
@@ -149,7 +150,9 @@ var ERC20Client = (function (_super) {
         return __awaiter(this, void 0, void 0, function () {
             return __generator(this, function (_a) {
                 switch (_a.label) {
-                    case 0: return [4, contractSimpleGetter(this.nodeAddress, this.contractHash, ["decimals"])];
+                    case 0: return [4, contractSimpleGetter(this.nodeAddress, this.contractHash, [
+                            'decimals',
+                        ])];
                     case 1: return [2, _a.sent()];
                 }
             });
@@ -159,7 +162,9 @@ var ERC20Client = (function (_super) {
         return __awaiter(this, void 0, void 0, function () {
             return __generator(this, function (_a) {
                 switch (_a.label) {
-                    case 0: return [4, contractSimpleGetter(this.nodeAddress, this.contractHash, ["total_supply"])];
+                    case 0: return [4, contractSimpleGetter(this.nodeAddress, this.contractHash, [
+                            'total_supply',
+                        ])];
                     case 1: return [2, _a.sent()];
                 }
             });
@@ -169,7 +174,9 @@ var ERC20Client = (function (_super) {
         return __awaiter(this, void 0, void 0, function () {
             return __generator(this, function (_a) {
                 switch (_a.label) {
-                    case 0: return [4, contractSimpleGetter(this.nodeAddress, this.contractHash, ["swap_fee"])];
+                    case 0: return [4, contractSimpleGetter(this.nodeAddress, this.contractHash, [
+                            'swap_fee',
+                        ])];
                     case 1: return [2, _a.sent()];
                 }
             });
@@ -179,7 +186,9 @@ var ERC20Client = (function (_super) {
         return __awaiter(this, void 0, void 0, function () {
             return __generator(this, function (_a) {
                 switch (_a.label) {
-                    case 0: return [4, contractSimpleGetter(this.nodeAddress, this.contractHash, ["minter"])];
+                    case 0: return [4, contractSimpleGetter(this.nodeAddress, this.contractHash, [
+                            'minter',
+                        ])];
                     case 1: return [2, _a.sent()];
                 }
             });
@@ -189,7 +198,9 @@ var ERC20Client = (function (_super) {
         return __awaiter(this, void 0, void 0, function () {
             return __generator(this, function (_a) {
                 switch (_a.label) {
-                    case 0: return [4, contractSimpleGetter(this.nodeAddress, this.contractHash, ["origin_chainid"])];
+                    case 0: return [4, contractSimpleGetter(this.nodeAddress, this.contractHash, [
+                            'origin_chainid',
+                        ])];
                     case 1: return [2, _a.sent()];
                 }
             });
@@ -199,7 +210,9 @@ var ERC20Client = (function (_super) {
         return __awaiter(this, void 0, void 0, function () {
             return __generator(this, function (_a) {
                 switch (_a.label) {
-                    case 0: return [4, contractSimpleGetter(this.nodeAddress, this.contractHash, ["origin_contract_address"])];
+                    case 0: return [4, contractSimpleGetter(this.nodeAddress, this.contractHash, [
+                            'origin_contract_address',
+                        ])];
                     case 1: return [2, _a.sent()];
                 }
             });
@@ -209,7 +222,9 @@ var ERC20Client = (function (_super) {
         return __awaiter(this, void 0, void 0, function () {
             return __generator(this, function (_a) {
                 switch (_a.label) {
-                    case 0: return [4, contractSimpleGetter(this.nodeAddress, this.contractHash, ["dev"])];
+                    case 0: return [4, contractSimpleGetter(this.nodeAddress, this.contractHash, [
+                            'dev',
+                        ])];
                     case 1: return [2, _a.sent()];
                 }
             });
@@ -228,11 +243,13 @@ var ERC20Client = (function (_super) {
                             amount: casper_js_sdk_1.CLValueBuilder.u256(transferAmount),
                         });
                         return [4, this.contractCall({
-                                entryPoint: "transfer",
+                                entryPoint: 'transfer',
                                 keys: keys,
                                 paymentAmount: paymentAmount,
                                 runtimeArgs: runtimeArgs,
-                                cb: function (deployHash) { return _this.addPendingDeploy(constants_1.ERC20Events.Transfer, deployHash); },
+                                cb: function (deployHash) {
+                                    return _this.addPendingDeploy(constants_1.ERC20Events.Transfer, deployHash);
+                                },
                                 ttl: ttl,
                             })];
                     case 1: return [2, _a.sent()];
@@ -254,11 +271,13 @@ var ERC20Client = (function (_super) {
                             amount: casper_js_sdk_1.CLValueBuilder.u256(transferAmount),
                         });
                         return [4, this.contractCall({
-                                entryPoint: "transfer_from",
+                                entryPoint: 'transfer_from',
                                 keys: keys,
                                 paymentAmount: paymentAmount,
                                 runtimeArgs: runtimeArgs,
-                                cb: function (deployHash) { return _this.addPendingDeploy(constants_1.ERC20Events.Transfer, deployHash); },
+                                cb: function (deployHash) {
+                                    return _this.addPendingDeploy(constants_1.ERC20Events.Transfer, deployHash);
+                                },
                                 ttl: ttl,
                             })];
                     case 1: return [2, _a.sent()];
@@ -279,11 +298,13 @@ var ERC20Client = (function (_super) {
                             amount: casper_js_sdk_1.CLValueBuilder.u256(approveAmount),
                         });
                         return [4, this.contractCall({
-                                entryPoint: "approve",
+                                entryPoint: 'approve',
                                 keys: keys,
                                 paymentAmount: paymentAmount,
                                 runtimeArgs: runtimeArgs,
-                                cb: function (deployHash) { return _this.addPendingDeploy(constants_1.ERC20Events.Approve, deployHash); },
+                                cb: function (deployHash) {
+                                    return _this.addPendingDeploy(constants_1.ERC20Events.Approve, deployHash);
+                                },
                                 ttl: ttl,
                             })];
                     case 1: return [2, _a.sent()];
@@ -299,7 +320,7 @@ var ERC20Client = (function (_super) {
                     case 0:
                         key = createRecipientAddress(account);
                         keyBytes = casper_js_sdk_1.CLValueParsers.toBytes(key).unwrap();
-                        itemKey = Buffer.from(keyBytes).toString("base64");
+                        itemKey = Buffer.from(keyBytes).toString('base64');
                         return [4, casper_js_client_helper_1.utils.contractDictionaryGetter(this.nodeAddress, itemKey, this.namedKeys.balances)];
                     case 1:
                         result = _a.sent();
@@ -316,9 +337,12 @@ var ERC20Client = (function (_super) {
                     case 0:
                         keyOwner = createRecipientAddress(owner);
                         keySpender = createRecipientAddress(spender);
-                        finalBytes = (0, bytes_1.concat)([casper_js_sdk_1.CLValueParsers.toBytes(keyOwner).unwrap(), casper_js_sdk_1.CLValueParsers.toBytes(keySpender).unwrap()]);
+                        finalBytes = (0, bytes_1.concat)([
+                            casper_js_sdk_1.CLValueParsers.toBytes(keyOwner).unwrap(),
+                            casper_js_sdk_1.CLValueParsers.toBytes(keySpender).unwrap(),
+                        ]);
                         blaked = blake.blake2b(finalBytes, undefined, 32);
-                        encodedBytes = Buffer.from(blaked).toString("hex");
+                        encodedBytes = Buffer.from(blaked).toString('hex');
                         return [4, casper_js_client_helper_1.utils.contractDictionaryGetter(this.nodeAddress, encodedBytes, this.namedKeys.allowances)];
                     case 1:
                         result = _a.sent();
@@ -342,14 +366,44 @@ var ERC20Client = (function (_super) {
                             recipient: createRecipientAddress(recipient),
                             amount: casper_js_sdk_1.CLValueBuilder.u256(transferAmount),
                             mintid: casper_js_sdk_1.CLValueBuilder.string(mintid),
-                            swap_fee: casper_js_sdk_1.CLValueBuilder.u256(swapFee)
+                            swap_fee: casper_js_sdk_1.CLValueBuilder.u256(swapFee),
                         });
                         return [4, this.contractCall({
-                                entryPoint: "mint",
+                                entryPoint: 'mint',
                                 keys: keys,
                                 paymentAmount: paymentAmount,
                                 runtimeArgs: runtimeArgs,
                                 cb: function (deployHash) { return _this.addPendingDeploy(constants_1.ERC20Events.Mint, deployHash); },
+                                ttl: ttl,
+                            })];
+                    case 2: return [2, _a.sent()];
+                }
+            });
+        });
+    };
+    ERC20Client.prototype.createUnsignedMint = function (publicKey, recipient, transferAmount, mintid, paymentAmount, ttl) {
+        if (ttl === void 0) { ttl = DEFAULT_TTL; }
+        return __awaiter(this, void 0, void 0, function () {
+            var swapFee, runtimeArgs;
+            var _this = this;
+            return __generator(this, function (_a) {
+                switch (_a.label) {
+                    case 0: return [4, this.swapFee()];
+                    case 1:
+                        swapFee = _a.sent();
+                        swapFee = swapFee.toString();
+                        runtimeArgs = casper_js_sdk_1.RuntimeArgs.fromMap({
+                            recipient: createRecipientAddress(recipient),
+                            amount: casper_js_sdk_1.CLValueBuilder.u256(transferAmount),
+                            mintid: casper_js_sdk_1.CLValueBuilder.string(mintid),
+                            swap_fee: casper_js_sdk_1.CLValueBuilder.u256(swapFee),
+                        });
+                        return [4, this.createUnsignedContractCall({
+                                entryPoint: 'mint',
+                                publicKey: publicKey,
+                                paymentAmount: paymentAmount,
+                                runtimeArgs: runtimeArgs,
+                                cb: function (deploy) { return _this.addPendingDeploy(constants_1.ERC20Events.Mint, deploy); },
                                 ttl: ttl,
                             })];
                     case 2: return [2, _a.sent()];
@@ -366,14 +420,16 @@ var ERC20Client = (function (_super) {
                 switch (_a.label) {
                     case 0:
                         runtimeArgs = casper_js_sdk_1.RuntimeArgs.fromMap({
-                            minter: createRecipientAddress(minter)
+                            minter: createRecipientAddress(minter),
                         });
                         return [4, this.contractCall({
-                                entryPoint: "change_minter",
+                                entryPoint: 'change_minter',
                                 keys: keys,
                                 paymentAmount: paymentAmount,
                                 runtimeArgs: runtimeArgs,
-                                cb: function (deployHash) { return _this.addPendingDeploy(constants_1.ERC20Events.ChangeMinter, deployHash); },
+                                cb: function (deployHash) {
+                                    return _this.addPendingDeploy(constants_1.ERC20Events.ChangeMinter, deployHash);
+                                },
                                 ttl: ttl,
                             })];
                     case 1: return [2, _a.sent()];
@@ -390,14 +446,16 @@ var ERC20Client = (function (_super) {
                 switch (_a.label) {
                     case 0:
                         runtimeArgs = casper_js_sdk_1.RuntimeArgs.fromMap({
-                            dev: createRecipientAddress(dev)
+                            dev: createRecipientAddress(dev),
                         });
                         return [4, this.contractCall({
-                                entryPoint: "change_dev",
+                                entryPoint: 'change_dev',
                                 keys: keys,
                                 paymentAmount: paymentAmount,
                                 runtimeArgs: runtimeArgs,
-                                cb: function (deployHash) { return _this.addPendingDeploy(constants_1.ERC20Events.ChangeDev, deployHash); },
+                                cb: function (deployHash) {
+                                    return _this.addPendingDeploy(constants_1.ERC20Events.ChangeDev, deployHash);
+                                },
                                 ttl: ttl,
                             })];
                     case 1: return [2, _a.sent()];
@@ -414,14 +472,16 @@ var ERC20Client = (function (_super) {
                 switch (_a.label) {
                     case 0:
                         runtimeArgs = casper_js_sdk_1.RuntimeArgs.fromMap({
-                            swap_fee: casper_js_sdk_1.CLValueBuilder.u256(swapFee)
+                            swap_fee: casper_js_sdk_1.CLValueBuilder.u256(swapFee),
                         });
                         return [4, this.contractCall({
-                                entryPoint: "change_swap_fee",
+                                entryPoint: 'change_swap_fee',
                                 keys: keys,
                                 paymentAmount: paymentAmount,
                                 runtimeArgs: runtimeArgs,
-                                cb: function (deployHash) { return _this.addPendingDeploy(constants_1.ERC20Events.ChangeFee, deployHash); },
+                                cb: function (deployHash) {
+                                    return _this.addPendingDeploy(constants_1.ERC20Events.ChangeFee, deployHash);
+                                },
                                 ttl: ttl,
                             })];
                     case 1: return [2, _a.sent()];
@@ -442,14 +502,16 @@ var ERC20Client = (function (_super) {
                             fee: casper_js_sdk_1.CLValueBuilder.u256(fee),
                             to_chainid: casper_js_sdk_1.CLValueBuilder.u256(toChainId),
                             receiver_address: casper_js_sdk_1.CLValueBuilder.string(receiverAddress),
-                            id: casper_js_sdk_1.CLValueBuilder.string(id)
+                            id: casper_js_sdk_1.CLValueBuilder.string(id),
                         });
                         return [4, this.contractCall({
-                                entryPoint: "request_bridge_back",
+                                entryPoint: 'request_bridge_back',
                                 keys: keys,
                                 paymentAmount: paymentAmount,
                                 runtimeArgs: runtimeArgs,
-                                cb: function (deployHash) { return _this.addPendingDeploy(constants_1.ERC20Events.ChangeFee, deployHash); },
+                                cb: function (deployHash) {
+                                    return _this.addPendingDeploy(constants_1.ERC20Events.ChangeFee, deployHash);
+                                },
                                 ttl: ttl,
                             })];
                     case 1: return [2, _a.sent()];

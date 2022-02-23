@@ -90,7 +90,7 @@ var ContractClient = (function () {
                             keys: keys,
                             runtimeArgs: runtimeArgs,
                             ttl: ttl,
-                            dependencies: dependencies
+                            dependencies: dependencies,
                         })];
                     case 1:
                         deployHash = _d.sent();
@@ -99,9 +99,59 @@ var ContractClient = (function () {
                             return [2, deployHash];
                         }
                         else {
-                            throw Error("Invalid Deploy");
+                            throw Error('Invalid Deploy');
                         }
                         return [2];
+                }
+            });
+        });
+    };
+    ContractClient.prototype.createUnsignedContractCall = function (_a) {
+        var publicKey = _a.publicKey, paymentAmount = _a.paymentAmount, entryPoint = _a.entryPoint, runtimeArgs = _a.runtimeArgs, cb = _a.cb, _b = _a.ttl, ttl = _b === void 0 ? constants_1.DEFAULT_TTL : _b, _c = _a.dependencies, dependencies = _c === void 0 ? [] : _c;
+        return __awaiter(this, void 0, void 0, function () {
+            var deploy;
+            return __generator(this, function (_d) {
+                switch (_d.label) {
+                    case 0: return [4, (0, lib_1.createUnsignedContractCallFn)({
+                            chainName: this.chainName,
+                            contractHash: this.contractHash,
+                            entryPoint: entryPoint,
+                            paymentAmount: paymentAmount,
+                            nodeAddress: this.nodeAddress,
+                            publicKey: publicKey,
+                            runtimeArgs: runtimeArgs,
+                            ttl: ttl,
+                            dependencies: dependencies,
+                        })];
+                    case 1:
+                        deploy = _d.sent();
+                        return [2, deploy];
+                }
+            });
+        });
+    };
+    ContractClient.prototype.putSignatureAndSend = function (_a) {
+        var publicKey = _a.publicKey, deploy = _a.deploy, signature = _a.signature, nodeAddress = _a.nodeAddress;
+        return __awaiter(this, void 0, void 0, function () {
+            var client, approval, deployHash;
+            return __generator(this, function (_b) {
+                switch (_b.label) {
+                    case 0:
+                        client = new casper_js_sdk_1.CasperClient(nodeAddress);
+                        approval = new casper_js_sdk_1.DeployUtil.Approval();
+                        console.log('public key', publicKey, deploy, signature, nodeAddress);
+                        approval.signer = publicKey.toHex();
+                        if (publicKey.isEd25519()) {
+                            approval.signature = casper_js_sdk_1.Keys.Ed25519.accountHex(signature);
+                        }
+                        else {
+                            approval.signature = casper_js_sdk_1.Keys.Secp256K1.accountHex(signature);
+                        }
+                        deploy.approvals.push(approval);
+                        return [4, client.putDeploy(deploy)];
+                    case 1:
+                        deployHash = _b.sent();
+                        return [2, [deploy, deployHash]];
                 }
             });
         });
@@ -112,10 +162,10 @@ var ContractClient = (function () {
     ContractClient.prototype.handleEvents = function (eventNames, callback) {
         var _this = this;
         if (!this.eventStreamAddress) {
-            throw Error("Please set eventStreamAddress before!");
+            throw Error('Please set eventStreamAddress before!');
         }
         if (this.isListening) {
-            throw Error("Only one event listener can be create at a time. Remove the previous one and start new.");
+            throw Error('Only one event listener can be create at a time. Remove the previous one and start new.');
         }
         var es = new casper_js_sdk_1.EventStream(this.eventStreamAddress);
         this.isListening = true;
@@ -125,7 +175,11 @@ var ContractClient = (function () {
             if (!pendingDeploy) {
                 return;
             }
-            var parsedEvent = utils.parseEvent({ contractPackageHash: _this.contractPackageHash, eventNames: eventNames, eventsURef: _this.namedKeys.events }, value);
+            var parsedEvent = utils.parseEvent({
+                contractPackageHash: _this.contractPackageHash,
+                eventNames: eventNames,
+                eventsURef: _this.namedKeys.events,
+            }, value);
             if (parsedEvent.error !== null) {
                 callback(pendingDeploy.deployType, {
                     deployHash: deployHash,

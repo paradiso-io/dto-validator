@@ -53,7 +53,7 @@
       "nativeSymbol": "fTOMO"
     },
     "97": {
-      "httpProvider": "https://data-seed-prebsc-1-s1.binance.org:8545/",
+      "httpProvider": "https://speedy-nodes-nyc.moralis.io/6f1c50d092cad31805b2371f/bsc/testnet",
       "wsProvider": "",
       "explorer": "https://testnet.bscscan.com",
       "confirmations": 6,
@@ -115,40 +115,40 @@
       "busd": ""
     },
     "42": {
-      "bridge": "0x7Ade928F2c168DCf73FE310E8abe09f16c8F6773",
-      "firstBlockCrawl": 28794342,
+      "bridge": "0x5920F911F724308814EC8e69f9a8f744Aa2BDf1b",
+      "firstBlockCrawl": 29992166,
       "wrapToken": "",
       "usdt": "",
       "usdc": "",
       "busd": ""
     },
     "89": {
-      "bridge": "0x5b4e9373bE02F0Eed27C32C6b3fa82aA1634FA3E",
-      "firstBlockCrawl": 16420039
+      "bridge": "0xa0633284f94f1C0B21985648f268C36B40217fF9",
+      "firstBlockCrawl": 19399371
     },
     "97": {
-      "bridge": "0xd4CC02B714492E0301388FB98aB729ABF6116D6c",
-      "firstBlockCrawl": 15183974,
+      "bridge": "0x606A84C753a149BEEA2CAD41e72289C2d785d804",
+      "firstBlockCrawl": 16997706,
       "wrapToken": "",
       "usdt": "",
       "usdc": "",
       "busd": ""
     },
     "1287": {
-      "bridge": "0xEE0E49BBa80cA6b11bd78355FbDacB9A77184e5b",
-      "firstBlockCrawl": 1360108
+      "bridge": "0xBc1224E1fb7c1d696663FfEFF5a19E80282bba60",
+      "firstBlockCrawl": 1747063
     },
     "4002": {
       "bridge": "0x106F6E9Ba8A93297b0a94A75BB7863e37a663A80",
       "firstBlockCrawl": 5934008
     },
     "43113": {
-      "bridge": "0x9de6932336e755a21d76206B72058fD026FE79E8",
-      "firstBlockCrawl": 1947163
+      "bridge": "0x547CA8E548ef43F3408cECD025979311AEFf262D",
+      "firstBlockCrawl": 6470124
     },
     "80001": {
-      "bridge": "0xaF2C0500A611D1Ab0B153e49CC7477aDA2342205",
-      "firstBlockCrawl": 19862185
+      "bridge": "0xDA7483DE7b9Bb7Ae7689ECe729f0AdAdC34ee67E",
+      "firstBlockCrawl": 25213396
     }
   },
   "db": {
@@ -156,6 +156,7 @@
   },
   "caspernetwork": "testnet",
   "testnet": {
+    "chainName": "casper-test",
     "fromBlock": 546200,
     "networkId": 96945816564243,
     "tokens": [
@@ -164,19 +165,21 @@
         "decimals": 18,
         "originChainId": 1,
         "originContractAddress": "ajsd",
-        "contractHash": "90971834805286b054b5c3665d60d752ab494610efdf909fb1c8b6aa4e113368"
+        "contractHash": "6e7e8c8fd98cdeffc74aa0dd2255ee5fbcceee9ccca6ca500616b3af423b2d4f"
       }
     ],
     "rpc": "http://3.136.227.9:7777/rpc",
     "eventStream": "http://16.162.124.124:9999/events/main"
   },
   "mainnet": {
+    "chainName": "casper-main",
     "fromBlock": 546089,
     "networkId": 131614895977472,
     "tokens": [],
     "rpc": "http://3.136.227.9:7777/rpc",
     "eventStream": "http://16.162.124.124:9999/events/main"
   },
+  "mpcPubkey": "0293bb6e503f11971dc7a98c818ef5acce5a400530884fc7a9fd85d7ab3ce56916",
   "signer": "",
   "checkTxOnChain": false,
   "signatureServer": []

@@ -1,4 +1,5 @@
-import { IPendingDeploy, IClassContractCallParams } from "./types";
+import { DeployUtil } from 'casper-js-sdk';
+import { IPendingDeploy, IClassContractCallParams, IClassContractCallParamsUnsigned, IAppendSignature } from './types';
 declare class ContractClient {
     nodeAddress: string;
     chainName: string;
@@ -9,7 +10,9 @@ declare class ContractClient {
     protected isListening: boolean;
     protected pendingDeploys: IPendingDeploy[];
     constructor(nodeAddress: string, chainName: string, eventStreamAddress?: string);
-    contractCall({ keys, paymentAmount, entryPoint, runtimeArgs, cb, ttl, dependencies }: IClassContractCallParams): Promise<string>;
+    contractCall({ keys, paymentAmount, entryPoint, runtimeArgs, cb, ttl, dependencies, }: IClassContractCallParams): Promise<string>;
+    createUnsignedContractCall({ publicKey, paymentAmount, entryPoint, runtimeArgs, cb, ttl, dependencies, }: IClassContractCallParamsUnsigned): Promise<DeployUtil.Deploy>;
+    putSignatureAndSend({ publicKey, deploy, signature, nodeAddress, }: IAppendSignature): Promise<(string | DeployUtil.Deploy)[]>;
     protected addPendingDeploy(deployType: any, deployHash: string): void;
     handleEvents(eventNames: any[], callback: (eventName: any, deployStatus: {
         deployHash: string;
