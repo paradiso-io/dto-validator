@@ -152,7 +152,7 @@
     }
   },
   "db": {
-    "uri": "mongodb://localhost:27017/dtoCrossChain"
+    "uri": "mongodb://localhost:27017/dtoBridge"
   },
   "caspernetwork": "testnet",
   "testnet": {
