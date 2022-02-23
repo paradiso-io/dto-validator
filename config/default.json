@@ -61,7 +61,7 @@
       "nativeSymbol": "fBNB"
     },
     "1287": {
-      "httpProvider": "https://rpc.testnet.moonbeam.network",
+      "httpProvider": "https://rpc.api.moonbase.moonbeam.network",
       "wsProvider": "",
       "explorer": "https://moonbeam-explorer.netlify.app/",
       "confirmations": 6,
