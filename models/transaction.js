@@ -7,6 +7,7 @@ const Transaction = new Schema({
     claimHash: { type: String, index: true },
     claimBlock: Number,
     account: { type: String, index: true },
+    txCreator: { type: String, index: true },
     originToken: { type: String, index: true },
     fromToken: { type: String, index: true },
     toToken: { type: String, index: true },
@@ -21,7 +22,8 @@ const Transaction = new Schema({
     amountNumber: Number,
     index: { type: Number, index: true},
     claimId: String,
-    requestTime: { type: Number, index: true}
+    requestTime: { type: Number, index: true},
+    casperDeployCreated: { type: Boolean, index: true }
 }, { timestamps: false, versionKey: false })
 
 module.exports = mongoose.model('Transaction', Transaction)

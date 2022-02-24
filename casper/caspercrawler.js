@@ -3,11 +3,11 @@ const CasperServiceByJsonRPC = require("casper-js-sdk").CasperServiceByJsonRPC;
 const BigNumber = require("bignumber.js");
 
 const configInfo = require("config");
-const CasperHelper = require("./helpers/casper");
-const tokenHelper = require("./helpers/token");
+const CasperHelper = require("../helpers/casper");
+const tokenHelper = require("../helpers/token");
 
-const logger = require("./helpers/logger");
-const db = require("./models");
+const logger = require("../helpers/logger");
+const db = require("../models");
 
 BigNumber.config({ EXPONENTIAL_AT: [-100, 100] });
 
@@ -195,7 +195,7 @@ const getPastEvent = async () => {
                 //mintid = <txHash>-<fromChainId>-<toChainId>-<index>-<originContractAddress>-<originChainId>
                 let mintidStr = mintid[1].parsed;
                 let mintidSplits = mintidStr.split("-");
-                let transactionHash = mintidSplits[0];
+                let transactionHash = h;
                 let fromChainId = parseInt(mintidSplits[1]);
                 let toChainId = parseInt(mintidSplits[2]);
                 let index = parseInt(mintidSplits[3]);

@@ -11,6 +11,7 @@
   },
   "author": "khaihkd",
   "dependencies": {
+    "amqplib": "^0.8.0",
     "axios": "^0.21.1",
     "bignumber.js": "^9.0.0",
     "casper-cep47-js-client": "file:./packages/cep47-client",

@@ -72,6 +72,9 @@ async function processEvent(
   let casperChainId = CasperConfig.networkId;
   if (parseInt(event.returnValues._toChainId) == casperChainId) {
     logger.info("bridging to casper network %s", decodedAddress);
+    if (decodedAddress.length == 64) {
+      decodedAddress = "account-hash-" + decodedAddress
+    }
   }
   await db.Transaction.updateOne(
     {

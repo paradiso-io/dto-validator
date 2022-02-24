@@ -3,11 +3,11 @@ const { utils } = require("casper-js-client-helper");
 const BigNumber = require("bignumber.js");
 
 const configInfo = require("config");
-const CasperHelper = require("./helpers/casper");
-const tokenHelper = require("./helpers/token");
+const CasperHelper = require("../helpers/casper");
+const tokenHelper = require("../helpers/token");
 
-const logger = require("./helpers/logger");
-const db = require("./models");
+const logger = require("../helpers/logger");
+const db = require("../models");
 const { CLPublicKey, CLAccountHash, DeployUtil } = require("casper-js-sdk");
 
 const { ERC20Client } = require("casper-erc20-js-client");

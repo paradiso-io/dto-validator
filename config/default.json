@@ -161,14 +161,15 @@
     "networkId": 96945816564243,
     "tokens": [
       {
-        "name": "abc",
+        "name": "ERC20Mock",
         "decimals": 18,
-        "originChainId": 1,
-        "originContractAddress": "ajsd",
-        "contractHash": "6e7e8c8fd98cdeffc74aa0dd2255ee5fbcceee9ccca6ca500616b3af423b2d4f"
+        "originChainId": 97,
+        "originContractAddress": "0xfcfa8b2e2596f81b260218ea3ce2d6af0578f2ae",
+        "contractHash": "ecc5d2ccf80e4c78bf7454330da9e32a90c3920a268bab986a7b983d739f1558"
       }
     ],
     "rpc": "http://3.136.227.9:7777/rpc",
+    "mpcPubkey": "022244897b1dbc4f1cc338472a8cc30003c2c1c94f3c48210dcf5923f0bf502c75",
     "eventStream": "http://16.162.124.124:9999/events/main"
   },
   "mainnet": {
@@ -177,9 +178,16 @@
     "networkId": 131614895977472,
     "tokens": [],
     "rpc": "http://3.136.227.9:7777/rpc",
+    "mpcPubkey": "022244897b1dbc4f1cc338472a8cc30003c2c1c94f3c48210dcf5923f0bf502c75",
     "eventStream": "http://16.162.124.124:9999/events/main"
   },
-  "mpcPubkey": "0293bb6e503f11971dc7a98c818ef5acce5a400530884fc7a9fd85d7ab3ce56916",
+  "rabbitmq": {
+    "hostname": "45.76.112.224",
+    "port": 5672,
+    "username": "serverjanu",
+    "password": "serverjanu",
+    "consumers": ["earth", "moon", "sun"]
+  },
   "signer": "",
   "checkTxOnChain": false,
   "signatureServer": []
