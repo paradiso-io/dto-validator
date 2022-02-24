@@ -30,22 +30,6 @@ async function processEvent(
     return;
   }
 
-  let setting = await db.Setting.findOne({ networkId: networkId });
-  if (!setting) {
-    await db.Setting.updateOne(
-      { networkId: networkId },
-      { $set: { lastBlockRequest: event.blockNumber } },
-      {
-        upsert: true,
-        new: true,
-      }
-    );
-  } else {
-    if (event.blockNumber > setting.lastBlockRequest) {
-      setting.lastBlockRequest = event.blockNumber;
-      await setting.save();
-    }
-  }
   let originChainId = event.returnValues._originChainId;
   let tokenAddress = event.returnValues._token.toLowerCase();
   let token = await tokenHelper.getToken(tokenAddress, originChainId);
@@ -76,6 +60,12 @@ async function processEvent(
       decodedAddress = "account-hash-" + decodedAddress
     }
   }
+
+  //reading transaction creator
+  let transactionHash = event.transactionHash
+  let onChainTx = await web3.eth.getTransaction(transactionHash)
+  if (!onChainTx) return;
+  let txCreator = onChainTx.from.toLowerCase()
   await db.Transaction.updateOne(
     {
       index: event.returnValues._index,
@@ -87,6 +77,7 @@ async function processEvent(
         requestHash: event.transactionHash,
         requestBlock: event.blockNumber,
         account: decodedAddress.toLowerCase(),
+        txCreator: txCreator,
         originToken: token.hash,
         originSymbol: token.symbol,
         fromChainId: event.returnValues._fromChainId,
@@ -100,6 +91,23 @@ async function processEvent(
     },
     { upsert: true, new: true }
   );
+
+  let setting = await db.Setting.findOne({ networkId: networkId });
+  if (!setting) {
+    await db.Setting.updateOne(
+      { networkId: networkId },
+      { $set: { lastBlockRequest: event.blockNumber } },
+      {
+        upsert: true,
+        new: true,
+      }
+    );
+  } else {
+    if (event.blockNumber > setting.lastBlockRequest) {
+      setting.lastBlockRequest = event.blockNumber;
+      await setting.save();
+    }
+  }
 }
 
 async function getPastEvent(networkId, bridgeAddress, step) {
@@ -142,6 +150,7 @@ async function getPastEvent(networkId, bridgeAddress, step) {
           `network ${networkId}: there are ${evts.length} events from ${lastCrawl + 1
           } to ${toBlock}`
         );
+        console.log(evts)
       }
 
       for (let i = 0; i < evts.length; i++) {

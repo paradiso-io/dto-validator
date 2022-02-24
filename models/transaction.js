@@ -23,7 +23,8 @@ const Transaction = new Schema({
     index: { type: Number, index: true},
     claimId: String,
     requestTime: { type: Number, index: true},
-    casperDeployCreated: { type: Boolean, index: true }
+    casperDeployCreated: { type: Boolean, index: true },
+    casperCreatedFailedReason: String
 }, { timestamps: false, versionKey: false })
 
 module.exports = mongoose.model('Transaction', Transaction)

@@ -31,6 +31,8 @@ async function main() {
             let splits = toAddress.split("-")
             var re = /[0-9A-Fa-f]{6}/g;
             if (splits.length != 3 || splits[0] != "account" || splits[1] != "hash" || !re.test(splits[2])) {
+                tx.casperDeployCreated = true
+                tx.casperCreatedFailedReason = "Invalid Account Hash"
                 continue
             }
             logger.info(
