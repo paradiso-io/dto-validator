@@ -165,11 +165,11 @@
         "decimals": 18,
         "originChainId": 97,
         "originContractAddress": "0xfcfa8b2e2596f81b260218ea3ce2d6af0578f2ae",
-        "contractHash": "ecc5d2ccf80e4c78bf7454330da9e32a90c3920a268bab986a7b983d739f1558"
+        "contractHash": "9373caec4b8119317bd79d86be8dff814196240aa852a7505a28b9da133ed072"
       }
     ],
     "rpc": "http://3.136.227.9:7777/rpc",
-    "mpcPubkey": "022244897b1dbc4f1cc338472a8cc30003c2c1c94f3c48210dcf5923f0bf502c75",
+    "mpcPubkey": "031ac6549656e8be3380151c59f02991f8f3641f0cb2d40a8f246524a1d1691522",
     "eventStream": "http://16.162.124.124:9999/events/main"
   },
   "mainnet": {
@@ -178,7 +178,7 @@
     "networkId": 131614895977472,
     "tokens": [],
     "rpc": "http://3.136.227.9:7777/rpc",
-    "mpcPubkey": "022244897b1dbc4f1cc338472a8cc30003c2c1c94f3c48210dcf5923f0bf502c75",
+    "mpcPubkey": "031ac6549656e8be3380151c59f02991f8f3641f0cb2d40a8f246524a1d1691522",
     "eventStream": "http://16.162.124.124:9999/events/main"
   },
   "rabbitmq": {
@@ -189,6 +189,6 @@
     "consumers": ["earth", "moon", "sun"]
   },
   "signer": "",
-  "checkTxOnChain": true,
+  "checkTxOnChain": false,
   "signatureServer": []
 }
