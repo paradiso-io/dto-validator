@@ -125,16 +125,13 @@ async function getPastEvent(networkId, bridgeAddress, step) {
         toBlock = lastBlock;
       }
       const contract = new web3.eth.Contract(GenericBridge, bridgeAddress);
-      if (networkId == 97) {
-        logger.info(
-          "Network %s: Get Past Event from block %s to %s, lastblock %s",
-          networkId,
-          lastCrawl + 1,
-          toBlock,
-          lastBlock
-        );
-
-      }
+      logger.info(
+        "Network %s: Get Past Event from block %s to %s, lastblock %s",
+        networkId,
+        lastCrawl + 1,
+        toBlock,
+        lastBlock
+      );
       let evts = await contract.getPastEvents("RequestBridge", {
         fromBlock: lastCrawl + 1,
         toBlock: toBlock,
