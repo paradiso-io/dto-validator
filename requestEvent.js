@@ -150,7 +150,6 @@ async function getPastEvent(networkId, bridgeAddress, step) {
           `network ${networkId}: there are ${evts.length} events from ${lastCrawl + 1
           } to ${toBlock}`
         );
-        console.log(evts)
       }
 
       for (let i = 0; i < evts.length; i++) {
