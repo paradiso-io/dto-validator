@@ -49,7 +49,7 @@
       "wsProvider": "wss://rpc.testnet.tomochain.com",
       "explorer": "https://scan.testnet.tomochain.com",
       "confirmations": 6,
-      "nativeName": "TomoChain Faucet",
+      "nativeName": "TomoChain Testnet",
       "nativeSymbol": "fTOMO"
     },
     "97": {

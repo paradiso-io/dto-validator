@@ -130,7 +130,8 @@ router.post('/request-withdraw',[
         symbol = await originTokenContract.methods.symbol().call()
     }
     if (transaction.toChainId !== transaction.originChainId) {
-        name = "DTO Wrapped " + name
+        let nativeName = config.blockchain[transaction.toChainId]
+        name = "DTO Wrapped " + name + `(${nativeName})`
         symbol = "d" + symbol
     }
 
