@@ -189,6 +189,6 @@
     "consumers": ["earth", "moon", "sun"]
   },
   "signer": "",
-  "checkTxOnChain": false,
+  "checkTxOnChain": true,
   "signatureServer": []
 }
