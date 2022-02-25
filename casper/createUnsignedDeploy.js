@@ -119,12 +119,16 @@ async function main() {
             let currentTime = generalHelper.now()
             let reqs = await db.RequestToCasper.find(
                 {
-                    casperDeployCreated: true, claimed: false, deadline: { $lt: currentTime }
+                    $and: [
+                        { $or: [{ claimed: false }, { claimed: null }] },
+                        { deadline: { $lt: currentTime } },
+                    ]
                 }
             )
+            console.log(reqs)
             for (const req of reqs) {
                 //verify format of  account address must be account hash
-                let toAddress = tx.toWallet
+                let toAddress = req.toWallet
                 logger.info(
                     "RENEWAL: Origin token %s",
                     req.originToken
