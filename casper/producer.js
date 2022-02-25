@@ -8,7 +8,7 @@ const { DeployUtil } = require("casper-js-sdk");
 async function main() {
     let consumers = config.rabbitmq.consumers
     while (true) {
-        let tx = await db.RequestToCasper.find({ isProcessed: false }).sort({ timestamp: 1 }).limit(1)
+        let tx = await db.RequestToCasper.find({}).sort({ timestamp: 1 }).limit(1)
         if (tx && tx.length > 0) {
             tx = tx[0]
             logger.info('sending %s to sign', tx.deployHash)
@@ -38,7 +38,7 @@ async function main() {
             }
         }
         console.log('sleep 10 seconds before continue')
-        await generalHelper.sleep(10000)
+        await generalHelper.sleep(60000)
     }
 }
 
