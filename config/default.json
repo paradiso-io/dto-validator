@@ -157,7 +157,7 @@
   "caspernetwork": "testnet",
   "testnet": {
     "chainName": "casper-test",
-    "fromBlock": 546200,
+    "fromBlock": 566000,
     "networkId": 96945816564243,
     "tokens": [
       {
@@ -165,27 +165,27 @@
         "decimals": 18,
         "originChainId": 97,
         "originContractAddress": "0xfcfa8b2e2596f81b260218ea3ce2d6af0578f2ae",
-        "contractHash": "9373caec4b8119317bd79d86be8dff814196240aa852a7505a28b9da133ed072"
+        "contractHash": "bdb84fc3e8776377723b141c52c1631dad81e3200ca9423568fb0d66f0845587"
       }
     ],
     "rpc": "http://3.136.227.9:7777/rpc",
-    "mpcPubkey": "031ac6549656e8be3380151c59f02991f8f3641f0cb2d40a8f246524a1d1691522",
+    "mpcPubkey": "038df1cff6b55615858b1acd2ebcce98db164f88cf88919c7b045268571cc49cb7",
     "eventStream": "http://16.162.124.124:9999/events/main"
   },
   "mainnet": {
     "chainName": "casper-main",
-    "fromBlock": 546089,
+    "fromBlock": 566000,
     "networkId": 131614895977472,
     "tokens": [],
     "rpc": "http://3.136.227.9:7777/rpc",
-    "mpcPubkey": "031ac6549656e8be3380151c59f02991f8f3641f0cb2d40a8f246524a1d1691522",
+    "mpcPubkey": "038df1cff6b55615858b1acd2ebcce98db164f88cf88919c7b045268571cc49cb7",
     "eventStream": "http://16.162.124.124:9999/events/main"
   },
   "rabbitmq": {
-    "hostname": "45.76.112.224",
+    "hostname": "139.99.9.174",
     "port": 5672,
-    "username": "serverjanu",
-    "password": "serverjanu",
+    "username": "dotoracle",
+    "password": "dotoracle",
     "consumers": ["earth", "moon", "sun"]
   },
   "signer": "",
