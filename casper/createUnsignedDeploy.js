@@ -17,6 +17,7 @@ async function main() {
         casperConfig.eventStream
     );
     while (true) {
+        //scan for tx without casperDeployCreated
         let pendingTxes = await db.Transaction.find(
             {
                 $and: [
@@ -78,15 +79,9 @@ async function main() {
             // timestamp: Number,
             // isProcessed: { type: Boolean, index: true },  //already submit to the MPC
             // deployJsonString: String,
-
             await db.RequestToCasper.updateOne(
                 {
-                    index: tx.index,
-                    requestHash: tx.requestHash,
-                    fromChainId: tx.fromChainId,
-                    toChainId: tx.toChainId,
-                    originChainId: tx.originChainId,
-                    originToken: tx.originToken,
+                    mintid: mintid
                 },
                 {
                     $set: {
@@ -100,10 +95,15 @@ async function main() {
                         originChainId: tx.originChainId,
                         originToken: tx.originToken.toLowerCase(),
                         destinationContractHash: token.contractHash,
-                        timestamp: generalHelper.now(),
+                        timestamp: Math.floor(deploy.header.timestamp / 1000),
+                        ttl: Math.floor(deploy.header.ttl / 1000),
+                        deadline: Math.floor((deploy.header.timestamp + deploy.header.ttl) / 1000),
                         isProcessed: false,
                         deployJsonString: deployJson,
-                        amount: tx.amount
+                        amount: tx.amount,
+                        mintid: mintid,
+                        claimed: false,
+                        renewalCount: 0
                     },
                 },
                 { upsert: true, new: true }
@@ -111,6 +111,97 @@ async function main() {
 
             tx.casperDeployCreated = true
             await tx.save()
+        }
+
+        //scan for RequestToCasper not confirmed yet: refresh
+        {
+            console.log('Start scanning for unconfirmed requests but ttl over')
+            let currentTime = generalHelper.now()
+            let reqs = await db.RequestToCasper.find(
+                {
+                    casperDeployCreated: true, claimed: false, deadline: { $lt: currentTime }
+                }
+            )
+            for (const req of reqs) {
+                //verify format of  account address must be account hash
+                let toAddress = tx.toWallet
+                logger.info(
+                    "RENEWAL: Origin token %s",
+                    req.originToken
+                );
+                let token = CasperHelper.getCasperTokenInfoFromOriginToken(req.originToken, req.originChainId)
+                if (!token) {
+                    continue
+                }
+                await erc20.setContractHash(token.contractHash)
+
+                let recipientAccountHashByte = Uint8Array.from(
+                    Buffer.from(toAddress.slice(13), 'hex'),
+                )
+                //mintid = <txHash>-<fromChainId>-<toChainId>-<index>-<originContractAddress>-<originChainId>
+                let mintid = req.mintid
+
+                //TODO: check whether mintid executed => this is to avoid failed transactions as mintid cant be executed more than one time
+
+                let deploy = await erc20.createUnsignedMint(
+                    mpcPubkey,
+                    new CLAccountHash(recipientAccountHashByte),
+                    req.amount,
+                    mintid,
+                    "1500000000"
+                );
+                let deployJson = JSON.stringify(DeployUtil.deployToJson(deploy));
+                let hashToSign = sha256(Buffer.from(deploy.hash)).toString("hex")
+                let deployHash = deploy.hash.toString('hex')
+                logger.info(
+                    "new transactions to casper %s",
+                    sha256(Buffer.from(deploy.hash)).toString("hex")
+                );
+
+                //create requestToCasper object
+                // requestHash: { type: String, index: true },
+                // index: { type: Number, index: true },
+                // deployHash: { type: String, index: true },
+                // deployHashToSign: { type: String, index: true },
+                // toWallet: { type: String, index: true },
+                // fromChainId: { type: Number, index: true },
+                // toChainId: { type: Number, index: true },
+                // originChainId: { type: Number, index: true },
+                // originToken: { type: String, index: true },
+                // destinationContractHash: { type: String, index: true },
+                // timestamp: Number,
+                // isProcessed: { type: Boolean, index: true },  //already submit to the MPC
+                // deployJsonString: String,
+                await db.RequestToCasper.updateOne(
+                    {
+                        mintid: mintid
+                    },
+                    {
+                        $set: {
+                            requestHash: req.requestHash,
+                            index: req.index,
+                            deployHash: deployHash,
+                            deployHashToSign: hashToSign,
+                            toWallet: req.toWallet,
+                            fromChainId: req.fromChainId,
+                            toChainId: req.toChainId,
+                            originChainId: req.originChainId,
+                            originToken: req.originToken.toLowerCase(),
+                            destinationContractHash: token.contractHash,
+                            timestamp: Math.floor(deploy.header.timestamp / 1000),
+                            ttl: Math.floor(deploy.header.ttl / 1000),
+                            deadline: Math.floor((deploy.header.timestamp + deploy.header.ttl) / 1000),
+                            isProcessed: false,
+                            deployJsonString: deployJson,
+                            amount: req.amount,
+                            mintid: mintid,
+                            claimed: false,
+                            renewalCount: req.renewalCount + 1
+                        },
+                    },
+                    { upsert: true, new: true }
+                );
+            }
         }
 
         console.log('sleep 10 seconds before create an other tx')

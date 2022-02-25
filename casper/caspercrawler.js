@@ -128,7 +128,7 @@ async function processRequestEvent(
         amount: amount,
         // amountNumber: amountNumber, // TODO: get token from chain detail
         index: eventData.index,
-        requestTime: block.timestamp,
+        requestTime: Math.floor(block.timestamp / 1000),
       },
     },
     { upsert: true, new: true }

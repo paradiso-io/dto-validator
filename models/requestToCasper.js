@@ -13,10 +13,15 @@ const RequestToCasper = new Schema(
     originChainId: { type: Number, index: true },
     originToken: { type: String, index: true },
     destinationContractHash: { type: String, index: true },
-    timestamp: Number,
+    timestamp: { type: Number, index: true },
+    ttl: { type: Number, index: true },
+    deadline: { type: Number, index: true },
     amount: { type: String, index: true },
     isProcessed: { type: Boolean, index: true },  //already submit to the MPC
     deployJsonString: String,
+    mintid: { type: String, unique: true },
+    txExecuted: { type: Boolean, index: true },
+    renewalCount: {type: Number, index: true}
   },
   { timestamps: false, versionKey: false }
 );
