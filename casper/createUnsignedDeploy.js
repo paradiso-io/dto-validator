@@ -59,7 +59,7 @@ async function main() {
             );
             let deployJson = JSON.stringify(DeployUtil.deployToJson(deploy));
             let hashToSign = sha256(Buffer.from(deploy.hash)).toString("hex")
-            let deployHash = deploy.hash.toString('hex')
+            let deployHash = Buffer.from(deploy.hash).toString('hex')
             logger.info(
                 "new transactions to casper %s",
                 sha256(Buffer.from(deploy.hash)).toString("hex")
