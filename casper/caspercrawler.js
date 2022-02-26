@@ -27,7 +27,7 @@ function toContractUnit(n, decimals) {
 async function processMintEvent(networkId, blockNumber, lastBlock, eventData) {
   logger.info("New event at block %s", blockNumber);
 
-  if (lastBlock - blockNumber < 15) {
+  if (lastBlock - blockNumber < 5) {
     return;
   }
 
@@ -72,7 +72,7 @@ async function processRequestEvent(
 ) {
   logger.info("New event at block %s", blockNumber);
 
-  if (lastBlock - blockNumber < 15) {
+  if (lastBlock - blockNumber < 5) {
     return;
   }
 
@@ -135,7 +135,7 @@ const getPastEvent = async () => {
   let currentBlockHeight = parseInt(
     currentBlock.block.header.height.toString()
   );
-  while (currentBlockHeight - fromBlock > 15) {
+  while (currentBlockHeight - fromBlock > 5) {
     //reading info
     let block = await client.getBlockInfoByHeight(fromBlock);
     console.log('readding block', block.block.header.height)
