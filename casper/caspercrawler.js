@@ -31,23 +31,6 @@ async function processMintEvent(networkId, blockNumber, lastBlock, eventData) {
     return;
   }
 
-  let setting = await db.Setting.findOne({ networkId: networkId });
-  if (!setting) {
-    await db.Setting.updateOne(
-      { networkId: networkId },
-      { $set: { lastBlockClaim: blockNumber } },
-      {
-        upsert: true,
-        new: true,
-      }
-    );
-  } else {
-    if (blockNumber > setting.lastBlockClaim) {
-      setting.lastBlockClaim = blockNumber;
-      await setting.save();
-    }
-  }
-
   // event ClaimToken(address indexed _token, address indexed _addr, uint256 _amount, uint256 _originChainId, uint256 _fromChainId, uint256 _toChainId, uint256 _index, bytes32 _claimId);
   await db.Transaction.updateOne(
     {
@@ -79,6 +62,24 @@ async function processMintEvent(networkId, blockNumber, lastBlock, eventData) {
     },
     { upsert: true, new: true }
   );
+
+  let setting = await db.Setting.findOne({ networkId: networkId });
+  if (!setting) {
+    await db.Setting.updateOne(
+      { networkId: networkId },
+      { $set: { lastBlockClaim: blockNumber, lastBlockRequest: blockNumber } },
+      {
+        upsert: true,
+        new: true,
+      }
+    );
+  } else {
+    if (blockNumber > setting.lastBlockClaim) {
+      setting.lastBlockClaim = blockNumber;
+      setting.lastBlockRequest = blockNumber;
+      await setting.save();
+    }
+  }
 }
 
 async function processRequestEvent(
@@ -97,7 +98,7 @@ async function processRequestEvent(
   if (!setting) {
     await db.Setting.updateOne(
       { networkId: networkId },
-      { $set: { lastBlockRequest: blockNumber } },
+      { $set: { lastBlockClaim: blockNumber, lastBlockRequest: blockNumber } },
       {
         upsert: true,
         new: true,
@@ -106,6 +107,7 @@ async function processRequestEvent(
   } else {
     if (blockNumber > setting.lastBlockRequest) {
       setting.lastBlockRequest = blockNumber;
+      setting.lastBlockClaim = blockNumber;
       await setting.save();
     }
   }
