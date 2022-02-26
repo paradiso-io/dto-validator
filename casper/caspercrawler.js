@@ -50,7 +50,7 @@ async function processMintEvent(networkId, blockNumber, lastBlock, eventData) {
     },
     { upsert: true, new: true }
   );
-  logger.info("Mintid", eventData.blockNumber);
+  logger.info("Mintid %s", eventData.blockNumber);
   await db.RequestToCasper.updateOne(
     {
       mintid: eventData.claimId
