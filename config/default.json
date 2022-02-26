@@ -157,7 +157,7 @@
   "caspernetwork": "testnet",
   "testnet": {
     "chainName": "casper-test",
-    "fromBlock": 566000,
+    "fromBlock": 568550,
     "networkId": 96945816564243,
     "tokens": [
       {

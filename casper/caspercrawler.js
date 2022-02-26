@@ -5,6 +5,7 @@ const BigNumber = require("bignumber.js");
 const configInfo = require("config");
 const CasperHelper = require("../helpers/casper");
 const tokenHelper = require("../helpers/token");
+const generalHelper = require("../helpers/general");
 
 const logger = require("../helpers/logger");
 const db = require("../models");
@@ -144,6 +145,12 @@ const getPastEvent = async () => {
   let networkId = casperConfig.networkId;
   const client = new CasperServiceByJsonRPC(casperConfig.rpc);
   let fromBlock = parseInt(casperConfig.fromBlock);
+
+  let setting = await db.Setting.findOne({ networkId: networkId });
+  if (setting && setting.lastBlockRequest) {
+    fromBlock = setting.lastBlockRequest;
+  }
+
   let contractHashes = casperConfig.tokens.map((e) => e.contractHash);
   let currentBlock = await client.getLatestBlockInfo();
   let currentBlockHeight = parseInt(
@@ -152,7 +159,7 @@ const getPastEvent = async () => {
   while (currentBlockHeight - fromBlock > 15) {
     //reading info
     let block = await client.getBlockInfoByHeight(fromBlock);
-
+    console.log('readding block', block.block.header.height)
     let deploy_hashes = block.block.body.deploy_hashes;
 
     //reading deploy hashes one by one
@@ -299,9 +306,10 @@ const getPastEvent = async () => {
 };
 
 let watch = async () => {
-  setInterval(async () => {
+  while(true) {
     await getPastEvent();
-  }, 10000);
+    generalHelper.sleep(10 * 1000) 
+  }
 };
 
 watch();
