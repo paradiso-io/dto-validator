@@ -6,7 +6,7 @@ const configInfo = require("config");
 const CasperHelper = require("../helpers/casper");
 const tokenHelper = require("../helpers/token");
 const generalHelper = require("../helpers/general");
-
+const Web3Utils = require('../helpers/web3')
 const logger = require("../helpers/logger");
 const db = require("../models");
 
