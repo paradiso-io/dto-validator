@@ -120,7 +120,7 @@ async function main() {
             let reqs = await db.RequestToCasper.find(
                 {
                     $and: [
-                        { $or: [{ claimed: false }, { claimed: null }] },
+                        { $or: [{ txExecuted: false }, { txExecuted: null }] },
                         { deadline: { $lt: currentTime } },
                     ]
                 }

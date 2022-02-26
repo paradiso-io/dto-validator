@@ -67,6 +67,18 @@ async function processMintEvent(networkId, blockNumber, lastBlock, eventData) {
     },
     { upsert: true, new: true }
   );
+
+  await db.RequestToCasper.updateOne(
+    {
+      mintid: eventData.claimId
+    },
+    {
+      $set: {
+        txExecuted: true
+      },
+    },
+    { upsert: true, new: true }
+  );
 }
 
 async function processRequestEvent(
