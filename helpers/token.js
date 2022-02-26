@@ -8,7 +8,6 @@ const TokenHelper = {
     if (token) {
       return token
     }
-    console.log('getToken', hash, networkId)
     const web3 = await Web3Util.getWeb3(networkId)
     let tokenFuncs = {
       decimals: '0x313ce567', // hex to decimal

@@ -77,7 +77,6 @@ async function processRequestEvent(
   }
 
   let originChainId = eventData.originChainId;
-  console.log('eventdata', eventData)
   let tokenAddress = eventData.token.toLowerCase();
   let token = await tokenHelper.getToken(tokenAddress, originChainId);
 
@@ -258,7 +257,7 @@ const getPastEvent = async () => {
                   index: parseInt(id),
                   fromChainId: parseInt(casperConfig.networkId),
                   toChainId: parseInt(toChainId),
-                  originChainId: casperConfig.originChainId,
+                  originChainId: tokenData.originChainId,
                   originToken: tokenData.originContractAddress.toLowerCase(),
                   transactionHash: h,
                   blockNumber: block.block.header.height,
