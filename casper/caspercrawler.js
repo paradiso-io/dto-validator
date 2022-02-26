@@ -65,7 +65,6 @@ async function processMintEvent(networkId, blockNumber, lastBlock, eventData) {
 }
 
 async function processRequestEvent(
-  networkId,
   blockNumber,
   lastBlock,
   eventData
@@ -82,9 +81,6 @@ async function processRequestEvent(
 
   let amount = eventData.amount;
   let amountNumber = new BigNumber(amount).div(10 ** token.decimals).toNumber();
-
-  let web3 = await Web3Utils.getWeb3(networkId);
-  let block = await web3.eth.getBlock(eventData.blockNumber);
 
   // event RequestBridge(address indexed _token, address indexed _addr, uint256 _amount, uint256 _originChainId, uint256 _fromChainId, uint256 _toChainId, uint256 _index);
   await db.Transaction.updateOne(
@@ -108,7 +104,7 @@ async function processRequestEvent(
         amount: amount,
         // amountNumber: amountNumber, // TODO: get token from chain detail
         index: eventData.index,
-        requestTime: Math.floor(block.timestamp / 1000),
+        requestTime: eventData.requestTime,
       },
     },
     { upsert: true, new: true }
@@ -264,12 +260,11 @@ const getPastEvent = async () => {
                   toAddr: receiver_address,
                   amount: amount,
                   index: parseInt(id),
-                  requestTime: block.block.header.timestamp,
+                  requestTime: Math.floor(block.block.header.timestamp / 1000),
                 };
                 logger.info("Casper Network Request: %s", eventData);
 
                 await processRequestEvent(
-                  casperConfig.networkId,
                   block.block.header.height,
                   currentBlock.block.header.height,
                   eventData
