@@ -262,7 +262,7 @@ const getPastEvent = async () => {
                   index: parseInt(id),
                   requestTime: Math.floor(block.block.header.timestamp / 1000),
                 };
-                logger.info("Casper Network Request: %s", eventData);
+                logger.info("Casper Network Request: %s", eventData, block.block);
 
                 await processRequestEvent(
                   block.block.header.height,
