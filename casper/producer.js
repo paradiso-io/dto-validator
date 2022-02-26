@@ -15,7 +15,6 @@ async function main() {
             if (tx) {
                 for (let i = 0; i < consumers.length; i++) {
                     let consumer = consumers[i]
-                    console.log('depoyJsonString', tx.depoyJsonString)
                     await queueHelper.newQueue(`${consumer}-signer`,
                         {
                             requestHash: tx.requestHash,
@@ -29,7 +28,7 @@ async function main() {
                             originToken: tx.originToken.toLowerCase(),
                             destinationContractHash: tx.destinationContractHash,
                             timestamp: tx.timestamp,
-                            deployJsonString: tx.depoyJsonString,
+                            deployJsonString: tx.deployJsonString,
                             amount: tx.amount,
                             mintid: tx.mintid
                         }
