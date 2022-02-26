@@ -50,7 +50,7 @@ async function processMintEvent(networkId, blockNumber, lastBlock, eventData) {
     },
     { upsert: true, new: true }
   );
-
+  logger.info("Mintid", eventData.blockNumber);
   await db.RequestToCasper.updateOne(
     {
       mintid: eventData.claimId
@@ -62,24 +62,6 @@ async function processMintEvent(networkId, blockNumber, lastBlock, eventData) {
     },
     { upsert: true, new: true }
   );
-
-  let setting = await db.Setting.findOne({ networkId: networkId });
-  if (!setting) {
-    await db.Setting.updateOne(
-      { networkId: networkId },
-      { $set: { lastBlockClaim: blockNumber, lastBlockRequest: blockNumber } },
-      {
-        upsert: true,
-        new: true,
-      }
-    );
-  } else {
-    if (blockNumber > setting.lastBlockClaim) {
-      setting.lastBlockClaim = blockNumber;
-      setting.lastBlockRequest = blockNumber;
-      await setting.save();
-    }
-  }
 }
 
 async function processRequestEvent(
@@ -94,23 +76,6 @@ async function processRequestEvent(
     return;
   }
 
-  let setting = await db.Setting.findOne({ networkId: networkId });
-  if (!setting) {
-    await db.Setting.updateOne(
-      { networkId: networkId },
-      { $set: { lastBlockClaim: blockNumber, lastBlockRequest: blockNumber } },
-      {
-        upsert: true,
-        new: true,
-      }
-    );
-  } else {
-    if (blockNumber > setting.lastBlockRequest) {
-      setting.lastBlockRequest = blockNumber;
-      setting.lastBlockClaim = blockNumber;
-      await setting.save();
-    }
-  }
   let originChainId = eventData.originChainId;
   let tokenAddress = eventData.token.toLowerCase();
   let token = await tokenHelper.getToken(tokenAddress, originChainId);
@@ -315,14 +280,32 @@ const getPastEvent = async () => {
         }
       }
     }
+    let blockNumber = block.block.header.height
+    let setting = await db.Setting.findOne({ networkId: networkId });
+    if (!setting) {
+      await db.Setting.updateOne(
+        { networkId: networkId },
+        { $set: { lastBlockClaim: blockNumber, lastBlockRequest: blockNumber } },
+        {
+          upsert: true,
+          new: true,
+        }
+      );
+    } else {
+      if (blockNumber > setting.lastBlockRequest) {
+        setting.lastBlockRequest = blockNumber;
+        setting.lastBlockClaim = blockNumber;
+        await setting.save();
+      }
+    }
     fromBlock++;
   }
 };
 
 let watch = async () => {
-  while(true) {
+  while (true) {
     await getPastEvent();
-    generalHelper.sleep(10 * 1000) 
+    generalHelper.sleep(10 * 1000)
   }
 };
 
