@@ -260,7 +260,7 @@ const getPastEvent = async () => {
                   toAddr: receiver_address,
                   amount: amount,
                   index: parseInt(id),
-                  requestTime: Math.floor(block.block.header.timestamp / 1000),
+                  requestTime: Math.floor(deploy.header.timestamp / 1000),
                 };
                 logger.info("Casper Network Request: %s, %s", eventData, block.block);
 
