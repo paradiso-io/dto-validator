@@ -248,6 +248,8 @@ const getPastEvent = async () => {
                 //   },
                 //   { upsert: true, new: true }
                 // );
+                let timestamp = Date.parse(block.block.header.timestamp)
+                
                 let eventData = {
                   token: tokenData.originContractAddress.toLowerCase(),
                   index: parseInt(id),
@@ -260,9 +262,10 @@ const getPastEvent = async () => {
                   toAddr: receiver_address,
                   amount: amount,
                   index: parseInt(id),
-                  requestTime: Math.floor(deploy.header.timestamp / 1000),
+                  requestTime: Math.floor(timestamp / 1000),
                 };
-                logger.info("Casper Network Request: %s, %s", eventData, block.block);
+                
+                logger.info("Casper Network Request: %s, %s", eventData);
 
                 await processRequestEvent(
                   block.block.header.height,
