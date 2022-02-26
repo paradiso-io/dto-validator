@@ -258,7 +258,7 @@ const getPastEvent = async () => {
                   fromChainId: parseInt(casperConfig.networkId),
                   toChainId: parseInt(toChainId),
                   originChainId: casperConfig.originChainId,
-                  originToken: casperConfig.originContractAddress.toLowerCase(),
+                  originToken: tokenData.originContractAddress.toLowerCase(),
                   transactionHash: h,
                   blockNumber: block.block.header.height,
                   toAddr: receiver_address,
