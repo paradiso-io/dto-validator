@@ -77,6 +77,7 @@ async function processRequestEvent(
   }
 
   let originChainId = eventData.originChainId;
+  console.log('eventdata', eventData)
   let tokenAddress = eventData.token.toLowerCase();
   let token = await tokenHelper.getToken(tokenAddress, originChainId);
 
