@@ -11,7 +11,7 @@ async function main() {
         let tx = await db.RequestToCasper.find({}).sort({ timestamp: 1 }).limit(1)
         if (tx && tx.length > 0) {
             tx = tx[0]
-            logger.info('sending %s to sign', tx.deployHash)
+
             if (tx) {
                 for (let i = 0; i < consumers.length; i++) {
                     let consumer = consumers[i]
@@ -29,7 +29,8 @@ async function main() {
                             destinationContractHash: tx.destinationContractHash,
                             timestamp: tx.timestamp,
                             deployJsonString: tx.depoyJsonString,
-                            amount: tx.amount
+                            amount: tx.amount,
+                            mintid: tx.mintid
                         }
                     )
                 }
