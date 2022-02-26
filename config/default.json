@@ -165,7 +165,7 @@
         "decimals": 18,
         "originChainId": 97,
         "originContractAddress": "0xfcfa8b2e2596f81b260218ea3ce2d6af0578f2ae",
-        "contractHash": "bdb84fc3e8776377723b141c52c1631dad81e3200ca9423568fb0d66f0845587"
+        "contractHash": "f0d552171af5baf45cb3283f24368b4cba18e09046db1bf83c2456d715bff826"
       }
     ],
     "rpc": "http://3.136.227.9:7777/rpc",
