@@ -184,8 +184,8 @@
   "rabbitmq": {
     "hostname": "139.99.9.174",
     "port": 5672,
-    "username": "dotoracle",
-    "password": "dotoracle",
+    "username": "vcd",
+    "password": "vcd",
     "consumers": ["earth", "moon", "sun"]
   },
   "signer": "",
