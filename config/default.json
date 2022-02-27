@@ -164,7 +164,7 @@
         "name": "BNB",
         "decimals": 18,
         "originChainId": 97,
-        "originContractAddress": "0xffffffffffffffffffffffffffffffffffffffff",
+        "originContractAddress": "0x1111111111111111111111111111111111111111",
         "contractHash": "70ef507ab53f933f802ff95ca6fca441967fde634d99eec6c6991730c504214b"
       }
     ],
