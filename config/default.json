@@ -161,11 +161,11 @@
     "networkId": 96945816564243,
     "tokens": [
       {
-        "name": "ERC20Mock",
+        "name": "BNB",
         "decimals": 18,
         "originChainId": 97,
-        "originContractAddress": "0xfcfa8b2e2596f81b260218ea3ce2d6af0578f2ae",
-        "contractHash": "f0d552171af5baf45cb3283f24368b4cba18e09046db1bf83c2456d715bff826"
+        "originContractAddress": "0xffffffffffffffffffffffffffffffffffffffff",
+        "contractHash": "70ef507ab53f933f802ff95ca6fca441967fde634d99eec6c6991730c504214b"
       }
     ],
     "rpc": "http://3.136.227.9:7777/rpc",
