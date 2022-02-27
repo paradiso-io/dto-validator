@@ -166,6 +166,13 @@
         "originChainId": 97,
         "originContractAddress": "0x1111111111111111111111111111111111111111",
         "contractHash": "70ef507ab53f933f802ff95ca6fca441967fde634d99eec6c6991730c504214b"
+      },
+      {
+        "name": "ERC20Mock",
+        "decimals": 18,
+        "originChainId": 97,
+        "originContractAddress": "0xFCfa8B2E2596F81b260218Ea3CE2D6Af0578f2Ae",
+        "contractHash": "991d0d9d7ebfffbdc9fe96891b832e1325bf4f65dcbb56995ced13b60eb6deb6"
       }
     ],
     "rpc": "http://3.136.227.9:7777/rpc",
