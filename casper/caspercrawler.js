@@ -9,6 +9,7 @@ const generalHelper = require("../helpers/general");
 const Web3Utils = require('../helpers/web3')
 const logger = require("../helpers/logger");
 const db = require("../models");
+const { ERC20Client } = require('casper-erc20-js-client')
 
 BigNumber.config({ EXPONENTIAL_AT: [-100, 100] });
 
@@ -219,6 +220,19 @@ const getPastEvent = async () => {
                 receiver_address = receiver_address[1].parsed;
                 let id = findArg(args, "id");
                 id = id[1].parsed;
+
+                //reading index from id
+                const erc20 = new ERC20Client(
+                  casperConfig.rpc,
+                  casperConfig.chainName,
+                  casperConfig.eventStream,
+                )
+              
+                await erc20.setContractHash(
+                  tokenData.contractHash
+                )
+
+                id = await erc20.readRequestIndex(id)
                 //amount after fee
                 amount = new BigNumber(amount).minus(fee).toString();
 
