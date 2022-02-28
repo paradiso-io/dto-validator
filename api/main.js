@@ -29,7 +29,7 @@ router.get('/transactions/:account/:networkId',[
     let skip = limit * (page - 1)
     let account = req.params.account.toLowerCase()
     let networkId = req.params.networkId
-    let query = {$or: [{account: account}, {txCreator: account}], $or: [{fromChainId: networkId}, {toChainId: networkId}]}
+    let query = {txCreator: account, $or: [{fromChainId: networkId}, {toChainId: networkId}]}
     let total = await db.Transaction.countDocuments(query)
     let transactions = await db.Transaction.find(query).sort({requestTime: -1}).limit(limit).skip(skip)
     return res.json({transactions: transactions,
