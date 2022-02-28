@@ -157,7 +157,7 @@
   "caspernetwork": "testnet",
   "testnet": {
     "chainName": "casper-test",
-    "fromBlock": 571038,
+    "fromBlock": 571915,
     "networkId": 96945816564243,
     "tokens": [
       {
@@ -165,14 +165,21 @@
         "decimals": 18,
         "originChainId": 97,
         "originContractAddress": "0x1111111111111111111111111111111111111111",
-        "contractHash": "70ef507ab53f933f802ff95ca6fca441967fde634d99eec6c6991730c504214b"
+        "contractHash": "73f499188176fdf5117d348cc047fc6923aa631097618233ec1a9f09fb2131f5"
+      },
+      {
+        "name": "ChainLink Token",
+        "decimals": 18,
+        "originChainId": 97,
+        "originContractAddress": "0x84b9B910527Ad5C03A9Ca831909E21e236EA7b06",
+        "contractHash": "bddd43141ded6c7e15c097e9ff65dc7fed5217e8448b3f48c9d73179097ed4db"
       },
       {
         "name": "ERC20Mock",
         "decimals": 18,
         "originChainId": 97,
         "originContractAddress": "0xFCfa8B2E2596F81b260218Ea3CE2D6Af0578f2Ae",
-        "contractHash": "991d0d9d7ebfffbdc9fe96891b832e1325bf4f65dcbb56995ced13b60eb6deb6"
+        "contractHash": "ecefa6841d5901f196bdbaa7ec83bcf123a890da31c0f4235c7f4a72b853558b"
       }
     ],
     "rpc": "http://3.136.227.9:7777/rpc",

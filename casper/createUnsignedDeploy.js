@@ -55,7 +55,7 @@ async function main() {
                 new CLAccountHash(recipientAccountHashByte),
                 tx.amount,
                 mintid,
-                "1500000000"
+                "400000000"
             );
             let deployJson = JSON.stringify(DeployUtil.deployToJson(deploy));
             let hashToSign = sha256(Buffer.from(deploy.hash)).toString("hex")
