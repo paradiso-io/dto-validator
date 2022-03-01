@@ -61,42 +61,65 @@ router.post('/request-withdraw', [
     let fromChainId = req.body.fromChainId
     let toChainId = req.body.toChainId
     let index = req.body.index
-
-    let web3 = await Web3Utils.getWeb3(fromChainId)
     let transaction = {}
     if (!config.checkTxOnChain) {
         transaction = await db.Transaction.findOne({ requestHash: requestHash, fromChainId: fromChainId, toChainId: toChainId, index: index })
     } else {
         transaction = await eventHelper.getRequestEvent(fromChainId, requestHash, index)
     }
-
     if (!transaction) {
-        return res.status(400).json({ errors: 'Transaction does not exist' })
+        return res.status(400).json({ errors: "invalid transaction hash" })
     }
-    if (transaction.claimed === true) {
-        return res.status(400).json({ errors: 'Transaction claimed' })
-    }
+    if (fromChainId != casperConfig.networkId) {
+        let web3 = await Web3Utils.getWeb3(fromChainId)
 
-    //re-verify whether tx still in the chain and confirmed (enough confirmation)
-    let onChainTx = await web3.eth.getTransaction(transaction.requestHash)
-    if (!onChainTx) {
-        return res.status(400).json({ errors: 'invalid transaction hash' })
-    }
+        if (!transaction) {
+            return res.status(400).json({ errors: 'Transaction does not exist' })
+        }
+        if (transaction.claimed === true) {
+            return res.status(400).json({ errors: 'Transaction claimed' })
+        }
 
-    let latestBlockNumber = await web3.eth.getBlockNumber()
-    let confirmations = config.blockchain[fromChainId].confirmations
-    if (latestBlockNumber - transaction.requestBlock < confirmations) {
-        return res.status(400).json({ errors: 'transaction not fully confirmed' })
-    }
+        //re-verify whether tx still in the chain and confirmed (enough confirmation)
+        let onChainTx = await web3.eth.getTransaction(transaction.requestHash)
+        if (!onChainTx) {
+            return res.status(400).json({ errors: 'invalid transaction hash' })
+        }
 
-    let txBlock = await web3.eth.getBlock(transaction.requestBlock)
-    if (!txBlock || txBlock.number !== onChainTx.blockNumber) {
-        return res.status(400).json({ errors: 'transaction invalid, fork happened' })
-    }
+        let latestBlockNumber = await web3.eth.getBlockNumber()
+        let confirmations = config.blockchain[fromChainId].confirmations
+        if (latestBlockNumber - transaction.requestBlock < confirmations) {
+            return res.status(400).json({ errors: 'transaction not fully confirmed' })
+        }
 
-    //is it necessary? check whether tx included in the block
-    if (txBlock.transactions.length <= onChainTx.transactionIndex || txBlock.transactions[onChainTx.transactionIndex].toLowerCase() !== transaction.requestHash.toLowerCase()) {
-        return res.status(400).json({ errors: 'transaction not found, fork happened' })
+        let txBlock = await web3.eth.getBlock(transaction.requestBlock)
+        if (!txBlock || txBlock.number !== onChainTx.blockNumber) {
+            return res.status(400).json({ errors: 'transaction invalid, fork happened' })
+        }
+
+        //is it necessary? check whether tx included in the block
+        if (txBlock.transactions.length <= onChainTx.transactionIndex || txBlock.transactions[onChainTx.transactionIndex].toLowerCase() !== transaction.requestHash.toLowerCase()) {
+            return res.status(400).json({ errors: 'transaction not found, fork happened' })
+        }
+    } else {
+        //casper
+        let casperRPC = CasperHelper.getCasperRPC()
+        try {
+            let deployResult = await casperRPC.getDeployInfo(transaction.requestHash)
+            let eventData = await CasperHelper.parseRequestFromCasper(deployResult)
+            if (eventData.toAddr.toLowerCase() != transaction.account.toLowerCase() 
+                || eventData.originToken.toLowerCase() != transaction.originToken.toLowerCase()
+                || eventData.amount != transaction.amount
+                || eventData.fromChainId != transaction.fromChainId
+                || eventData.toChainId != transaction.toChainId
+                || eventData.originChainId != transaction.originChainId
+                || eventData.index != transaction.index) {
+                    return res.status(400).json({ errors: 'conflict transaction data between local database and on-chain data ' + transaction.requestHash })
+                }
+        } catch (e) {
+            console.error(e)
+            return res.status(400).json({ errors: 'failed to get on-chain casper transction for ' + transaction.requestHash })
+        }
     }
     let otherSignature = []
     if (config.signatureServer.length > 0) {
