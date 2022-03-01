@@ -6,7 +6,7 @@ const morgan = require('morgan')
 const cors = require('cors')
 const compression = require('compression')
 const logger = require('./helpers/logger')
-const limitRequest = require('./middlewares/limitRequest')
+//const limitRequest = require('./middlewares/limitRequest')
 
 const server = require('http').Server(app)
 
@@ -14,7 +14,7 @@ app.use(compression())
 app.use(cors())
 app.use(bodyParser.urlencoded({ extended: true }))
 app.use(bodyParser.json())
-app.use(limitRequest({}))
+//app.use(limitRequest({}))
 
 morgan.token('remote-addr', function (req, res) {
     const ffHeaderValue = req.header('x-forwarded-for') ? req.header('x-forwarded-for').split(',')[0] : ''
