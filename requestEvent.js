@@ -19,16 +19,8 @@ let sleep = (time) => new Promise((resolve) => setTimeout(resolve, time));
 
 async function processEvent(
   event,
-  bridgeAddress,
-  networkId,
-  lastBlock,
-  confirmations
-) {
+  networkId) {
   logger.info("New event at block %s", event.blockNumber);
-
-  if (lastBlock - event.blockNumber < confirmations) {
-    return;
-  }
 
   let originChainId = event.returnValues._originChainId;
   let tokenAddress = event.returnValues._token.toLowerCase();
@@ -91,47 +83,42 @@ async function processEvent(
     },
     { upsert: true, new: true }
   );
+}
 
-  let setting = await db.Setting.findOne({ networkId: networkId });
-  if (!setting) {
-    await db.Setting.updateOne(
-      { networkId: networkId },
-      { $set: { lastBlockRequest: event.blockNumber } },
-      {
-        upsert: true,
-        new: true,
+async function updateBlock(networkId, lastBlock) {
+  if (lastBlock) {
+    let setting = await db.Setting.findOne({ networkId: networkId });
+    if (!setting) {
+      await db.Setting.updateOne(
+        { networkId: networkId },
+        { $set: { lastBlockRequest: lastBlock } },
+        {
+          upsert: true,
+          new: true,
+        }
+      );
+    } else {
+      if (lastBlock > setting.lastBlockRequest) {
+        setting.lastBlockRequest = lastBlock;
+        await setting.save();
       }
-    );
-  } else {
-    if (event.blockNumber > setting.lastBlockRequest) {
-      setting.lastBlockRequest = event.blockNumber;
-      await setting.save();
     }
   }
 }
 
-async function getPastEvent(networkId, bridgeAddress, step) {
-  try {
-    let web3 = await Web3Utils.getWeb3(networkId);
-    const confirmations = config.get("blockchain")[networkId].confirmations;
-    let lastBlock = await web3.eth.getBlockNumber();
-    let setting = await db.Setting.findOne({ networkId: networkId });
-    let lastCrawl = config.contracts[networkId].firstBlockCrawl;
-    if (lastCrawl === null) {
-      lastCrawl = 9394711;
-    }
-    if (setting && setting.lastBlockRequest) {
-      lastCrawl = setting.lastBlockRequest;
-    }
-    lastCrawl = parseInt(lastCrawl);
-
-    while (lastBlock - lastCrawl > 5) {
+async function getPastEventForBatch(networkId, bridgeAddress, step, from, to) {
+  let lastBlock = to
+  let lastCrawl = from
+  logger.info(`Network ${networkId} start batch from ${from} to ${to}`)
+  while (lastBlock - lastCrawl > 0) {
+    try {
       let toBlock;
       if (lastBlock - lastCrawl > step) {
         toBlock = lastCrawl + step;
       } else {
         toBlock = lastBlock;
       }
+      let web3 = await Web3Utils.getWeb3(networkId);
       const contract = new web3.eth.Contract(GenericBridge, bridgeAddress);
       logger.info(
         "Network %s: Get Past Event from block %s to %s, lastblock %s",
@@ -156,33 +143,60 @@ async function getPastEvent(networkId, bridgeAddress, step) {
         let event = evts[i];
         await processEvent(
           event,
-          bridgeAddress,
-          networkId,
-          lastBlock,
-          confirmations
-        );
-      }
-
-      if (lastBlock - toBlock > confirmations) {
-        await db.Setting.updateOne(
-          { networkId: networkId },
-          { $set: { lastBlockRequest: toBlock } },
-          {
-            upsert: true,
-            new: true,
-          }
+          networkId
         );
       }
 
       // console.log('sleep 2 seconds and wait to continue')
       await sleep(1000);
 
-      lastBlock = await web3.eth.getBlockNumber();
       lastCrawl = toBlock;
+    } catch (e) {
+      logger.warn("Error network %s, waiting 5 seconds: %s", networkId, e)
+      await sleep(5000)
     }
+  }
+}
+
+async function getPastEvent(networkId, bridgeAddress, step) {
+  try {
+    let web3 = await Web3Utils.getWeb3(networkId);
+    const confirmations = config.get("blockchain")[networkId].confirmations;
+    let lastBlock = await web3.eth.getBlockNumber();
+    let setting = await db.Setting.findOne({ networkId: networkId });
+    let lastCrawl = config.contracts[networkId].firstBlockCrawl;
+    if (lastCrawl === null) {
+      lastCrawl = 9394711;
+    }
+    if (setting && setting.lastBlockRequest) {
+      lastCrawl = setting.lastBlockRequest;
+    }
+    lastCrawl = parseInt(lastCrawl);
+    lastBlock = parseInt(lastBlock) - confirmations
+
+    let blockPerBatch = 30000
+    let numBatch = Math.floor((lastBlock - lastCrawl) / blockPerBatch) + 1
+    let tasks = []
+    for (var i = 0; i < numBatch; i++) {
+      let from = lastCrawl + i * blockPerBatch
+      let to = lastCrawl + (i + 1) * blockPerBatch
+      if (to > lastBlock) {
+        to = lastBlock
+      }
+      tasks.push(getPastEventForBatch(networkId, bridgeAddress, step, from, to))
+    }
+
+    await Promise.all(tasks)
+
+    logger.info(
+      `network ${networkId}: done for blocks from ${lastCrawl
+      } to ${lastBlock}`
+    );
+
+    await updateBlock(networkId, lastBlock)
   } catch (e) {
     console.log(e);
-    await sleep(10000);
+    //await sleep(10000);
   }
 }
 
