@@ -85,6 +85,25 @@ async function processEvent(
   );
 }
 
+async function processClaimEvent(event, networkId) {
+  logger.info('New claim event at block %s', event.blockNumber)
+
+  // event ClaimToken(address indexed _token, address indexed _addr, uint256 _amount, uint256 _originChainId, uint256 _fromChainId, uint256 _toChainId, uint256 _index, bytes32 _claimId);
+  await db.Transaction.updateOne({
+    index: event.returnValues._index,
+    fromChainId: event.returnValues._fromChainId,
+    toChainId: event.returnValues._toChainId
+  },
+    {
+      $set: {
+        claimHash: event.transactionHash,
+        claimBlock: event.blockNumber,
+        claimed: true,
+        claimId: event.returnValues._claimId
+      }
+    }, { upsert: true, new: true })
+}
+
 async function updateBlock(networkId, lastBlock) {
   if (lastBlock) {
     let setting = await db.Setting.findOne({ networkId: networkId });
@@ -127,24 +146,40 @@ async function getPastEventForBatch(networkId, bridgeAddress, step, from, to) {
         toBlock,
         lastBlock
       );
-      let evts = await contract.getPastEvents("RequestBridge", {
+      let allEvents = await contract.getPastEvents("allEvents", {
         fromBlock: lastCrawl + 1,
         toBlock: toBlock,
       });
-
-      if (evts.length > 0) {
+      if (allEvents.length > 0) {
         logger.info(
-          `network ${networkId}: there are ${evts.length} events from ${lastCrawl + 1
+          `network ${networkId}: there are ${allEvents.length} events from ${lastCrawl + 1
           } to ${toBlock}`
         );
       }
+      {
+        //request events
+        let evts = allEvents.filter(e => e.event == "RequestBridge")
 
-      for (let i = 0; i < evts.length; i++) {
-        let event = evts[i];
-        await processEvent(
-          event,
-          networkId
-        );
+        for (let i = 0; i < evts.length; i++) {
+          let event = evts[i];
+          await processEvent(
+            event,
+            networkId
+          );
+        }
+      }
+      
+      {
+        //request events
+        let evts = allEvents.filter(e => e.event == "ClaimToken")
+
+        for (let i = 0; i < evts.length; i++) {
+          let event = evts[i];
+          await processClaimEvent(
+            event,
+            networkId
+          );
+        }
       }
 
       // console.log('sleep 2 seconds and wait to continue')
