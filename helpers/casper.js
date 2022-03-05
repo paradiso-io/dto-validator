@@ -84,7 +84,7 @@ const CasperHelper = {
                                 toChainId: parseInt(toChainId),
                                 originChainId: tokenData.originChainId,
                                 originToken: tokenData.originContractAddress.toLowerCase(),
-                                transactionHash: h,
+                                transactionHash: deploy.hash,
                                 toAddr: receiver_address,
                                 amount: amount,
                                 index: parseInt(id),
