@@ -1,5 +1,7 @@
 const config = require('config')
 const { CLPublicKey, CLPublicKeyTag, CasperServiceByJsonRPC } = require("casper-js-sdk");
+const { ERC20Client } = require('casper-erc20-js-client')
+const BigNumber = require("bignumber.js");
 
 const CasperHelper = {
     getConfigInfo: () => {
