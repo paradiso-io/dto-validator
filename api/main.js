@@ -15,7 +15,7 @@ router.get('/status', [], async function (req, res) {
 })
 
 router.get('/transactions/:account/:networkId', [
-    check('account').exists().isLength({ min: 42, max: 42 }).withMessage('address is incorrect.'),
+    check('account').exists().isLength({ min: 42, max: 68 }).withMessage('address is incorrect.'),
     check('networkId').exists().isNumeric({ no_symbols: true }).withMessage('networkId is incorrect'),
     query('limit').isInt({ min: 0, max: 200 }).optional().withMessage('limit should greater than 0 and less than 200'),
     query('page').isNumeric({ no_symbols: true }).optional().withMessage('page must be number')
@@ -24,10 +24,34 @@ router.get('/transactions/:account/:networkId', [
     if (!errors.isEmpty()) {
         return res.status(400).json({ errors: errors.array() })
     }
+    let account = req.params.account.toLowerCase()
+    if (account.length != 42 && account.length != 68) {
+        return res.status(400).json({ errors: "invalid address" })
+    }
+    {
+        //check hex
+        let temp = account.replace("0x", "")
+        var re = /[0-9A-Fa-f]{6}/g;
+
+        if (!re.test(temp)) {
+            return res.status(400).json({ errors: "address must be hex" })
+        }
+
+        if (account.length == 68) {
+            if (account.substring(0, 2) != "01" && account.substring(0, 2) != "02") {
+                return res.status(400).json({ errors: "invalid casper public key" })
+            }
+
+            if (account.substring(2, 4) != "03" && account.substring(2, 4) != "02") {
+                return res.status(400).json({ errors: "invalid casper public key" })
+            }
+
+            account = CasperHelper.fromCasperPubkeyToAccountHash(account)
+        }
+    }
     let limit = (req.query.limit) ? parseInt(req.query.limit) : 20
     let page = req.query.page || 1
     let skip = limit * (page - 1)
-    let account = req.params.account.toLowerCase()
     let networkId = req.params.networkId
     let query = {
         $and: [
@@ -107,15 +131,15 @@ router.post('/request-withdraw', [
         try {
             let deployResult = await casperRPC.getDeployInfo(transaction.requestHash)
             let eventData = await CasperHelper.parseRequestFromCasper(deployResult)
-            if (eventData.toAddr.toLowerCase() != transaction.account.toLowerCase() 
+            if (eventData.toAddr.toLowerCase() != transaction.account.toLowerCase()
                 || eventData.originToken.toLowerCase() != transaction.originToken.toLowerCase()
                 || eventData.amount != transaction.amount
                 || eventData.fromChainId != transaction.fromChainId
                 || eventData.toChainId != transaction.toChainId
                 || eventData.originChainId != transaction.originChainId
                 || eventData.index != transaction.index) {
-                    return res.status(400).json({ errors: 'conflict transaction data between local database and on-chain data ' + transaction.requestHash })
-                }
+                return res.status(400).json({ errors: 'conflict transaction data between local database and on-chain data ' + transaction.requestHash })
+            }
         } catch (e) {
             console.error(e)
             return res.status(400).json({ errors: 'failed to get on-chain casper transction for ' + transaction.requestHash })

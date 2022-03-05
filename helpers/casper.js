@@ -23,6 +23,10 @@ const CasperHelper = {
         let configCasper = CasperHelper.getConfigInfo()
         return new CasperServiceByJsonRPC(casperConfig.rpc)
     },
+    fromCasperPubkeyToAccountHash: (clPubkeyHex) => {
+        let clPubkey = CLPublicKey.fromHex(clPubkeyHex);
+        return `account-hash-${Buffer.from(clPubkey.toAccountHash()).toString('hex')}`
+    },
     parseRequestFromCasper: async (deployResult) => {
         let casperConfig = CasperHelper.getConfigInfo()
         let contractHashes = casperConfig.tokens.map((e) => e.contractHash);
