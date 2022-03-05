@@ -9,6 +9,7 @@ const eventHelper = require('../helpers/event')
 const IERC20ABI = require('../contracts/ERC20.json')
 const axios = require('axios')
 const CasperHelper = require('../helpers/casper')
+const logger = require('../helpers/logger')
 const casperConfig = CasperHelper.getConfigInfo()
 router.get('/status', [], async function (req, res) {
     return res.json({ status: 'ok' })
@@ -208,12 +209,14 @@ router.post('/request-withdraw', [
 
         return res.json({ r: r, s: s, v: v, msgHash: otherSignature[0].msgHash, name: name, symbol: symbol, decimals: decimals })
     } else {
+        let txHashToSign = transaction.requestHash.includes("0x") ? transaction.requestHash : ("0x" + transaction.requestHash)
+        logger.info("txHashToSign %s", txHashToSign)
         let sig = Web3Utils.signClaim(
             transaction.originToken,
             transaction.account,
             transaction.amount,
             [transaction.originChainId, transaction.fromChainId, transaction.toChainId, transaction.index],
-            transaction.requestHash.includes("0x") ? transaction.requestHash : "0x" + transaction.requestHash,
+            txHashToSign,
             name,
             symbol,
             decimals
