@@ -190,7 +190,7 @@ const getPastEvent = async () => {
                 let eventData = {
                   fromChainId: fromChainId,
                   toChainId: toChainId,
-                  transactionHash: transactionHash,
+                  transactionHash: CasperHelper.toNormalTxHash(transactionHash),
                   index: index,
                   blockNumber: blockNumber,
                   claimId: claimId,
@@ -268,7 +268,6 @@ const getPastEvent = async () => {
                 //   { upsert: true, new: true }
                 // );
                 let timestamp = Date.parse(block.block.header.timestamp)
-                
                 let eventData = {
                   token: tokenData.originContractAddress.toLowerCase(),
                   index: parseInt(id),
@@ -276,7 +275,7 @@ const getPastEvent = async () => {
                   toChainId: parseInt(toChainId),
                   originChainId: tokenData.originChainId,
                   originToken: tokenData.originContractAddress.toLowerCase(),
-                  transactionHash: h,
+                  transactionHash: CasperHelper.toNormalTxHash(h),
                   blockNumber: block.block.header.height,
                   toAddr: receiver_address,
                   amount: amount,

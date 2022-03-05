@@ -130,7 +130,7 @@ router.post('/request-withdraw', [
         //casper
         let casperRPC = CasperHelper.getCasperRPC()
         try {
-            let deployResult = await casperRPC.getDeployInfo(transaction.requestHash)
+            let deployResult = await casperRPC.getDeployInfo(CasperHelper.toCasperDeployHash(transaction.requestHash))
             let eventData = await CasperHelper.parseRequestFromCasper(deployResult)
             if (eventData.toAddr.toLowerCase() != transaction.account.toLowerCase()
                 || eventData.originToken.toLowerCase() != transaction.originToken.toLowerCase()

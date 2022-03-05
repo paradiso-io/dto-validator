@@ -15,6 +15,12 @@ const CasperHelper = {
         byteArray = Uint8Array.from(byteArray)
         return new CLPublicKey(byteArray, CLPublicKeyTag.SECP256K1)
     },
+    toCasperDeployHash: (h) => {
+        return h.replace("0x", "")
+    },
+    toNormalTxHash: (h) => {
+        return "0x" + h.replace("0x", "")
+    },
     getCasperTokenInfoFromOriginToken: (originTokenAddress, originChainId) => {
         let casperConfig = CasperHelper.getConfigInfo()
         let tokens = casperConfig.tokens
@@ -84,7 +90,7 @@ const CasperHelper = {
                                 toChainId: parseInt(toChainId),
                                 originChainId: tokenData.originChainId,
                                 originToken: tokenData.originContractAddress.toLowerCase(),
-                                transactionHash: deploy.hash,
+                                transactionHash: CasperHelper.toNormalTxHash(deploy.hash),
                                 toAddr: receiver_address,
                                 amount: amount,
                                 index: parseInt(id)
