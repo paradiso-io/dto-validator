@@ -28,6 +28,7 @@ const CasperHelper = {
         return `account-hash-${Buffer.from(clPubkey.toAccountHash()).toString('hex')}`
     },
     parseRequestFromCasper: async (deployResult) => {
+        let deploy = deployResult.deploy;
         let casperConfig = CasperHelper.getConfigInfo()
         let contractHashes = casperConfig.tokens.map((e) => e.contractHash);
         if (deployResult.execution_results) {
