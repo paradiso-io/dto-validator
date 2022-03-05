@@ -213,7 +213,7 @@ router.post('/request-withdraw', [
             transaction.account,
             transaction.amount,
             [transaction.originChainId, transaction.fromChainId, transaction.toChainId, transaction.index],
-            transaction.requestHash,
+            transaction.requestHash.includes("0x") ? transaction.requestHash : "0x" + transaction.requestHash,
             name,
             symbol,
             decimals
