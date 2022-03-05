@@ -20,7 +20,7 @@ const CasperHelper = {
         return token
     },
     getCasperRPC: () => {
-        let configCasper = CasperHelper.getConfigInfo()
+        let casperConfig = CasperHelper.getConfigInfo()
         return new CasperServiceByJsonRPC(casperConfig.rpc)
     },
     fromCasperPubkeyToAccountHash: (clPubkeyHex) => {
