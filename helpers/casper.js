@@ -87,8 +87,7 @@ const CasperHelper = {
                                 transactionHash: deploy.hash,
                                 toAddr: receiver_address,
                                 amount: amount,
-                                index: parseInt(id),
-                                requestTime: Math.floor(timestamp / 1000),
+                                index: parseInt(id)
                             };
 
                             return eventData
