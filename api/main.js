@@ -28,7 +28,6 @@ router.get('/transactions/:account/:networkId', [
     if (account.length != 42 && account.length != 68) {
         return res.status(400).json({ errors: "invalid address" })
     }
-    console.log('before casper check', account)
     {
         //check hex
         let temp = account.replace("0x", "")
@@ -50,7 +49,6 @@ router.get('/transactions/:account/:networkId', [
             account = CasperHelper.fromCasperPubkeyToAccountHash(account)
         }
     }
-    console.log('after casper check', account)
     let limit = (req.query.limit) ? parseInt(req.query.limit) : 20
     let page = req.query.page || 1
     let skip = limit * (page - 1)

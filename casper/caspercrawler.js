@@ -210,6 +210,11 @@ const getPastEvent = async () => {
               } else if (
                 StoredContractByHash.entry_point == "request_bridge_back"
               ) {
+                let txCreator = ""
+                if (deploy.approvals.length > 0) {
+                  txCreator = deploy.approvals[0].signer
+                  txCreator = CasperHelper.fromCasperPubkeyToAccountHash(txCreator)
+                }
                 let amount = findArg(args, "amount");
                 amount = amount[1].parsed;
                 let toChainId = findArg(args, "to_chainid");
@@ -277,6 +282,7 @@ const getPastEvent = async () => {
                   amount: amount,
                   index: parseInt(id),
                   requestTime: Math.floor(timestamp / 1000),
+                  txCreator: txCreator
                 };
                 
                 logger.info("Casper Network Request: %s, %s", eventData);
