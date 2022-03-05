@@ -77,8 +77,6 @@ const CasperHelper = {
                             //amount after fee
                             amount = new BigNumber(amount).minus(fee).toString();
 
-                            let timestamp = Date.parse(block.block.header.timestamp)
-
                             let eventData = {
                                 token: tokenData.originContractAddress.toLowerCase(),
                                 index: parseInt(id),
@@ -87,7 +85,6 @@ const CasperHelper = {
                                 originChainId: tokenData.originChainId,
                                 originToken: tokenData.originContractAddress.toLowerCase(),
                                 transactionHash: h,
-                                blockNumber: block.block.header.height,
                                 toAddr: receiver_address,
                                 amount: amount,
                                 index: parseInt(id),
