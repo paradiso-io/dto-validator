@@ -19,6 +19,9 @@ const CasperHelper = {
         let token = tokens.find((e) => e.originContractAddress.toLowerCase() == originTokenAddress.toLowerCase() && e.originChainId == originChainId)
         return token
     },
+    findArg: (args, argName) => {
+        return args.find((e) => e[0] == argName);
+    },
     getCasperRPC: () => {
         let casperConfig = CasperHelper.getConfigInfo()
         return new CasperServiceByJsonRPC(casperConfig.rpc)
@@ -46,15 +49,15 @@ const CasperHelper = {
                         if (
                             StoredContractByHash.entry_point == "request_bridge_back"
                         ) {
-                            let amount = findArg(args, "amount");
+                            let amount = CasperHelper.findArg(args, "amount");
                             amount = amount[1].parsed;
-                            let toChainId = findArg(args, "to_chainid");
+                            let toChainId = CasperHelper.findArg(args, "to_chainid");
                             toChainId = toChainId[1].parsed;
-                            let fee = findArg(args, "fee");
+                            let fee = CasperHelper.findArg(args, "fee");
                             fee = fee[1].parsed;
-                            let receiver_address = findArg(args, "receiver_address");
+                            let receiver_address = CasperHelper.findArg(args, "receiver_address");
                             receiver_address = receiver_address[1].parsed;
-                            let id = findArg(args, "id");
+                            let id = CasperHelper.findArg(args, "id");
                             id = id[1].parsed;
 
                             //reading index from id
