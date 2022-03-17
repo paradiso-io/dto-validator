@@ -1,46 +1,146 @@
-const config = require('config')
-const queueHelper = require('../helpers/queue')
-const generalHelper = require('../helpers/general')
+'use strict'
+
+// Libp2p Core
+const Libp2p = require('libp2p')
+// Transports
+const TCP = require('libp2p-tcp')
+const Websockets = require('libp2p-websockets')
+// const WebRTCStar = require('libp2p-webrtc-star')
+// const wrtc = require('wrtc')
+// Stream Muxer
+const Mplex = require('libp2p-mplex')
+// Connection Encryption
+const { NOISE } = require('libp2p-noise')
+// Chat over Pubsub
+const PubsubChat = require('../chat/chat')
+// Peer Discovery
+const Bootstrap = require('libp2p-bootstrap')
+const MDNS = require('libp2p-mdns')
+//const KadDHT = require('libp2p-kad-dht')
+// Gossipsub
+const Gossipsub = require('libp2p-gossipsub')
 const db = require('../models')
-const logger = require("../helpers/logger");
-const { DeployUtil } = require("casper-js-sdk");
 
-async function main() {
-    let consumers = config.rabbitmq.consumers
-    while (true) {
-        let tx = await db.RequestToCasper.find({isProcessed: false}).sort({ timestamp: 1 }).limit(1)
-        if (tx && tx.length > 0) {
-            tx = tx[0]
 
-            if (tx) {
-                for (let i = 0; i < consumers.length; i++) {
-                    let consumer = consumers[i]
-                    await queueHelper.newQueue(`${consumer}-signer`,
-                        {
-                            requestHash: tx.requestHash,
-                            index: tx.index,
-                            deployHash: tx.deployHash,
-                            deployHashToSign: tx.deployHashToSign,
-                            toWallet: tx.toWallet,
-                            fromChainId: tx.fromChainId,
-                            toChainId: tx.toChainId,
-                            originChainId: tx.originChainId,
-                            originToken: tx.originToken.toLowerCase(),
-                            destinationContractHash: tx.destinationContractHash,
-                            timestamp: tx.timestamp,
-                            deployJsonString: tx.deployJsonString,
-                            amount: tx.amount,
-                            mintid: tx.mintid
-                        }
-                    )
-                }
-                tx.isProcessed = true
-                await tx.save()
-            }
+;(async () => {
+  // Create the Node
+  const libp2p = await Libp2p.create({
+    addresses: {
+      listen: [
+        '/ip4/0.0.0.0/tcp/222'
+      
+      ]
+    },
+    modules: {
+      transport: [ TCP, Websockets ],
+      streamMuxer: [ Mplex ],
+      connEncryption: [ NOISE ],
+      peerDiscovery: [ Bootstrap ],
+      // dht: KadDHT,
+      pubsub: Gossipsub
+    },
+    config: {
+      transport : {
+        // [WebRTCStar.prototype[Symbol.toStringTag]]: {
+        //   wrtc
+        // }
+      },
+      peerDiscovery: {
+        bootstrap: {
+          list: [ '/ip4/45.76.112.224/tcp/63785/ipfs/QmWjz6xb8v9K4KnYEwP5Yk75k5mMBCehzWFLCvvQpYxF3d' ]
         }
-        console.log('sleep 10 seconds before continue')
-        await generalHelper.sleep(60000)
+      },
+      // dht: {
+      //   enabled: true,
+      //   randomWalk: {
+      //     enabled: true
+      //   }
+      // }
     }
-}
+  })
 
-main()
+  // Listen on libp2p for `peer:connect` and log the provided connection.remotePeer.toB58String() peer id string.
+  libp2p.connectionManager.on('peer:connect', (connection) => {
+    console.info(`Connected to ${connection.remotePeer.toB58String()}!`)
+  })
+
+  // Start libp2p
+  await libp2p.start()
+  console.log('ID  node PRODUCER : ' , libp2p.peerId.toB58String())
+  //console.log(libp2p.peerId)
+
+
+
+// const config = require('config')
+// const queueHelper = require('../helpers/queue')
+// const generalHelper = require('../helpers/general')
+// const db = require('../models')
+// const logger = require("../helpers/logger");
+// const { DeployUtil } = require("casper-js-sdk");
+  
+
+  const config = require('config')
+  const queueHelper = require('./helpers/queue')
+  const generalHelper = require('./helpers/general')
+  const db = require('./models')
+  
+  while(true) {
+          let tx = await db.RequestToCasper.findOne({isProcess: false})
+              await queueHelper.newQueue(`abc`,
+                  {
+                    requestHash: tx.requestHash,
+                    index: tx.index,
+                    deployHash: tx.deployHash,
+                    deployHashToSign: tx.deployHashToSign,
+                    toWallet: tx.toWallet,
+                    fromChainId: tx.fromChainId,
+                    toChainId: tx.toChainId,
+                    originChainId: tx.originChainId,
+                    originToken: tx.originToken.toLowerCase(),
+                    destinationContractHash: tx.destinationContractHash,
+                    timestamp: tx.timestamp,
+                    deployJsonString: tx.deployJsonString,
+                    amount: tx.amount,
+                    mintid: tx.mintid
+                  }
+              )
+          
+          tx.isProcess = true
+          await tx.save()
+          console.log('sleep 60 seconds before continue')
+          await generalHelper.sleep(60000)
+      
+  
+
+
+
+   
+  //Create our PubsubChat client 
+  const pubsubChat = new PubsubChat(libp2p, PubsubChat.TOPIC, ({ from, message }) => {
+    let fromMe = from === libp2p.peerId.toB58String()
+    let user = fromMe ? 'Me' : from.substring(0, 6)
+    if (pubsubChat.userHandles.has(from)) {
+      user = pubsubChat.userHandles.get(from)
+    }
+    console.info(`${fromMe ? PubsubChat.CLEARLINE : ''}${user}(${new Date(message.created).toLocaleTimeString()}): ${message.data}`)
+  })
+
+  // Set up our input handler
+  //process.stdin.on('data', async (message) => {
+      //message = tx
+      //console.log(message)
+    // Remove trailing newline
+    //message = message.slice(0, -1)
+    
+    // TODO: use pubsubChat.checkCommand(message) to exit early if it returns true
+
+    // Publish the message
+    try {
+      await pubsubChat.send(tx)
+    } catch (err) {
+      console.error('Could not publish chat', err)
+    }
+  //})
+
+}
+})()
