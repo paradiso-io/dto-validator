@@ -58,7 +58,7 @@ router.get('/transactions/:account/:networkId', [
     try {
         accountHash = CasperHelper.fromCasperPubkeyToAccountHash(account)
     } catch (e) {
-        logger.warn("not public key")
+        logger.warn("not public key %s", e)
     }
     CasperHelper.fromCasperPubkeyToAccountHash
     let query = {
