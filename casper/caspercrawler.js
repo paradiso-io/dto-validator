@@ -102,6 +102,7 @@ async function processRequestEvent(
         fromChainId: eventData.fromChainId,
         originChainId: eventData.originChainId,
         toChainId: eventData.toChainId,
+        txCreator: eventData.txCreator,
         amount: amount,
         // amountNumber: amountNumber, // TODO: get token from chain detail
         index: eventData.index,
