@@ -121,6 +121,7 @@ async function crawl(from, to, lastBlockHeight) {
   let toBlock = to
   let casperConfig = CasperHelper.getConfigInfo();
   let client = new CasperServiceByJsonRPC(casperConfig.rpc);
+  let contractHashes = casperConfig.tokens.map((e) => e.contractHash);
   while (fromBlock < toBlock) {
     try {
       let block = await client.getBlockInfoByHeight(fromBlock);
