@@ -19,9 +19,16 @@ const MDNS = require('libp2p-mdns')
 //const KadDHT = require('libp2p-kad-dht')
 // Gossipsub
 const Gossipsub = require('libp2p-gossipsub')
+// const db = require('../models')
+
+//const config = require('config')
+const queueHelper = require('../helpers/queue')
+const generalHelper = require('../helpers/general')
 const db = require('../models')
+const logger = require("../helpers/logger");
+const { DeployUtil } = require("casper-js-sdk");
 
-
+console.log()
 ;(async () => {
   // Create the Node
   const libp2p = await Libp2p.create({
@@ -71,12 +78,12 @@ const db = require('../models')
 
 
 
-const config = require('config')
-const queueHelper = require('../helpers/queue')
-const generalHelper = require('../helpers/general')
+// const config = require('config')
+// const queueHelper = require('../helpers/queue')
+// const generalHelper = require('../helpers/general')
 // const db = require('../models')
-const logger = require("../helpers/logger");
-const { DeployUtil } = require("casper-js-sdk");
+// const logger = require("../helpers/logger");
+// const { DeployUtil } = require("casper-js-sdk");
   
 
 //   const config = require('config')
