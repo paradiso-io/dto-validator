@@ -71,18 +71,18 @@ const db = require('../models')
 
 
 
-// const config = require('config')
-// const queueHelper = require('../helpers/queue')
-// const generalHelper = require('../helpers/general')
-// const db = require('../models')
-// const logger = require("../helpers/logger");
-// const { DeployUtil } = require("casper-js-sdk");
+const config = require('config')
+const queueHelper = require('../helpers/queue')
+const generalHelper = require('../helpers/general')
+const db = require('../models')
+const logger = require("../helpers/logger");
+const { DeployUtil } = require("casper-js-sdk");
   
 
-  const config = require('config')
-  const queueHelper = require('./helpers/queue')
-  const generalHelper = require('./helpers/general')
-  const db = require('./models')
+//   const config = require('config')
+//   const queueHelper = require('../helpers/queue')
+//   const generalHelper = require('../helpers/general')
+//   const db = require('./models')
   
   while(true) {
           let tx = await db.RequestToCasper.findOne({isProcess: false})
