@@ -54,7 +54,8 @@ router.get('/transactions/:account/:networkId', [
     let page = req.query.page || 1
     let skip = limit * (page - 1)
     let networkId = req.params.networkId
-    let accountHash = account
+    let accountHash = 
+    logger.warn('account %s', account)
     try {
         accountHash = CasperHelper.fromCasperPubkeyToAccountHash(account)
     } catch (e) {
