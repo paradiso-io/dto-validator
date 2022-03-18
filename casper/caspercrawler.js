@@ -102,6 +102,7 @@ async function processRequestEvent(
         fromChainId: eventData.fromChainId,
         originChainId: eventData.originChainId,
         toChainId: eventData.toChainId,
+        txCreator: eventData.txCreator,
         amount: amount,
         // amountNumber: amountNumber, // TODO: get token from chain detail
         index: eventData.index,
@@ -120,7 +121,9 @@ async function crawl(from, to, lastBlockHeight) {
   let fromBlock = from
   let toBlock = to
   let casperConfig = CasperHelper.getConfigInfo();
+  let networkId = casperConfig.networkId;
   let client = new CasperServiceByJsonRPC(casperConfig.rpc);
+  let contractHashes = casperConfig.tokens.map((e) => e.contractHash);
   while (fromBlock < toBlock) {
     try {
       let block = await client.getBlockInfoByHeight(fromBlock);
@@ -288,6 +291,7 @@ async function crawl(from, to, lastBlockHeight) {
       }
       fromBlock++
     } catch (e) {
+      logger.error("Error: %s [%s-%s]", e, from, to)
       await generalHelper.sleep(5 * 1000)
       client = new CasperServiceByJsonRPC(casperConfig.rpc);
     }
@@ -311,8 +315,9 @@ const getPastEvent = async () => {
   );
 
   currentBlockHeight -= 5
+  console.log(fromBlock, currentBlockHeight)
 
-  let blockPerBatch = 500
+  let blockPerBatch = 100
   let numBatch = Math.floor((currentBlockHeight - fromBlock) / blockPerBatch) + 1
   let tasks = []
   for (var i = 0; i < numBatch; i++) {

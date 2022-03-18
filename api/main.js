@@ -54,6 +54,7 @@ router.get('/transactions/:account/:networkId', [
     let page = req.query.page || 1
     let skip = limit * (page - 1)
     let networkId = req.params.networkId
+
     let query = {
         $and: [
             { $or: [{ txCreator: account }, { account: account }] },
