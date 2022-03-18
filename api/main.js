@@ -55,10 +55,9 @@ router.get('/transactions/:account/:networkId', [
     let skip = limit * (page - 1)
     let networkId = req.params.networkId
 
-    CasperHelper.fromCasperPubkeyToAccountHash
     let query = {
         $and: [
-            { $or: [{ txCreator: accountHash }, { account: accountHash }] },
+            { $or: [{ txCreator: account }, { account: account }] },
             { $or: [{ fromChainId: networkId }, { toChainId: networkId }] }
         ]
     }
