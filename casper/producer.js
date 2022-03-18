@@ -21,14 +21,14 @@ const MDNS = require('libp2p-mdns')
 const Gossipsub = require('libp2p-gossipsub')
 // const db = require('../models')
 
-//const config = require('config')
+const config = require('config')
 const queueHelper = require('../helpers/queue')
 const generalHelper = require('../helpers/general')
 const db = require('../models')
 const logger = require("../helpers/logger");
 const { DeployUtil } = require("casper-js-sdk");
 
-console.log()
+//console.log(config.get(rabbitmq.hostname))
 ;(async () => {
   // Create the Node
   const libp2p = await Libp2p.create({
@@ -54,7 +54,7 @@ console.log()
       },
       peerDiscovery: {
         bootstrap: {
-          list: [ '/ip4/45.76.112.224/tcp/63785/ipfs/QmWjz6xb8v9K4KnYEwP5Yk75k5mMBCehzWFLCvvQpYxF3d' ]
+          list: [ '/ip4/139.99.9.174/tcp/63785/ipfs/QmWjz6xb8v9K4KnYEwP5Yk75k5mMBCehzWFLCvvQpYxF3d' ]
         }
       },
       // dht: {
@@ -92,31 +92,35 @@ console.log()
 //   const db = require('./models')
   
   while(true) {
-          let tx = await db.RequestToCasper.findOne({isProcess: false})
-              await queueHelper.newQueue(`abc`,
-                  {
-                    requestHash: tx.requestHash,
-                    index: tx.index,
-                    deployHash: tx.deployHash,
-                    deployHashToSign: tx.deployHashToSign,
-                    toWallet: tx.toWallet,
-                    fromChainId: tx.fromChainId,
-                    toChainId: tx.toChainId,
-                    originChainId: tx.originChainId,
-                    originToken: tx.originToken.toLowerCase(),
-                    destinationContractHash: tx.destinationContractHash,
-                    timestamp: tx.timestamp,
-                    deployJsonString: tx.deployJsonString,
-                    amount: tx.amount,
-                    mintid: tx.mintid
-                  }
-              )
-          
-          tx.isProcess = true
-          await tx.save()
-          console.log('sleep 60 seconds before continue')
-          await generalHelper.sleep(60000)
-      
+          let tx = await db.RequestToCasper.find({isProcessed: false}).sort({ timestamp: 1 }).limit(1)
+          //let tx = await db.RequestToCasper.findOne({isProcess: false})
+          if (tx && tx.length > 0) {
+            tx = tx[0]
+            if (tx) {
+                    await queueHelper.newQueue(`abc`,
+                        {
+                            requestHash: tx.requestHash,
+                            index: tx.index,
+                            deployHash: tx.deployHash,
+                            deployHashToSign: tx.deployHashToSign,
+                            toWallet: tx.toWallet,
+                            fromChainId: tx.fromChainId,
+                            toChainId: tx.toChainId,
+                            originChainId: tx.originChainId,
+                            originToken: tx.originToken.toLowerCase(),
+                            destinationContractHash: tx.destinationContractHash,
+                            timestamp: tx.timestamp,
+                            deployJsonString: tx.deployJsonString,
+                            amount: tx.amount,
+                            mintid: tx.mintid
+                        }
+                    )
+                    tx.isProcess = true
+                    await tx.save()
+                    console.log('sleep 60 seconds before continue')
+                    await generalHelper.sleep(60000)
+            }
+        }
   
 
 
