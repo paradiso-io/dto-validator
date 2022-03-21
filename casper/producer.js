@@ -105,10 +105,11 @@ const { DeployUtil } = require("casper-js-sdk");
 
   while(true) {
          // let tx = await db.RequestToCasper.find({isProcessed: false}).sort({ timestamp: 1 }).limit(1)
-          let tx = await db.RequestToCasper.findOne({isProcess: false})
+          let tx = await db.RequestToCasper.findOne({isProcessed: false})
+          //console.log(tx)
           
-          if (tx && tx.length > 0) {
-            tx = tx[0]
+          //if (tx && tx.length > 0) {
+          //  tx = tx[0]
             if (tx) {
                     await queueHelper.newQueue(`abc`,
                         {
@@ -128,7 +129,25 @@ const { DeployUtil } = require("casper-js-sdk");
                             mintid: tx.mintid
                         }
                     )
-                    tx.isProcess = true
+
+                    //Create our PubsubChat client 
+                    const pubsubChat = new PubsubChat(libp2p, PubsubChat.TOPIC, ({ from, message }) => {
+                        let fromMe = from === libp2p.peerId.toB58String()
+                        let user = fromMe ? 'Me' : from.substring(0, 6)
+                        if (pubsubChat.userHandles.has(from)) {
+                        user = pubsubChat.userHandles.get(from)
+                        }
+                        console.info(`${fromMe ? PubsubChat.CLEARLINE : ''}${user}(${new Date(message.created).toLocaleTimeString()}): ${message.data}`)
+                    })
+
+
+                    try {
+                        await pubsubChat.send(tx)
+                        console.log("send sucessed")
+                    } catch (err) {
+                        console.error('Could not publish chat', err)
+                    }
+                    tx.isProcessed = true
                     await tx.save()
                     console.log('sleep 60 seconds before continue')
                     await generalHelper.sleep(60000)
@@ -151,12 +170,8 @@ const { DeployUtil } = require("casper-js-sdk");
                     // TODO: use pubsubChat.checkCommand(message) to exit early if it returns true
 
                     // Publish the message
-                    try {
-                        await pubsubChat.send(tx)
-                    } catch (err) {
-                        console.error('Could not publish chat', err)
-                    }
+                    
   //})
-                }
+               // }
 }
 })()
