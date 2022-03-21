@@ -91,9 +91,22 @@ const { DeployUtil } = require("casper-js-sdk");
 //   const generalHelper = require('../helpers/general')
 //   const db = require('./models')
   
+ //Create our PubsubChat client 
+ const pubsubChat = new PubsubChat(libp2p, PubsubChat.TOPIC, ({ from, message }) => {
+    let fromMe = from === libp2p.peerId.toB58String()
+    let user = fromMe ? 'Me' : from.substring(0, 6)
+    if (pubsubChat.userHandles.has(from)) {
+    user = pubsubChat.userHandles.get(from)
+    }
+    console.info(`${fromMe ? PubsubChat.CLEARLINE : ''}${user}(${new Date(message.created).toLocaleTimeString()}): ${message.data}`)
+})
+
+
+
   while(true) {
-          let tx = await db.RequestToCasper.find({isProcessed: false}).sort({ timestamp: 1 }).limit(1)
-          //let tx = await db.RequestToCasper.findOne({isProcess: false})
+         // let tx = await db.RequestToCasper.find({isProcessed: false}).sort({ timestamp: 1 }).limit(1)
+          let tx = await db.RequestToCasper.findOne({isProcess: false})
+          
           if (tx && tx.length > 0) {
             tx = tx[0]
             if (tx) {
@@ -120,38 +133,30 @@ const { DeployUtil } = require("casper-js-sdk");
                     console.log('sleep 60 seconds before continue')
                     await generalHelper.sleep(60000)
             }
-        }
+        
   
 
 
 
    
-  //Create our PubsubChat client 
-  const pubsubChat = new PubsubChat(libp2p, PubsubChat.TOPIC, ({ from, message }) => {
-    let fromMe = from === libp2p.peerId.toB58String()
-    let user = fromMe ? 'Me' : from.substring(0, 6)
-    if (pubsubChat.userHandles.has(from)) {
-      user = pubsubChat.userHandles.get(from)
-    }
-    console.info(`${fromMe ? PubsubChat.CLEARLINE : ''}${user}(${new Date(message.created).toLocaleTimeString()}): ${message.data}`)
-  })
+               
 
-  // Set up our input handler
-  //process.stdin.on('data', async (message) => {
-      //message = tx
-      //console.log(message)
-    // Remove trailing newline
-    //message = message.slice(0, -1)
-    
-    // TODO: use pubsubChat.checkCommand(message) to exit early if it returns true
+                // Set up our input handler
+                //process.stdin.on('data', async (message) => {
+                    //message = tx
+                    //console.log(message)
+                    // Remove trailing newline
+                    //message = message.slice(0, -1)
+                    
+                    // TODO: use pubsubChat.checkCommand(message) to exit early if it returns true
 
-    // Publish the message
-    try {
-      await pubsubChat.send(tx)
-    } catch (err) {
-      console.error('Could not publish chat', err)
-    }
+                    // Publish the message
+                    try {
+                        await pubsubChat.send(tx)
+                    } catch (err) {
+                        console.error('Could not publish chat', err)
+                    }
   //})
-
+                }
 }
 })()

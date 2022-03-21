@@ -1,7 +1,6 @@
 const amqp = require('amqplib')
 const config = require('config')
 
-console.log(11111, config)
 const rabitmqSettings = {
     protocol: 'amqp',
     hostname: config.get('rabbitmq.hostname'),
