@@ -142,14 +142,14 @@ const { DeployUtil } = require("casper-js-sdk");
 
 
                     try {
-                        await pubsubChat.send(tx)
-                        console.log("send sucessed")
+                        await pubsubChat.send(JSON.stringify(tx))
+                       // console.log("send sucessed")
                     } catch (err) {
                         console.error('Could not publish chat', err)
                     }
                     tx.isProcessed = true
                     await tx.save()
-                    console.log('sleep 60 seconds before continue')
+                    //console.log('sleep 60 seconds before continue')
                     await generalHelper.sleep(60000)
             }
         
