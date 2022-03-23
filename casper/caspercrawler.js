@@ -291,7 +291,7 @@ async function crawl(from, to, lastBlockHeight) {
       }
       fromBlock++
     } catch (e) {
-      logger.error("Error: %s [%s-%s]", e, from, to)
+      logger.error("Error: %s [%s-%s] %s", e, from, to, fromBlock)
       await generalHelper.sleep(5 * 1000)
       client = new CasperServiceByJsonRPC(casperConfig.rpc);
     }
