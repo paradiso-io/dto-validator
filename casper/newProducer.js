@@ -130,7 +130,7 @@ const { DeployUtil } = require("casper-js-sdk");
                         }
                     )
 
-                    let success = ""
+                    let success = null
 
                     //Create our PubsubChat client 
                     const pubsubChat = new PubsubChat(libp2p, PubsubChat.TOPIC, ({ from, message }) => {
@@ -140,7 +140,7 @@ const { DeployUtil } = require("casper-js-sdk");
                         user = pubsubChat.userHandles.get(from)
                         }
                         console.info(`${fromMe ? PubsubChat.CLEARLINE : ''}${user}(${new Date(message.created).toLocaleTimeString()}): ${message.data}`)
-                        success = message.toString()
+                        success = JSON.parse(message.data)
                     })
 
 
