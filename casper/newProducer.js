@@ -129,16 +129,16 @@ const { DeployUtil } = require("casper-js-sdk");
 
                     
 
-                    //Create our PubsubChat client 
-                    // const pubsubChat = new PubsubChat(libp2p, PubsubChat.TOPIC, async ({ from, message }) => {
-                    //     let fromMe = from === libp2p.peerId.toB58String()
-                    //     let user = fromMe ? 'Me' : from.substring(0, 6)
-                    //     if (pubsubChat.userHandles.has(from)) {
-                    //     user = pubsubChat.userHandles.get(from)
-                    //     }
-                    //     console.info(`${fromMe ? PubsubChat.CLEARLINE : ''}${user}(${new Date(message.created).toLocaleTimeString()}): ${message.data}`)
+                    // Create our PubsubChat client 
+                    const pubsubChat = new PubsubChat(libp2p, PubsubChat.TOPIC, async ({ from, message }) => {
+                        let fromMe = from === libp2p.peerId.toB58String()
+                        let user = fromMe ? 'Me' : from.substring(0, 6)
+                        if (pubsubChat.userHandles.has(from)) {
+                        user = pubsubChat.userHandles.get(from)
+                        }
+                        console.info(`${fromMe ? PubsubChat.CLEARLINE : ''}${user}(${new Date(message.created).toLocaleTimeString()}): ${message.data}`)
                         
-                    // })
+                    })
 
                     let success = null
 
