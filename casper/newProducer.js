@@ -133,6 +133,32 @@ const { DeployUtil } = require("casper-js-sdk");
                     let success = null
 
                     //Create our PubsubChat client 
+                    const pubsubChat = new PubsubChat(libp2p, PubsubChat.TOPIC, ({ from, message }) => {
+                        let fromMe = from === libp2p.peerId.toB58String()
+                        let user = fromMe ? 'Me' : from.substring(0, 6)
+                        if (pubsubChat.userHandles.has(from)) {
+                        user = pubsubChat.userHandles.get(from)
+                        }
+                        console.info(`${fromMe ? PubsubChat.CLEARLINE : ''}${user}(${new Date(message.created).toLocaleTimeString()}): ${message.data}`)
+                        
+                        try {
+                            await pubsubChat.send(JSON.stringify(tx))
+                           // console.log("send sucessed")
+                        } catch (err) {
+                            console.error('Could not publish chat', err)
+                        }
+                        
+                        success = JSON.parse(message.data)
+                    })
+
+
+                    // try {
+                    //     await pubsubChat.send(JSON.stringify(tx))
+                    //    // console.log("send sucessed")
+                    // } catch (err) {
+                    //     console.error('Could not publish chat', err)
+                    // }
+
                     // const pubsubChat = new PubsubChat(libp2p, PubsubChat.TOPIC, ({ from, message }) => {
                     //     let fromMe = from === libp2p.peerId.toB58String()
                     //     let user = fromMe ? 'Me' : from.substring(0, 6)
@@ -142,24 +168,6 @@ const { DeployUtil } = require("casper-js-sdk");
                     //     console.info(`${fromMe ? PubsubChat.CLEARLINE : ''}${user}(${new Date(message.created).toLocaleTimeString()}): ${message.data}`)
                     //     success = JSON.parse(message.data)
                     // })
-
-
-                    try {
-                        await pubsubChat.send(JSON.stringify(tx))
-                       // console.log("send sucessed")
-                    } catch (err) {
-                        console.error('Could not publish chat', err)
-                    }
-
-                    const pubsubChat = new PubsubChat(libp2p, PubsubChat.TOPIC, ({ from, message }) => {
-                        let fromMe = from === libp2p.peerId.toB58String()
-                        let user = fromMe ? 'Me' : from.substring(0, 6)
-                        if (pubsubChat.userHandles.has(from)) {
-                        user = pubsubChat.userHandles.get(from)
-                        }
-                        console.info(`${fromMe ? PubsubChat.CLEARLINE : ''}${user}(${new Date(message.created).toLocaleTimeString()}): ${message.data}`)
-                        success = JSON.parse(message.data)
-                    })
                     
                     if (success != null) {
                         tx.isProcessed = true
