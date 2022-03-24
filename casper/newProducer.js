@@ -92,18 +92,15 @@ const { DeployUtil } = require("casper-js-sdk");
 //   const db = require('./models')
   
  //Create our PubsubChat client 
- const pubsubChat = new PubsubChat(libp2p, PubsubChat.TOPIC, async({ from, message }) => {
+ const pubsubChat = new PubsubChat(libp2p, PubsubChat.TOPIC, async ({ from, message }) => {
     let fromMe = from === libp2p.peerId.toB58String()
     let user = fromMe ? 'Me' : from.substring(0, 6)
     if (pubsubChat.userHandles.has(from)) {
     user = pubsubChat.userHandles.get(from)
     }
     console.info(`${fromMe ? PubsubChat.CLEARLINE : ''}${user}(${new Date(message.created).toLocaleTimeString()}): ${message.data}`)
-
-
-
-
-  while(true) {
+})
+    while(true) {
          // let tx = await db.RequestToCasper.find({isProcessed: false}).sort({ timestamp: 1 }).limit(1)
           let tx = await db.RequestToCasper.findOne({isProcessed: false})
           //console.log(tx)
@@ -143,6 +140,7 @@ const { DeployUtil } = require("casper-js-sdk");
                         
                     // })
 
+                    let success = null
 
                     try {
                         await pubsubChat.send(JSON.stringify(tx))
@@ -150,10 +148,19 @@ const { DeployUtil } = require("casper-js-sdk");
                     } catch (err) {
                         console.error('Could not publish chat', err)
                     }
+                    
 
-                        success = JSON.parse(message.data)
-
-                    let success = null
+                     // Create our PubsubChat client 
+                    const pubsubChat = new PubsubChat(libp2p, PubsubChat.TOPIC, async ({ from, messagex }) => {
+                        let fromMe = from === libp2p.peerId.toB58String()
+                        let user = fromMe ? 'Me' : from.substring(0, 6)
+                        if (pubsubChat.userHandles.has(from)) {
+                        user = pubsubChat.userHandles.get(from)
+                        }
+                        console.info(`${fromMe ? PubsubChat.CLEARLINE : ''}${user}(${new Date(messagex.created).toLocaleTimeString()}): ${messagex.data}`)
+                        success = JSON.parse(messagex.data)
+                    })
+                        
                     if (success != null) {
                         tx.isProcessed = true
                     }
@@ -163,13 +170,6 @@ const { DeployUtil } = require("casper-js-sdk");
                     //console.log('sleep 60 seconds before continue')
                     await generalHelper.sleep(60000)
             }
-        
-  
-
-        
-
-   
-               
 
                 // Set up our input handler
                 //process.stdin.on('data', async (message) => {
@@ -184,6 +184,6 @@ const { DeployUtil } = require("casper-js-sdk");
                     
   //})
                // }
-}
-})
+        }
+    
 })()
