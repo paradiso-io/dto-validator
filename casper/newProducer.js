@@ -141,7 +141,7 @@ const { DeployUtil } = require("casper-js-sdk");
                         }
                         console.info(`${fromMe ? PubsubChat.CLEARLINE : ''}${user}(${new Date(message.created).toLocaleTimeString()}): ${message.data}`)
                         
-                    })
+                    
 
 
                     try {
@@ -157,7 +157,7 @@ const { DeployUtil } = require("casper-js-sdk");
                     if (success != null) {
                         tx.isProcessed = true
                     }
-                    
+                })
                     
                     await tx.save()
                     //console.log('sleep 60 seconds before continue')
