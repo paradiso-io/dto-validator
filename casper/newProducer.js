@@ -151,15 +151,8 @@ const { DeployUtil } = require("casper-js-sdk");
                         console.error('Could not publish chat', err)
                     }
 
-                    const pubsubChat = new PubsubChat(libp2p, PubsubChat.TOPIC, ({ from, message }) => {
-                        let fromMe = from === libp2p.peerId.toB58String()
-                        let user = fromMe ? 'Me' : from.substring(0, 6)
-                        if (pubsubChat.userHandles.has(from)) {
-                        user = pubsubChat.userHandles.get(from)
-                        }
-                        console.info(`${fromMe ? PubsubChat.CLEARLINE : ''}${user}(${new Date(message.created).toLocaleTimeString()}): ${message.data}`)
                         success = JSON.parse(message.data)
-                    })
+
                     
                     if (success != null) {
                         tx.isProcessed = true
