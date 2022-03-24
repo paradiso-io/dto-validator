@@ -140,7 +140,7 @@ const { DeployUtil } = require("casper-js-sdk");
                         
                     })
 
-                    let success = null
+                   // let success = null
 
                     try {
                         await pubsubChat.send(JSON.stringify(tx))
@@ -150,20 +150,20 @@ const { DeployUtil } = require("casper-js-sdk");
                     }
                     
 
-                     // Create our PubsubChat client 
-                    const pubsubChat = new PubsubChat(libp2p, PubsubChat.TOPIC, async ({ from, messagex }) => {
-                        let fromMe = from === libp2p.peerId.toB58String()
-                        let user = fromMe ? 'Me' : from.substring(0, 6)
-                        if (pubsubChat.userHandles.has(from)) {
-                        user = pubsubChat.userHandles.get(from)
-                        }
-                        console.info(`${fromMe ? PubsubChat.CLEARLINE : ''}${user}(${new Date(messagex.created).toLocaleTimeString()}): ${messagex.data}`)
-                        success = JSON.parse(messagex.data)
-                    })
+                    //  // Create our PubsubChat client 
+                    // const pubsubChat1 = new PubsubChat(libp2p, PubsubChat.TOPIC, async ({ from, messagex }) => {
+                    //     let fromMe = from === libp2p.peerId.toB58String()
+                    //     let user = fromMe ? 'Me' : from.substring(0, 6)
+                    //     if (pubsubChat1.userHandles.has(from)) {
+                    //     user = pubsubChat1.userHandles.get(from)
+                    //     }
+                    //     console.info(`${fromMe ? PubsubChat.CLEARLINE : ''}${user}(${new Date(messagex.created).toLocaleTimeString()}): ${messagex.data}`)
+                    //     success = JSON.parse(messagex.data)
+                    // })
                         
-                    if (success != null) {
+                  //  if (success != null) {
                         tx.isProcessed = true
-                    }
+                   // }
                     
                     
                     await tx.save()
