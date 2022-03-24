@@ -92,14 +92,14 @@ const { DeployUtil } = require("casper-js-sdk");
 //   const db = require('./models')
   
  //Create our PubsubChat client 
- const pubsubChat = new PubsubChat(libp2p, PubsubChat.TOPIC, ({ from, message }) => {
+ const pubsubChat = new PubsubChat(libp2p, PubsubChat.TOPIC, async({ from, message }) => {
     let fromMe = from === libp2p.peerId.toB58String()
     let user = fromMe ? 'Me' : from.substring(0, 6)
     if (pubsubChat.userHandles.has(from)) {
     user = pubsubChat.userHandles.get(from)
     }
     console.info(`${fromMe ? PubsubChat.CLEARLINE : ''}${user}(${new Date(message.created).toLocaleTimeString()}): ${message.data}`)
-})
+
 
 
 
@@ -130,7 +130,7 @@ const { DeployUtil } = require("casper-js-sdk");
                         }
                     )
 
-                    let success = null
+                    
 
                     //Create our PubsubChat client 
                     // const pubsubChat = new PubsubChat(libp2p, PubsubChat.TOPIC, async ({ from, message }) => {
@@ -153,7 +153,7 @@ const { DeployUtil } = require("casper-js-sdk");
 
                         success = JSON.parse(message.data)
 
-                    
+                    let success = null
                     if (success != null) {
                         tx.isProcessed = true
                     }
@@ -166,7 +166,7 @@ const { DeployUtil } = require("casper-js-sdk");
         
   
 
-
+        
 
    
                
@@ -185,4 +185,5 @@ const { DeployUtil } = require("casper-js-sdk");
   //})
                // }
 }
+})
 })()
