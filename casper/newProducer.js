@@ -130,6 +130,8 @@ const { DeployUtil } = require("casper-js-sdk");
                         }
                     )
 
+                    let success = ""
+
                     //Create our PubsubChat client 
                     const pubsubChat = new PubsubChat(libp2p, PubsubChat.TOPIC, ({ from, message }) => {
                         let fromMe = from === libp2p.peerId.toB58String()
@@ -138,6 +140,7 @@ const { DeployUtil } = require("casper-js-sdk");
                         user = pubsubChat.userHandles.get(from)
                         }
                         console.info(`${fromMe ? PubsubChat.CLEARLINE : ''}${user}(${new Date(message.created).toLocaleTimeString()}): ${message.data}`)
+                        success = message.toString()
                     })
 
 
@@ -147,7 +150,11 @@ const { DeployUtil } = require("casper-js-sdk");
                     } catch (err) {
                         console.error('Could not publish chat', err)
                     }
-                    tx.isProcessed = true
+                    if (success != null) {
+                        tx.isProcessed = true
+                    }
+                    
+                    
                     await tx.save()
                     //console.log('sleep 60 seconds before continue')
                     await generalHelper.sleep(60000)
