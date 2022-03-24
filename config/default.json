@@ -168,6 +168,13 @@
         "contractHash": "e97b72e5094fe3fb852c00c17eaa2a0e0303edc5f5c16606e87be50caef84362"
       },
       {
+        "name": "ETH",
+        "decimals": 18,
+        "originChainId": 42,
+        "originContractAddress": "0x1111111111111111111111111111111111111111",
+        "contractHash": "4dcaa1989c7d8f340f0a900030ad0aeb47e4679d3326359d0f9452280eea0e1d"
+      },
+      {
         "name": "ChainLink Token",
         "decimals": 18,
         "originChainId": 97,
