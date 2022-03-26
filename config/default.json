@@ -155,60 +155,6 @@
     "uri": "mongodb://localhost:27017/dtoBridge"
   },
   "caspernetwork": "testnet",
-  "testnet": {
-    "chainName": "casper-test",
-    "fromBlock": 574000,
-    "networkId": 96945816564243,
-    "tokens": [
-      {
-        "name": "BNB",
-        "decimals": 18,
-        "originChainId": 97,
-        "originContractAddress": "0x1111111111111111111111111111111111111111",
-        "contractHash": "e97b72e5094fe3fb852c00c17eaa2a0e0303edc5f5c16606e87be50caef84362"
-      },
-      {
-        "name": "ETH",
-        "decimals": 18,
-        "originChainId": 42,
-        "originContractAddress": "0x1111111111111111111111111111111111111111",
-        "contractHash": "4dcaa1989c7d8f340f0a900030ad0aeb47e4679d3326359d0f9452280eea0e1d"
-      },
-      {
-        "name": "ChainLink Token",
-        "decimals": 18,
-        "originChainId": 97,
-        "originContractAddress": "0x84b9B910527Ad5C03A9Ca831909E21e236EA7b06",
-        "contractHash": "bddd43141ded6c7e15c097e9ff65dc7fed5217e8448b3f48c9d73179097ed4db"
-      },
-      {
-        "name": "ERC20Mock",
-        "decimals": 18,
-        "originChainId": 97,
-        "originContractAddress": "0xFCfa8B2E2596F81b260218Ea3CE2D6Af0578f2Ae",
-        "contractHash": "ecefa6841d5901f196bdbaa7ec83bcf123a890da31c0f4235c7f4a72b853558b"
-      },
-      {
-        "name": "ERC20Mock",
-        "decimals": 18,
-        "originChainId": 97,
-        "originContractAddress": "0x51c87aBA0AD711331bB4d09AE314a10E93aaa7eb",
-        "contractHash": "578667174fa620dc1f2cbb2593f6f0a963dbbebbafaa654c7c0994709850aea8"
-      }
-    ],
-    "rpc": "http://3.136.227.9:7777/rpc",
-    "mpcPubkey": "038df1cff6b55615858b1acd2ebcce98db164f88cf88919c7b045268571cc49cb7",
-    "eventStream": "http://16.162.124.124:9999/events/main"
-  },
-  "mainnet": {
-    "chainName": "casper-main",
-    "fromBlock": 566000,
-    "networkId": 131614895977472,
-    "tokens": [],
-    "rpc": "http://3.136.227.9:7777/rpc",
-    "mpcPubkey": "038df1cff6b55615858b1acd2ebcce98db164f88cf88919c7b045268571cc49cb7",
-    "eventStream": "http://16.162.124.124:9999/events/main"
-  },
   "rabbitmq": {
     "hostname": "139.99.9.174",
     "port": 5672,
