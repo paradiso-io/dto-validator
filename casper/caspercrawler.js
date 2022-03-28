@@ -313,7 +313,7 @@ const getPastEvent = async () => {
     currentBlock.block.header.height.toString()
   );
 
-  currentBlockHeight -= 5
+  currentBlockHeight -= 1
   console.log(fromBlock, currentBlockHeight)
 
   let blockPerBatch = 100
