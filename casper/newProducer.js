@@ -27,6 +27,7 @@ const generalHelper = require('../helpers/general')
 const db = require('../models')
 const logger = require("../helpers/logger");
 const { DeployUtil } = require("casper-js-sdk");
+const { sleep } = require('../helpers/general')
 
 //console.log(config.get(rabbitmq.hostname))
 ;(async () => {
@@ -108,24 +109,24 @@ const { DeployUtil } = require("casper-js-sdk");
           //if (tx && tx.length > 0) {
           //  tx = tx[0]
             if (tx) {
-                    await queueHelper.newQueue(`abc`,
-                        {
-                            requestHash: tx.requestHash,
-                            index: tx.index,
-                            deployHash: tx.deployHash,
-                            deployHashToSign: tx.deployHashToSign,
-                            toWallet: tx.toWallet,
-                            fromChainId: tx.fromChainId,
-                            toChainId: tx.toChainId,
-                            originChainId: tx.originChainId,
-                            originToken: tx.originToken.toLowerCase(),
-                            destinationContractHash: tx.destinationContractHash,
-                            timestamp: tx.timestamp,
-                            deployJsonString: tx.deployJsonString,
-                            amount: tx.amount,
-                            mintid: tx.mintid
-                        }
-                    )
+                    //  await queueHelper.newQueue(`abc`,
+                    //     {
+                    //         requestHash: tx.requestHash,
+                    //         index: tx.index,
+                    //         deployHash: tx.deployHash,
+                    //         deployHashToSign: tx.deployHashToSign,
+                    //         toWallet: tx.toWallet,
+                    //         fromChainId: tx.fromChainId,
+                    //         toChainId: tx.toChainId,
+                    //         originChainId: tx.originChainId,
+                    //         originToken: tx.originToken.toLowerCase(),
+                    //         destinationContractHash: tx.destinationContractHash,
+                    //         timestamp: tx.timestamp,
+                    //         deployJsonString: tx.deployJsonString,
+                    //         amount: tx.amount,
+                    //         mintid: tx.mintid
+                    //     }
+                    // )
 
                     
 
@@ -168,7 +169,8 @@ const { DeployUtil } = require("casper-js-sdk");
                     
                     await tx.save()
                     //console.log('sleep 60 seconds before continue')
-                    await generalHelper.sleep(60000)
+                    await sleep(60000)
+                    // await generalHelper.sleep(60000)
             }
 
                 // Set up our input handler
