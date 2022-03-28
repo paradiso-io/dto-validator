@@ -27,42 +27,41 @@ function toContractUnit(n, decimals) {
 
 async function processMintEvent(networkId, blockNumber, lastBlock, eventData) {
   logger.info("New event at block %s", blockNumber);
-
-  if (lastBlock - blockNumber < 5) {
-    return;
+  try {
+    // event ClaimToken(address indexed _token, address indexed _addr, uint256 _amount, uint256 _originChainId, uint256 _fromChainId, uint256 _toChainId, uint256 _index, bytes32 _claimId);
+    await db.Transaction.updateOne(
+      {
+        index: eventData.index,
+        fromChainId: eventData.fromChainId,
+        toChainId: eventData.toChainId,
+        originChainId: eventData.originChainId,
+        originToken: eventData.originToken,
+      },
+      {
+        $set: {
+          claimHash: eventData.transactionHash,
+          claimBlock: eventData.blockNumber,
+          claimed: true,
+          claimId: eventData.claimId,
+        },
+      },
+      { upsert: true, new: true }
+    );
+    logger.info("Mintid %s", eventData);
+    await db.RequestToCasper.updateOne(
+      {
+        mintid: eventData.claimId
+      },
+      {
+        $set: {
+          txExecuted: true
+        },
+      },
+      { upsert: true, new: true }
+    );
+  } catch (e) {
+    logger.error("error while saving process minting %s %s", eventData, e)
   }
-
-  // event ClaimToken(address indexed _token, address indexed _addr, uint256 _amount, uint256 _originChainId, uint256 _fromChainId, uint256 _toChainId, uint256 _index, bytes32 _claimId);
-  await db.Transaction.updateOne(
-    {
-      index: eventData.index,
-      fromChainId: eventData.fromChainId,
-      toChainId: eventData.toChainId,
-      originChainId: eventData.originChainId,
-      originToken: eventData.originToken,
-    },
-    {
-      $set: {
-        claimHash: eventData.transactionHash,
-        claimBlock: eventData.blockNumber,
-        claimed: true,
-        claimId: eventData.claimId,
-      },
-    },
-    { upsert: true, new: true }
-  );
-  logger.info("Mintid %s", eventData);
-  await db.RequestToCasper.updateOne(
-    {
-      mintid: eventData.claimId
-    },
-    {
-      $set: {
-        txExecuted: true
-      },
-    },
-    { upsert: true, new: true }
-  );
 }
 
 async function processRequestEvent(
@@ -72,10 +71,6 @@ async function processRequestEvent(
 ) {
   logger.info("New event at block %s", blockNumber);
 
-  if (lastBlock - blockNumber < 5) {
-    return;
-  }
-
   let originChainId = eventData.originChainId;
   let tokenAddress = eventData.token.toLowerCase();
   let token = await tokenHelper.getToken(tokenAddress, originChainId);
@@ -84,33 +79,37 @@ async function processRequestEvent(
   let amountNumber = new BigNumber(amount).div(10 ** token.decimals).toNumber();
 
   // event RequestBridge(address indexed _token, address indexed _addr, uint256 _amount, uint256 _originChainId, uint256 _fromChainId, uint256 _toChainId, uint256 _index);
-  await db.Transaction.updateOne(
-    {
-      index: eventData.index,
-      fromChainId: eventData.fromChainId,
-      toChainId: eventData.toChainId,
-      originChainId: eventData.originChainId,
-      originToken: eventData.originToken,
-    },
-    {
-      $set: {
-        requestHash: eventData.transactionHash,
-        requestBlock: eventData.blockNumber,
-        account: eventData.toAddr.toLowerCase(),
-        originToken: token.hash,
-        originSymbol: token.symbol,
-        fromChainId: eventData.fromChainId,
-        originChainId: eventData.originChainId,
-        toChainId: eventData.toChainId,
-        txCreator: eventData.txCreator,
-        amount: amount,
-        // amountNumber: amountNumber, // TODO: get token from chain detail
+  try {
+    await db.Transaction.updateOne(
+      {
         index: eventData.index,
-        requestTime: eventData.requestTime,
+        fromChainId: eventData.fromChainId,
+        toChainId: eventData.toChainId,
+        originChainId: eventData.originChainId,
+        originToken: eventData.originToken,
       },
-    },
-    { upsert: true, new: true }
-  );
+      {
+        $set: {
+          requestHash: eventData.transactionHash,
+          requestBlock: eventData.blockNumber,
+          account: eventData.toAddr.toLowerCase(),
+          originToken: token.hash,
+          originSymbol: token.symbol,
+          fromChainId: eventData.fromChainId,
+          originChainId: eventData.originChainId,
+          toChainId: eventData.toChainId,
+          txCreator: eventData.txCreator,
+          amount: amount,
+          // amountNumber: amountNumber, // TODO: get token from chain detail
+          index: eventData.index,
+          requestTime: eventData.requestTime,
+        },
+      },
+      { upsert: true, new: true }
+    );
+  } catch (e) {
+    logger.error("error while saving process request %s %s", eventData, e)
+  }
 }
 
 function findArg(args, argName) {

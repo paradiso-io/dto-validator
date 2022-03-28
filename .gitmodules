@@ -1,3 +1,6 @@
 [submodule "packages"]
 	path = packages
 	url = https://github.com/dotoracle/packages.git
+[submodule "casper-contract-hash"]
+	path = casper-contract-hash
+	url = https://github.com/dotoracle/casper-contract-hash.git
