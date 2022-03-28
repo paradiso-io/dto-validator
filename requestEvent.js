@@ -89,19 +89,32 @@ async function processClaimEvent(event, networkId) {
   logger.info('New claim event at block %s', event.blockNumber)
 
   // event ClaimToken(address indexed _token, address indexed _addr, uint256 _amount, uint256 _originChainId, uint256 _fromChainId, uint256 _toChainId, uint256 _index, bytes32 _claimId);
-  await db.Transaction.updateOne({
+  let requestTx = db.Transaction.findOne({
     index: event.returnValues._index,
     fromChainId: event.returnValues._fromChainId,
-    toChainId: event.returnValues._toChainId
-  },
-    {
-      $set: {
-        claimHash: event.transactionHash,
-        claimBlock: event.blockNumber,
-        claimed: true,
-        claimId: event.returnValues._claimId
-      }
-    }, { upsert: true, new: true })
+    toChainId: event.returnValues._toChainId,
+    originChainId: event.returnValues._originChainId,
+    originToken: event.returnValues._token.toLowerCase()
+  })
+  if (!requestTx) {
+    logger.warn("Dont find request tx for claim event %s", event)
+  } else {
+    await db.Transaction.updateOne({
+      index: event.returnValues._index,
+      fromChainId: event.returnValues._fromChainId,
+      toChainId: event.returnValues._toChainId,
+      originChainId: event.returnValues._originChainId,
+      originToken: event.returnValues._token.toLowerCase()
+    },
+      {
+        $set: {
+          claimHash: event.transactionHash,
+          claimBlock: event.blockNumber,
+          claimed: true,
+          claimId: event.returnValues._claimId
+        }
+      }, { upsert: true, new: true })
+  }
 }
 
 async function updateBlock(networkId, lastBlock) {
@@ -168,7 +181,7 @@ async function getPastEventForBatch(networkId, bridgeAddress, step, from, to) {
           );
         }
       }
-      
+
       {
         //request events
         let evts = allEvents.filter(e => e.event == "ClaimToken")
