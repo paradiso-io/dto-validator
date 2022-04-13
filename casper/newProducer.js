@@ -55,7 +55,7 @@ const { sleep } = require('../helpers/general')
       },
       peerDiscovery: {
         bootstrap: {
-          list: [ '/ip4/139.99.9.174/tcp/63785/ipfs/QmWjz6xb8v9K4KnYEwP5Yk75k5mMBCehzWFLCvvQpYxF3d' ]
+          list: [ '/ip4/139.99.9.174/tcp/63785/ipfs/QmVASRfp5mxD21XaAcSJFmbaAdukUwqK1AMs8tT4RT4b1n' ]
         }
       },
       // dht: {
