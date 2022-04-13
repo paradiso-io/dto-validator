@@ -24,8 +24,11 @@ const Bootstrap = require('libp2p-bootstrap')
 const Gossipsub = require('libp2p-gossipsub')
 
 const PeerId = require('peer-id')
-const idJSON = require('../config/id.json')
+const config = require('config')
+//const idJSON = require('../config/id.json')
 const PubsubChat = require('../chat/chat')
+
+
 
 // Chat protocol
 const ChatProtocol = require('../chat/chat-protocol')
@@ -33,7 +36,11 @@ const bootstrapMultiaddrs = [
     '/ip4/127.0.0.1/tcp/99/ipfs/QmbAGRDkbbmKva5tV6vKrWjAFrPHbc5zeaMHuwjReqxp6d',
     '/ip4/127.0.0.1/tcp/100/ipfs/QmZUGghqGVssYP45GYnQu17ArYoGrhf5yvPDe4eTFQVDaD'
 ]
-
+const idJSON = {
+  id: config.id,
+  privKey: config.privKey,
+  pubKey: config.pubKey
+}
 ;(async () => {
   const peerId = await PeerId.createFromJSON(idJSON)
   //console.log(peerId)
