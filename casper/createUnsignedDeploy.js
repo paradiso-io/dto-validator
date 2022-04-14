@@ -50,12 +50,15 @@ async function main() {
             )
             //mintid = <txHash>-<fromChainId>-<toChainId>-<index>-<originContractAddress>-<originChainId>
             let mintid = `${tx.requestHash}-${tx.fromChainId}-${tx.toChainId}-${tx.index}-${tx.originToken}-${tx.originChainId}`
+
+            let ttl = 600000
             let deploy = await erc20.createUnsignedMint(
                 mpcPubkey,
                 new CLAccountHash(recipientAccountHashByte),
                 tx.amount,
                 mintid,
-                "400000000"
+                "400000000",
+                ttl
             );
             let deployJson = JSON.stringify(DeployUtil.deployToJson(deploy));
             let hashToSign = sha256(Buffer.from(deploy.hash)).toString("hex")
