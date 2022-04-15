@@ -13,17 +13,19 @@ const EventHelper = {
         let log = logs[i]
         if (log.topics[0] === '0xc210de9a5a98ab6c6b579b8d4b8003cce89c8ec3ff669ff2481d63172e00779b') {
           let data = log.data.replace('0x', '')
+          let token = log.topics[1].replace('0x', '').substring(24)
+          console.log('data', data)
           let decoded = web3.eth.abi.decodeParameters([
-            {type: "address", name: "token"},
             {type: "bytes", name: "toAddr"},
             {type: "uint256", name: "amount"},
             {type: "uint256", name: "originChainId"},
             {type: "uint256", name: "fromChainId"},
             {type: "uint256", name: "toChainId"},
             {type: "uint256", name: "index"}
-          ], log.data)
+          ], data)
+          decoded.token = token
 
-          let originToken = decoded.token
+          let originToken = decoded.token.toLowerCase()
           let toAddrBytes = decoded.toAddr
           let decodedAddress = web3.eth.abi.decodeParameters(
             [{ type: "string", name: "decodedAddress" }],
