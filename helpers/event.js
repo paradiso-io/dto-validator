@@ -11,19 +11,30 @@ const EventHelper = {
       let logs = tx.logs
       for (let i = 0; i < logs.length; i++) {
         let log = logs[i]
-        if (log.topics[0] === '0x56e67c8e68bcd127d4be811709a5f04a9dbf3c7757868c0e5b9f554f175cb4fc') {
+        if (log.topics[0] === '0xc210de9a5a98ab6c6b579b8d4b8003cce89c8ec3ff669ff2481d63172e00779b') {
           let data = log.data.replace('0x', '')
-          let params = []
-          for (let i = 0; i < data.length / 64; i++) {
-            params.push(data.substr(i * 64, 64))
-          }
-          let originToken = log.topics[1].replace('0x000000000000000000000000', '0x').toLowerCase()
-          let account = log.topics[2].replace('0x000000000000000000000000', '0x').toLowerCase()
-          let amount = web3.utils.hexToNumberString('0x' + params[0])
-          let originChainId = web3.utils.hexToNumber('0x' + params[1])
-          let fromChainId = web3.utils.hexToNumber('0x' + params[2])
-          let toChainId = web3.utils.hexToNumber('0x' + params[3])
-          let index = web3.utils.hexToNumber('0x' + params[4])
+          let decoded = web3.eth.abi.decodeParameters([
+            {type: "address", name: "token"},
+            {type: "bytes", name: "toAddr"},
+            {type: "uint256", name: "amount"},
+            {type: "uint256", name: "originChainId"},
+            {type: "uint256", name: "fromChainId"},
+            {type: "uint256", name: "toChainId"},
+            {type: "uint256", name: "index"}
+          ], log.data)
+
+          let originToken = decoded.token
+          let toAddrBytes = decoded.toAddr
+          let decodedAddress = web3.eth.abi.decodeParameters(
+            [{ type: "string", name: "decodedAddress" }],
+            toAddrBytes
+          );
+          let account = decodedAddress.decodedAddress.toLowerCase()
+          let amount = decoded.amount
+          let originChainId = parseInt(decoded.originChainId)
+          let fromChainId = parseInt(decoded.fromChainId)
+          let toChainId = parseInt(decoded.fromChainId)
+          let index = parseInt(decoded.index)
 
           if (index === parseInt(txIndex)) {
             result = {
