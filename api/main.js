@@ -71,7 +71,7 @@ router.get('/transactions/:account/:networkId', [
     })
 })
 
-router.get('/verify-transaction/:requestHash/:fromChainId/:index', [
+router.get('/verify-transaction', [
     check('requestHash').exists().withMessage('message is require'),
     check('fromChainId').exists().isNumeric({ no_symbols: true }).withMessage('fromChainId is incorrect'),
     check('index').exists().withMessage('index is require')
