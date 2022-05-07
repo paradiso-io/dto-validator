@@ -132,8 +132,8 @@ router.get('/verify-transaction/:requestHash/:fromChainId/:index', [
                 || eventData.toChainId != transaction.toChainId
                 || eventData.originChainId != transaction.originChainId
                 || eventData.index != transaction.index) {
-                    return res.json({ success: false })
-                }
+                return res.json({ success: false })
+            }
         } catch (e) {
             console.error(e)
             return res.json({ success: false })
@@ -300,6 +300,41 @@ router.post('/request-withdraw', [
 
         return res.json({ r: r, s: s, v: v, msgHash: sig.msgHash, name: name, symbol: symbol, decimals: decimals })
     }
+})
+
+router.get('/bridge-fee/:originToken/:networkId/:toChainId', [
+    check('networkId').exists().isNumeric({ no_symbols: true }).withMessage('networkId is incorrect'),
+    check('toChainId').exists().isNumeric({ no_symbols: true }).withMessage('toChainId is incorrect'),
+    check('originToken').exists().isLength({ min: 42, max: 68 }).withMessage('token address is incorrect.')
+], async function (req, res, next) {
+    const errors = validationResult(req)
+    if (!errors.isEmpty()) {
+        return res.status(400).json({ errors: errors.array() })
+    }
+    let originToken = req.params.originToken.toLowerCase()
+    if (originToken.length != 42) {
+        return res.status(400).json({ errors: "invalid token address" })
+    }
+
+    let networkId = req.params.networkId
+    let toChainId = req.params.toChainId
+    if (`${toChainId}` == `${casperConfig.networkId}`) {
+        return CasperHelper.getBridgeFee(originToken)
+    }
+
+    let feeToken = await db.Fee.findOne({ token: originToken, networkId: networkId, toChainId: toChainId })
+    let feeAmount = '0'
+    let feePercent = 0
+    let feeDivisor = 10000
+    if (feeToken) {
+        feeAmount = feeToken.feeAmount
+        feePercent = feeToken.feePercent
+    }
+    return res.json({
+        feeAmount: feeAmount,
+        feePercent: feePercent,
+        feeDivisor: feeDivisor
+    })
 })
 
 

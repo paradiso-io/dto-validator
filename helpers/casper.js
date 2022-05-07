@@ -9,6 +9,16 @@ const CasperHelper = {
         let network = config.caspernetwork;
         return CasperContractConfig[network]
     },
+    getBridgeFee: (originTokenAddress) => {
+        let casperConfig = CasperHelper.getConfigInfo()
+        let tokens = casperConfig.tokens
+        for(const t of tokens) {
+            if (t.originContractAddress.toLowerCase() == originTokenAddress.toLowerCase()) {
+                return t.fee
+            }
+        }
+        return '0'
+    },
     getMPCPubkey: () => {
         let casperConfig = CasperHelper.getConfigInfo()
         let mpcPubkey = casperConfig.mpcPubkey
