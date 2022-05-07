@@ -18,7 +18,7 @@ async function readFee(token, toChainId, bridgeContractAddress) {
   while (retry > 0) {
     logger.info('Reading fee for token %s to chain %s, retry %s', token, toChainId, 10 - retry)
     try {
-      let web3 = await Web3Utils.getWeb3(networkId);
+      let web3 = await Web3Utils.getWeb3(toChainId);
       const contract = new web3.eth.Contract(GenericBridge, bridgeContractAddress);
       let fees = await contract.methods.getFeeInfo(token.hash).call()
       await db.Fee.updateOne(
