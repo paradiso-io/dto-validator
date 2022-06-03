@@ -22,7 +22,6 @@ const Gossipsub = require('libp2p-gossipsub')
 // const db = require('../models')
 
 const config = require('config')
-const queueHelper = require('../helpers/queue')
 const generalHelper = require('../helpers/general')
 const db = require('../models')
 const logger = require("../helpers/logger");
@@ -36,6 +35,7 @@ const { sleep } = require('../helpers/general')
       addresses: {
         listen: [
           '/ip4/0.0.0.0/tcp/222'
+
         ]
       },
       modules: {
@@ -57,12 +57,6 @@ const { sleep } = require('../helpers/general')
             list: ['/ip4/139.99.9.174/tcp/63785/ipfs/QmVASRfp5mxD21XaAcSJFmbaAdukUwqK1AMs8tT4RT4b1n']
           }
         },
-        // dht: {
-        //   enabled: true,
-        //   randomWalk: {
-        //     enabled: true
-        //   }
-        // }
       }
     })
 
@@ -74,22 +68,6 @@ const { sleep } = require('../helpers/general')
     // Start libp2p
     await libp2p.start()
     console.log('ID  node PRODUCER : ', libp2p.peerId.toB58String())
-    //console.log(libp2p.peerId)
-
-
-
-    // const config = require('config')
-    // const queueHelper = require('../helpers/queue')
-    // const generalHelper = require('../helpers/general')
-    // const db = require('../models')
-    // const logger = require("../helpers/logger");
-    // const { DeployUtil } = require("casper-js-sdk");
-
-
-    //   const config = require('config')
-    //   const queueHelper = require('../helpers/queue')
-    //   const generalHelper = require('../helpers/general')
-    //   const db = require('./models')
 
     //Create our PubsubChat client 
     const pubsubChat = new PubsubChat(libp2p, PubsubChat.TOPIC, async ({ from, message }) => {
@@ -101,34 +79,8 @@ const { sleep } = require('../helpers/general')
       console.info(`${fromMe ? PubsubChat.CLEARLINE : ''}${user}(${new Date(message.created).toLocaleTimeString()}): ${message.data}`)
     })
     while (true) {
-      // let tx = await db.RequestToCasper.find({isProcessed: false}).sort({ timestamp: 1 }).limit(1)
       let tx = await db.RequestToCasper.findOne({ isProcessed: false })
-      //console.log(tx)
-
-      //if (tx && tx.length > 0) {
-      //  tx = tx[0]
       if (tx) {
-        //  await queueHelper.newQueue(`abc`,
-        //     {
-        //         requestHash: tx.requestHash,
-        //         index: tx.index,
-        //         deployHash: tx.deployHash,
-        //         deployHashToSign: tx.deployHashToSign,
-        //         toWallet: tx.toWallet,
-        //         fromChainId: tx.fromChainId,
-        //         toChainId: tx.toChainId,
-        //         originChainId: tx.originChainId,
-        //         originToken: tx.originToken.toLowerCase(),
-        //         destinationContractHash: tx.destinationContractHash,
-        //         timestamp: tx.timestamp,
-        //         deployJsonString: tx.deployJsonString,
-        //         amount: tx.amount,
-        //         mintid: tx.mintid
-        //     }
-        // )
-
-
-
         // Create our PubsubChat client 
         const pubsubChat = new PubsubChat(libp2p, PubsubChat.TOPIC, async ({ from, message }) => {
           let fromMe = from === libp2p.peerId.toB58String()
@@ -149,18 +101,6 @@ const { sleep } = require('../helpers/general')
           console.error('Could not publish chat', err)
         }
 
-
-        //  // Create our PubsubChat client 
-        // const pubsubChat1 = new PubsubChat(libp2p, PubsubChat.TOPIC, async ({ from, messagex }) => {
-        //     let fromMe = from === libp2p.peerId.toB58String()
-        //     let user = fromMe ? 'Me' : from.substring(0, 6)
-        //     if (pubsubChat1.userHandles.has(from)) {
-        //     user = pubsubChat1.userHandles.get(from)
-        //     }
-        //     console.info(`${fromMe ? PubsubChat.CLEARLINE : ''}${user}(${new Date(messagex.created).toLocaleTimeString()}): ${messagex.data}`)
-        //     success = JSON.parse(messagex.data)
-        // })
-
         //  if (success != null) {
         tx.isProcessed = true
         // }
@@ -171,20 +111,6 @@ const { sleep } = require('../helpers/general')
         await sleep(60000)
         // await generalHelper.sleep(60000)
       }
-
-      // Set up our input handler
-      //process.stdin.on('data', async (message) => {
-      //message = tx
-      //console.log(message)
-      // Remove trailing newline
-      //message = message.slice(0, -1)
-
-      // TODO: use pubsubChat.checkCommand(message) to exit early if it returns true
-
-      // Publish the message
-
-      //})
-      // }
     }
 
   })()
