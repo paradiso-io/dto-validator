@@ -107,12 +107,11 @@
   },
   "contracts": {
     "1": {
-      "bridge": "",
-      "firstBlockCrawl": 1,
+      "bridge": "0x02b758ce469af940C57A42aD1dE5D404122bc283",
+      "firstBlockCrawl": 14895882,
       "wrapToken": "",
-      "usdt": "",
-      "usdc": "",
-      "busd": ""
+      "usdt": "0xdac17f958d2ee523a2206206994597c13d831ec7",
+      "usdc": "0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48"
     },
     "42": {
       "bridge": "0xF1f62E51766037BDc5202CfDED157fF688A09C5f",
@@ -154,14 +153,7 @@
   "db": {
     "uri": "mongodb://localhost:27017/dtoBridge"
   },
-  "caspernetwork": "testnet",
-  "rabbitmq": {
-    "hostname": "139.99.9.174",
-    "port": 5672,
-    "username": "vcd",
-    "password": "vcd",
-    "consumers": ["earth", "moon", "sun"]
-  },
+  "caspernetwork": "mainnet",
   "signer": "",
   "checkTxOnChain": false,
   "signatureServer": []
