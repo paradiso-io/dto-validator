@@ -13,7 +13,7 @@
   },
   "blockchain": {
     "1": {
-      "httpProvider": "https://infura.io/v3/468031fc706e435eb5f32f89a4077d56",
+      "httpProvider": "",
       "wsProvider": "",
       "explorer": "https://etherscan.io",
       "confirmations": 6,
@@ -21,7 +21,7 @@
       "nativeSymbol": "ETH"
     },
     "42": {
-      "httpProvider": "https://speedy-nodes-nyc.moralis.io/6f1c50d092cad31805b2371f/eth/kovan",
+      "httpProvider": "",
       "wsProvider": "",
       "explorer": "https://kovan.etherscan.io",
       "confirmations": 6,
@@ -53,7 +53,7 @@
       "nativeSymbol": "fTOMO"
     },
     "97": {
-      "httpProvider": "https://speedy-nodes-nyc.moralis.io/6f1c50d092cad31805b2371f/bsc/testnet",
+      "httpProvider": "",
       "wsProvider": "",
       "explorer": "https://testnet.bscscan.com",
       "confirmations": 6,
@@ -77,7 +77,7 @@
       "nativeSymbol": "fFTM"
     },
     "43113": {
-      "httpProvider": "https://speedy-nodes-nyc.moralis.io/6f1c50d092cad31805b2371f/avalanche/testnet",
+      "httpProvider": "",
       "wsProvider": "",
       "explorer": "https://testnet.snowtrace.io/",
       "confirmations": 6,
