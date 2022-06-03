@@ -261,11 +261,14 @@ async function watch(networkId, bridgeAddress) {
 
 function main() {
   let contracts = config.contracts;
+  let crawlChainIds = config.crawlChainIds ? config.crawlChainIds : []
   let networks = Object.keys(contracts);
   networks.forEach((networkId) => {
-    let contractAddress = contracts[networkId].bridge;
-    if (contractAddress !== "") {
-      watch(networkId, contractAddress);
+    if (crawlChainIds.includes(networkId)) {
+      let contractAddress = contracts[networkId].bridge;
+      if (contractAddress !== "") {
+        watch(networkId, contractAddress);
+      }
     }
   });
 }
