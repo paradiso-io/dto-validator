@@ -34,7 +34,7 @@ const { sleep } = require('../helpers/general')
     const libp2p = await Libp2p.create({
       addresses: {
         listen: [
-          '/ip4/0.0.0.0/tcp/222'
+          '/ip4/0.0.0.0/tcp/223'
 
         ]
       },
