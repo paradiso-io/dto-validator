@@ -155,7 +155,7 @@ async function main() {
                     new CLAccountHash(recipientAccountHashByte),
                     req.amount,
                     mintid,
-                    "1500000000",
+                    "400000000",
                     ttl
                 );
                 let deployJson = JSON.stringify(DeployUtil.deployToJson(deploy));
