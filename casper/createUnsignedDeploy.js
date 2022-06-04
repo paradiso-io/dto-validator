@@ -149,13 +149,14 @@ async function main() {
                 let mintid = req.mintid
 
                 //TODO: check whether mintid executed => this is to avoid failed transactions as mintid cant be executed more than one time
-
+                let ttl = 600000
                 let deploy = await erc20.createUnsignedMint(
                     mpcPubkey,
                     new CLAccountHash(recipientAccountHashByte),
                     req.amount,
                     mintid,
-                    "1500000000"
+                    "1500000000",
+                    ttl
                 );
                 let deployJson = JSON.stringify(DeployUtil.deployToJson(deploy));
                 let hashToSign = sha256(Buffer.from(deploy.hash)).toString("hex")
