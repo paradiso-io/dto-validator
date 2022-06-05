@@ -65,12 +65,15 @@ router.get('/transactions/:account/:networkId', [
     }
     let total = await db.Transaction.countDocuments(query)
     let transactions = await db.Transaction.find(query).sort({ requestTime: -1 }).limit(limit).skip(skip)
-    for (var i = 0; i < transactions.length; i++) {
-        if (transactions[i].originToken == "0x1111111111111111111111111111111111111111") {
-            transactions[i].originDecimals = 18
+    for (const t of transactions) {
+        if (t.originToken == "0x1111111111111111111111111111111111111111") {
+            t.originDecimals = 18
+            console.log(t)
         } else {
-            let token = await tokenHelper.getToken(transactions[i].originToken, transactions[i].originChainId)
-            transactions[i].originDecimals = token.decimals
+            let token = await tokenHelper.getToken(t.originToken, t.originChainId)
+            t.originDecimals = token.decimals
+            console.log(token)
+            console.log(t)
         }
     }
     return res.json({
