@@ -72,7 +72,6 @@ router.get('/transactions/:account/:networkId', [
             let token = await tokenHelper.getToken(t.originToken, t.originChainId)
             t.originDecimals = token.decimals
         }
-
     }
     return res.json({
         transactions: transactions,
