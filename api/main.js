@@ -68,12 +68,9 @@ router.get('/transactions/:account/:networkId', [
     for (const t of transactions) {
         if (t.originToken == "0x1111111111111111111111111111111111111111") {
             t.originDecimals = 18
-            console.log(t)
         } else {
             let token = await tokenHelper.getToken(t.originToken, t.originChainId)
             t.originDecimals = token.decimals
-            console.log(token)
-            console.log(t)
         }
     }
     return res.json({
