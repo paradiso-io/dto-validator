@@ -66,6 +66,7 @@ router.get('/transactions/:account/:networkId', [
     let total = await db.Transaction.countDocuments(query)
     let transactions = await db.Transaction.find(query).sort({ requestTime: -1 }).limit(limit).skip(skip)
     for (const t of transactions) {
+        t.originDecimals = 18;
         if (t.originToken == "0x1111111111111111111111111111111111111111") {
             t.originDecimals = 18
             console.log(t)
