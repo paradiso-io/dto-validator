@@ -8,15 +8,15 @@ const logger = require("../helpers/logger");
 const { CLAccountHash, DeployUtil } = require("casper-js-sdk");
 
 async function main() {
-    let casperConfig = CasperHelper.getConfigInfo()
-    let casperChainId = casperConfig.networkId
-    let mpcPubkey = CasperHelper.getMPCPubkey()
-    const erc20 = new ERC20Client(
-        casperConfig.rpc,
-        casperConfig.chainName,
-        casperConfig.eventStream
-    );
     while (true) {
+        let casperConfig = CasperHelper.getConfigInfo()
+        let casperChainId = casperConfig.networkId
+        let mpcPubkey = CasperHelper.getMPCPubkey()
+        const erc20 = new ERC20Client(
+            casperConfig.rpc,
+            casperConfig.chainName,
+            casperConfig.eventStream
+        );
         //scan for tx without casperDeployCreated
         let pendingTxes = await db.Transaction.find(
             {
