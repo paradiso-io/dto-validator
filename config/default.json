@@ -17,7 +17,7 @@
       "httpProvider": "",
       "wsProvider": "",
       "explorer": "https://etherscan.io",
-      "confirmations": 6,
+      "confirmations": 12,
       "nativeName": "Ethereum",
       "nativeSymbol": "ETH"
     },
@@ -33,7 +33,7 @@
       "httpProvider": "https://bsc-dataseed.binance.org",
       "wsProvider": "wss://bsc-ws-node.nariox.org:443",
       "explorer": "https://bscscan.com",
-      "confirmations": 6,
+      "confirmations": 30,
       "nativeName": "Binance",
       "nativeSymbol": "BNB"
     },
@@ -41,7 +41,7 @@
       "httpProvider": "https://rpc.tomochain.com",
       "wsProvider": "wss://ws.tomochain.com",
       "explorer": "https://scan.tomochain.com",
-      "confirmations": 6,
+      "confirmations": 30,
       "nativeName": "TomoChain",
       "nativeSymbol": "TOMO"
     },
@@ -49,7 +49,7 @@
       "httpProvider": "https://rpc.testnet.tomochain.com",
       "wsProvider": "wss://rpc.testnet.tomochain.com",
       "explorer": "https://scan.testnet.tomochain.com",
-      "confirmations": 6,
+      "confirmations": 30,
       "nativeName": "TomoChain Testnet",
       "nativeSymbol": "fTOMO"
     },
@@ -57,7 +57,7 @@
       "httpProvider": "",
       "wsProvider": "",
       "explorer": "https://testnet.bscscan.com",
-      "confirmations": 6,
+      "confirmations": 30,
       "nativeName": "Binance Testnet",
       "nativeSymbol": "fBNB"
     },
@@ -73,7 +73,7 @@
       "httpProvider": "https://rpc.testnet.fantom.network/",
       "wsProvider": "",
       "explorer": "https://testnet.ftmscan.com/",
-      "confirmations": 6,
+      "confirmations": 30,
       "nativeName": "Fantom Testnet",
       "nativeSymbol": "fFTM"
     },
@@ -81,7 +81,7 @@
       "httpProvider": "",
       "wsProvider": "",
       "explorer": "https://testnet.snowtrace.io/",
-      "confirmations": 6,
+      "confirmations": 30,
       "nativeName": "Avalanche Testnet",
       "nativeSymbol": "fAVAX"
     },
@@ -89,7 +89,7 @@
       "httpProvider": "https://rpc-mumbai.maticvigil.com/",
       "wsProvider": "",
       "explorer": "https://explorer-mumbai.maticvigil.com/",
-      "confirmations": 6,
+      "confirmations": 30,
       "nativeName": "Mumbai Matic",
       "nativeSymbol": "fMatic"
     },
