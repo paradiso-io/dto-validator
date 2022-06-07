@@ -8,15 +8,15 @@ const logger = require("../helpers/logger");
 const { CLAccountHash, DeployUtil } = require("casper-js-sdk");
 
 async function main() {
-    let casperConfig = CasperHelper.getConfigInfo()
-    let casperChainId = casperConfig.networkId
-    let mpcPubkey = CasperHelper.getMPCPubkey()
-    const erc20 = new ERC20Client(
-        casperConfig.rpc,
-        casperConfig.chainName,
-        casperConfig.eventStream
-    );
     while (true) {
+        let casperConfig = CasperHelper.getConfigInfo()
+        let casperChainId = casperConfig.networkId
+        let mpcPubkey = CasperHelper.getMPCPubkey()
+        const erc20 = new ERC20Client(
+            casperConfig.rpc,
+            casperConfig.chainName,
+            casperConfig.eventStream
+        );
         //scan for tx without casperDeployCreated
         let pendingTxes = await db.Transaction.find(
             {
@@ -149,13 +149,14 @@ async function main() {
                 let mintid = req.mintid
 
                 //TODO: check whether mintid executed => this is to avoid failed transactions as mintid cant be executed more than one time
-
+                let ttl = 600000
                 let deploy = await erc20.createUnsignedMint(
                     mpcPubkey,
                     new CLAccountHash(recipientAccountHashByte),
                     req.amount,
                     mintid,
-                    "1500000000"
+                    "400000000",
+                    ttl
                 );
                 let deployJson = JSON.stringify(DeployUtil.deployToJson(deploy));
                 let hashToSign = sha256(Buffer.from(deploy.hash)).toString("hex")

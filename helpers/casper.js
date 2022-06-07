@@ -1,12 +1,12 @@
 const config = require('config')
 const { CLPublicKey, CLPublicKeyTag, CasperServiceByJsonRPC } = require("casper-js-sdk");
 const { ERC20Client } = require('casper-erc20-js-client')
-const CasperContractConfig = require("../casper-contract-hash/config.json")
 const BigNumber = require("bignumber.js");
 
 const CasperHelper = {
     getConfigInfo: () => {
         let network = config.caspernetwork;
+        const CasperContractConfig = require("../casper-contract-hash/config.json")
         return CasperContractConfig[network]
     },
     getBridgeFee: (originTokenAddress) => {

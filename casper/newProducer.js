@@ -35,7 +35,6 @@ const { sleep } = require('../helpers/general')
       addresses: {
         listen: [
           '/ip4/0.0.0.0/tcp/223'
-
         ]
       },
       modules: {

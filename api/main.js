@@ -11,6 +11,8 @@ const axios = require('axios')
 const CasperHelper = require('../helpers/casper')
 const logger = require('../helpers/logger')
 const casperConfig = CasperHelper.getConfigInfo()
+const tokenHelper = require("../helpers/token");
+
 router.get('/status', [], async function (req, res) {
     return res.json({ status: 'ok' })
 })
@@ -62,7 +64,15 @@ router.get('/transactions/:account/:networkId', [
         ]
     }
     let total = await db.Transaction.countDocuments(query)
-    let transactions = await db.Transaction.find(query).sort({ requestTime: -1 }).limit(limit).skip(skip)
+    let transactions = await db.Transaction.find(query).sort({ requestTime: -1 }).limit(limit).skip(skip).lean().exec()
+    for (const t of transactions) {
+        if (t.originToken == "0x1111111111111111111111111111111111111111") {
+            t.originDecimals = 18
+        } else {
+            let token = await tokenHelper.getToken(t.originToken, t.originChainId)
+            t.originDecimals = token.decimals
+        }
+    }
     return res.json({
         transactions: transactions,
         page: page,
