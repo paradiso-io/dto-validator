@@ -81,6 +81,35 @@ router.get('/transactions/:account/:networkId', [
     })
 })
 
+router.get('/history', [
+    query('limit').isInt({ min: 0, max: 200 }).optional().withMessage('limit should greater than 0 and less than 200'),
+    query('page').isNumeric({ no_symbols: true }).optional().withMessage('page must be number')
+], async function (req, res, next) {
+    const errors = validationResult(req)
+    if (!errors.isEmpty()) {
+        return res.status(400).json({ errors: errors.array() })
+    }
+    let limit = (req.query.limit) ? parseInt(req.query.limit) : 50
+    let page = req.query.page || 1
+    let skip = limit * (page - 1)
+    let total = await db.Transaction.countDocuments({})
+    let transactions = await db.Transaction.find({}).sort({ requestTime: -1 }).limit(limit).skip(skip).lean().exec()
+    for (const t of transactions) {
+        if (t.originToken == "0x1111111111111111111111111111111111111111") {
+            t.originDecimals = 18
+        } else {
+            let token = await tokenHelper.getToken(t.originToken, t.originChainId)
+            t.originDecimals = token.decimals
+        }
+    }
+    return res.json({
+        transactions: transactions,
+        page: page,
+        limit: limit,
+        total: total
+    })
+})
+
 router.get('/verify-transaction/:requestHash/:fromChainId/:index', [
     check('requestHash').exists().withMessage('message is require'),
     check('fromChainId').exists().isNumeric({ no_symbols: true }).withMessage('fromChainId is incorrect'),
