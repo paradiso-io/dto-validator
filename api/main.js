@@ -28,7 +28,7 @@ router.get('/transactions/:account/:networkId', [
         return res.status(400).json({ errors: errors.array() })
     }
     let account = req.params.account.toLowerCase()
-    if (account.length != 42 && account.length != 68) {
+    if (account.length != 42 && account.length != 68 && account.length != 66) {
         return res.status(400).json({ errors: "invalid address" })
     }
     {
@@ -40,14 +40,14 @@ router.get('/transactions/:account/:networkId', [
             return res.status(400).json({ errors: "address must be hex" })
         }
 
-        if (account.length == 68) {
+        if (account.length == 68 || account.length == 66) {
             if (account.substring(0, 2) != "01" && account.substring(0, 2) != "02") {
                 return res.status(400).json({ errors: "invalid casper public key" })
             }
 
-            if (account.substring(2, 4) != "03" && account.substring(2, 4) != "02") {
-                return res.status(400).json({ errors: "invalid casper public key" })
-            }
+            // if (account.substring(2, 4) != "03" && account.substring(2, 4) != "02") {
+            //     return res.status(400).json({ errors: "invalid casper public key" })
+            // }
 
             account = CasperHelper.fromCasperPubkeyToAccountHash(account)
         }
