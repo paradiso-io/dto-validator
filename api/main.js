@@ -17,6 +17,13 @@ router.get('/status', [], async function (req, res) {
     return res.json({ status: 'ok' })
 })
 
+router.get('/tvl', [], async function (req, res) {
+    let tvl = await db.TVL.findOne({})
+    return res.json({
+        tvl
+    })
+})
+
 router.get('/transactions/:account/:networkId', [
     check('account').exists().isLength({ min: 42, max: 68 }).withMessage('address is incorrect.'),
     check('networkId').exists().isNumeric({ no_symbols: true }).withMessage('networkId is incorrect'),
