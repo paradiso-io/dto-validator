@@ -1,0 +1,19 @@
+{
+  "tokenOnExchangeMap": {
+    "dto": "dotoracle",
+    "btc": "bitcoin",
+    "eth": "ethereum",
+    "bnb": "binancecoin",
+    "ada": "cardano",
+    "fxs": "frax-share",
+    "frax": "frax",
+    "usdt": "tether",
+    "dai": "dai",
+    "usdc": "usd-coin",
+    "avax": "avalanche-2",
+    "glmr": "moonbeam"
+  },
+  "exchanges": [
+    "CGK"
+  ]
+}
