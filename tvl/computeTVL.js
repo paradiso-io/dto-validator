@@ -24,7 +24,7 @@ const TVLHelper = {
                 let tokenSymbol = token.symbol
                 let tokenBalance = '0'
                 let bridgeContractAddress = bridgeContracts[`${token.originChainId}`].bridge
-                if (token.originContractAddress == "0x1111111111111111111111111111111111111111") {
+                if (token.originContractAddress === "0x1111111111111111111111111111111111111111") {
                     tokenBalance = await web3.eth.getBalance(bridgeContractAddress)
                 } else {
                     let originTokenContract = await new web3.eth.Contract(ERC20ABI, originContractAddress)
