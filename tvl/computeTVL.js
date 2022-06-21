@@ -37,7 +37,7 @@ const TVLHelper = {
                 addTokens.push(tokenSymbol)
                 //reading balance from casper contract
                 const erc20 = new ERC20Client(
-                    tokenConfigInfo.rpc,
+                    casperHelper.getRandomCasperRPCLink(),
                     tokenConfigInfo.chainName,
                     tokenConfigInfo.eventStream,
                 )
@@ -82,6 +82,7 @@ async function main() {
         },
         {upsert: true, new: true}
     )
+    process.exit(0)
 }
 
 main()

@@ -13,7 +13,7 @@ async function main() {
         let casperChainId = casperConfig.networkId
         let mpcPubkey = CasperHelper.getMPCPubkey()
         const erc20 = new ERC20Client(
-            casperConfig.rpc,
+            CasperHelper.getRandomCasperRPCLink(),
             casperConfig.chainName,
             casperConfig.eventStream
         );

@@ -121,7 +121,7 @@ async function crawl(from, to, lastBlockHeight) {
   let toBlock = to
   let casperConfig = CasperHelper.getConfigInfo();
   let networkId = casperConfig.networkId;
-  let client = new CasperServiceByJsonRPC(casperConfig.rpc);
+  let client = new CasperServiceByJsonRPC(CasperHelper.getRandomCasperRPCLink());
   let contractHashes = casperConfig.tokens.map((e) => e.contractHash);
   while (fromBlock < toBlock) {
     try {
@@ -219,7 +219,7 @@ async function crawl(from, to, lastBlockHeight) {
 
                   //reading index from id
                   const erc20 = new ERC20Client(
-                    casperConfig.rpc,
+                    CasperHelper.getRandomCasperRPCLink(),
                     casperConfig.chainName,
                     casperConfig.eventStream,
                   )
@@ -292,7 +292,7 @@ async function crawl(from, to, lastBlockHeight) {
     } catch (e) {
       logger.error("Error: %s [%s-%s] %s", e, from, to, fromBlock)
       await generalHelper.sleep(5 * 1000)
-      client = new CasperServiceByJsonRPC(casperConfig.rpc);
+      client = new CasperServiceByJsonRPC(CasperHelper.getRandomCasperRPCLink());
     }
   }
 }
@@ -300,7 +300,7 @@ async function crawl(from, to, lastBlockHeight) {
 const getPastEvent = async () => {
   let casperConfig = CasperHelper.getConfigInfo();
   let networkId = casperConfig.networkId;
-  const client = new CasperServiceByJsonRPC(casperConfig.rpc);
+  const client = new CasperServiceByJsonRPC(CasperHelper.getRandomCasperRPCLink());
   let fromBlock = parseInt(casperConfig.fromBlock);
 
   let setting = await db.Setting.findOne({ networkId: networkId });

@@ -37,7 +37,7 @@ const test = async () => {
   let tokens = casperConfig.tokens;
   let contractHash = tokens[0].contractHash;
   const erc20 = new ERC20Client(
-    casperConfig.rpc,
+    CasperHelper.getRandomCasperRPCLink(),
     casperConfig.chainName,
     casperConfig.eventStream
   );
