@@ -150,7 +150,13 @@ async function getPastEventForBatch(networkId, bridgeAddress, step, from, to) {
       } else {
         toBlock = lastBlock;
       }
-      let web3 = await Web3Utils.getWeb3(networkId);
+      let both = await Web3Utils.getWeb3AndRPC(networkId);
+      let web3 = both.web3
+      let currentBlockForRPC = await web3.eth.getBlockNumber()
+      if (parseInt(currentBlockForRPC) < parseInt(toBlock)) {
+        logger.warning("invalid RPC %s, try again", both.rpc)
+        continue
+      } 
       const contract = new web3.eth.Contract(GenericBridge, bridgeAddress);
       logger.info(
         "Network %s: Get Past Event from block %s to %s, lastblock %s",

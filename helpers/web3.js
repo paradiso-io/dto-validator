@@ -3,7 +3,20 @@ const config = require('config')
 
 let Web3Util = {
   getWeb3: async (networkId) => {
-    return new Web3(new Web3.providers.HttpProvider(config.blockchain[networkId].httpProvider))
+    let both = await Web3Util.getWeb3AndRPC(networkId)
+    return both.web3
+  },
+  getWeb3AndRPC: async (networkId) => {
+    let list = []
+    if (Array.isArray(config.blockchain[networkId].httpProvider)) {
+      list = config.blockchain[networkId].httpProvider
+    } else {
+      list.push(config.blockchain[networkId].httpProvider)
+    }
+    let len = list.length
+    let random = Math.floor(Math.random() * len)
+    let rpc = list[random]
+    return { web3: new Web3(new Web3.providers.HttpProvider(rpc)), rpc: rpc}
   },
   getWeb3Socket: async (networkId) => {
     return new Web3(new Web3.providers.WebsocketProvider(config.get('blockchain')[networkId].wsProvider))
