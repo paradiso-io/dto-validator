@@ -88,6 +88,70 @@ router.get('/transactions/:account/:networkId', [
     })
 })
 
+
+router.get('/transaction-status/:requestHash/:fromChainId', [
+    check('requestHash').exists().withMessage('message is required'),
+    check('fromChainId').exists().isNumeric({ no_symbols: true }).withMessage('fromChainId is incorrect')
+], async function (req, res, next) {
+    const errors = validationResult(req)
+    if (!errors.isEmpty()) {
+        return res.status(400).json({ errors: errors.array() })
+    }
+    console.log('req', req.params)
+    let requestHash = req.params.requestHash
+    let fromChainId = req.params.fromChainId
+    let index = req.query.index ? req.query.index : 0
+
+    if (!req.query.index) {
+        {
+            //check transaction on-chain
+            let transaction = await eventHelper.getRequestEvent(fromChainId, requestHash)
+            if (!transaction || !transaction.requestHash) {
+                //cant find transaction on-chain
+                return res.status(400).json({ errors: "transaction not found" })
+            }
+            index = transaction.index
+        }
+    }
+
+    //read tx from the server itself
+    let requestData = `verify-transaction/${requestHash}/${fromChainId}/${index}`
+    let myself = `http://localhost:${config.server.port}/${requestData}`
+    let verifyRet = await axios.get(myself)
+    let myNodeResult = verifyRet.data
+    console.log('myNodeResult', myNodeResult)
+    const readStatus = async (i) => {
+        try {
+            console.log('reading from', config.signatureServer[i])
+            let ret = await axios.get(config.signatureServer[i] + `/${requestData}`, {timeout: 10 * 1000})
+            ret = ret.data
+            console.log('reading from ret ', ret)
+            ret = ret.success ? ret.success : false
+            return { index: i, success: ret }
+        } catch (e) {
+            console.log('e', e.toString())
+        }
+        return { index: i, success: false }
+    }
+
+    let responses = []
+    if (config.signatureServer.length > 0) {
+        try {
+            let r = []
+            for (let i = 0; i < config.signatureServer.length; i++) {
+                r.push(readStatus(i))
+            }
+
+            responses = await Promise.all(r)
+
+        } catch (e) {
+            console.log(e)
+        }
+    }
+
+    return res.json({ apiServer: myNodeResult.success, others: responses, index: index })
+})
+
 router.get('/history', [
     query('limit').isInt({ min: 0, max: 200 }).optional().withMessage('limit should greater than 0 and less than 200'),
     query('page').isNumeric({ no_symbols: true }).optional().withMessage('page must be number')
@@ -131,7 +195,7 @@ router.get('/verify-transaction/:requestHash/:fromChainId/:index', [
     let fromChainId = req.params.fromChainId
     let index = req.params.index
     let transaction = await eventHelper.getRequestEvent(fromChainId, requestHash, index)
-    if (!transaction) {
+    if (!transaction || !transaction.requestHash) {
         return res.json({ success: false })
     }
     if (fromChainId != casperConfig.networkId) {

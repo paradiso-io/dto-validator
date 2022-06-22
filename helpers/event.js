@@ -37,7 +37,7 @@ const EventHelper = {
           let toChainId = parseInt(decoded.fromChainId)
           let index = parseInt(decoded.index)
 
-          if (index === parseInt(txIndex)) {
+          if (!txIndex || index === parseInt(txIndex)) {
             result = {
               requestHash: txHash,
               requestBlock: log.blockNumber,
@@ -48,6 +48,9 @@ const EventHelper = {
               toChainId: toChainId,
               amount: amount,
               index: index,
+            }
+            if (!txIndex) {
+              return result
             }
           }
         }
