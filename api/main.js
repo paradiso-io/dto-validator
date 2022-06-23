@@ -242,6 +242,7 @@ router.get('/verify-transaction/:requestHash/:fromChainId/:index', [
         //casper
         let casperRPC = CasperHelper.getCasperRPC()
         try {
+            transaction = await db.Transaction.findOne({ requestHash: requestHash, fromChainId: fromChainId })
             let deployResult = await casperRPC.getDeployInfo(CasperHelper.toCasperDeployHash(transaction.requestHash))
             let eventData = await CasperHelper.parseRequestFromCasper(deployResult)
             if (eventData.toAddr.toLowerCase() != transaction.account.toLowerCase()
@@ -350,7 +351,7 @@ router.post('/request-withdraw', [
                 try {
                     console.log("requesting signature from ", config.signatureServer[i])
                     let ret = await axios.post(config.signatureServer[i] + '/request-withdraw', body, { timeout: 20 * 1000 })
-                    console.log("signature data ", ret, config.signatureServer[i])
+                    console.log("signature data ok ", config.signatureServer[i])
                     return ret
                 } catch (e) {
                     console.log("failed to get signature from ", config.signatureServer[i], e)
@@ -413,6 +414,7 @@ router.post('/request-withdraw', [
         //reading required number of signature
         let minApprovers = 0
         let retry = 10
+        console.log("reading minApprovers", minApprovers)
         while(retry > 0) {
             try {
                 let bridgeContract = await Web3Utils.getBridgeContract(transaction.toChainId)
@@ -420,11 +422,12 @@ router.post('/request-withdraw', [
                 minApprovers = parseInt(minApprovers)
                 break
             } catch(e) {
+                console.log("error in reading approver", minApprovers)
                 await GeneralHelper.sleep(5 * 1000)
             }
             retry--
         }
-
+        console.log("done reading minApprovers", minApprovers)
         if (r.length < minApprovers) {
             return res.status(400).json({ errors: 'Validators data are not fully synced yet, please try again later' })
         }
