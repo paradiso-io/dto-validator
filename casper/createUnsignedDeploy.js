@@ -6,14 +6,14 @@ const { ERC20Client } = require("casper-erc20-js-client");
 const { sha256 } = require("ethereum-cryptography/sha256");
 const logger = require("../helpers/logger");
 const { CLAccountHash, DeployUtil } = require("casper-js-sdk");
-
+const BigNumber = require("bignumber.js")
 async function main() {
     while (true) {
         let casperConfig = CasperHelper.getConfigInfo()
         let casperChainId = casperConfig.networkId
         let mpcPubkey = CasperHelper.getMPCPubkey()
         const erc20 = new ERC20Client(
-            casperConfig.rpc,
+            CasperHelper.getRandomCasperRPCLink(),
             casperConfig.chainName,
             casperConfig.eventStream
         );
@@ -44,6 +44,13 @@ async function main() {
             if (!token) {
                 continue
             }
+            if (new BigNumber(tx.amount).comparedTo(token.minBridge) < 0) {
+                logger.info(
+                    "Amount swap token %s too small, swap amount %s, minAmount %s",
+                    tx.originToken, tx.amount, token.minBridge
+                );
+                continue
+            }
             await erc20.setContractHash(token.contractHash)
             let recipientAccountHashByte = Uint8Array.from(
                 Buffer.from(toAddress.slice(13), 'hex'),
@@ -51,7 +58,7 @@ async function main() {
             //mintid = <txHash>-<fromChainId>-<toChainId>-<index>-<originContractAddress>-<originChainId>
             let mintid = `${tx.requestHash}-${tx.fromChainId}-${tx.toChainId}-${tx.index}-${tx.originToken}-${tx.originChainId}`
 
-            let ttl = 600000
+            let ttl = 300000
             let deploy = await erc20.createUnsignedMint(
                 mpcPubkey,
                 new CLAccountHash(recipientAccountHashByte),
@@ -149,7 +156,7 @@ async function main() {
                 let mintid = req.mintid
 
                 //TODO: check whether mintid executed => this is to avoid failed transactions as mintid cant be executed more than one time
-                let ttl = 600000
+                let ttl = 300000
                 let deploy = await erc20.createUnsignedMint(
                     mpcPubkey,
                     new CLAccountHash(recipientAccountHashByte),

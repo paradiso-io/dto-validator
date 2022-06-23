@@ -9,6 +9,28 @@ const CasperHelper = {
         const CasperContractConfig = require("../casper-contract-hash/config.json")
         return CasperContractConfig[network]
     },
+    getRandomCasperRPCLink: () => {
+        let casperConfigInfo = CasperHelper.getConfigInfo();
+        let rpcList = []
+        if (casperConfigInfo.rpc) {
+            if (Array.isArray(casperConfigInfo.rpc)) {
+                rpcList.push(...casperConfigInfo.rpc)
+            } else {
+                rpcList.push(casperConfigInfo.rpc)
+            }
+        }
+
+        if (casperConfigInfo.rpcs) {
+            if (Array.isArray(casperConfigInfo.rpcs)) {
+                rpcList.push(...casperConfigInfo.rpcs)
+            } else {
+                rpcList.push(casperConfigInfo.rpcs)
+            }
+        }
+
+        let random = Math.floor(Math.random() * rpcList.length)
+        return rpcList[random]
+    },
     getBridgeFee: (originTokenAddress) => {
         let casperConfig = CasperHelper.getConfigInfo()
         let tokens = casperConfig.tokens
