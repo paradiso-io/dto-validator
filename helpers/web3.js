@@ -1,10 +1,15 @@
 const Web3 = require('web3')
 const config = require('config')
-
+const GenericBridgeABI = require('../contracts/GenericBridge.json')
 let Web3Util = {
   getWeb3: async (networkId) => {
     let both = await Web3Util.getWeb3AndRPC(networkId)
     return both.web3
+  },
+  getBridgeContract: async (networkId) => {
+    let web3 = await Web3Util.getWeb3(networkId)
+    let contract = await new web3.eth.Contract(GenericBridgeABI, config.contracts[`${networkId}`].bridge)
+    return contract
   },
   getWeb3AndRPC: async (networkId) => {
     let list = []

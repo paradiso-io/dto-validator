@@ -12,6 +12,7 @@ const CasperHelper = require('../helpers/casper')
 const logger = require('../helpers/logger')
 const casperConfig = CasperHelper.getConfigInfo()
 const tokenHelper = require("../helpers/token");
+const GeneralHelper = require('../helpers/general')
 
 router.get('/status', [], async function (req, res) {
     return res.json({ status: 'ok' })
@@ -123,7 +124,7 @@ router.get('/transaction-status/:requestHash/:fromChainId', [
     const readStatus = async (i) => {
         try {
             console.log('reading from', config.signatureServer[i])
-            let ret = await axios.get(config.signatureServer[i] + `/${requestData}`, {timeout: 10 * 1000})
+            let ret = await axios.get(config.signatureServer[i] + `/${requestData}`, { timeout: 10 * 1000 })
             ret = ret.data
             console.log('reading from ret ', ret)
             ret = ret.success ? ret.success : false
@@ -195,7 +196,7 @@ router.get('/verify-transaction/:requestHash/:fromChainId/:index', [
     let fromChainId = req.params.fromChainId
     let index = req.params.index
     let transaction = await eventHelper.getRequestEvent(fromChainId, requestHash, index)
-    if (!transaction || !transaction.requestHash) {
+    if (!transaction || (fromChainId != casperConfig.networkId && !transaction.requestHash)) {
         return res.json({ success: false })
     }
     if (fromChainId != casperConfig.networkId) {
@@ -337,8 +338,16 @@ router.post('/request-withdraw', [
                 index: req.body.index
             }
             let r = []
+            const requestSignatureFromOther = async function (i) {
+                try {
+                    let ret = await axios.post(config.signatureServer[i] + '/request-withdraw', body, { timeout: 20 * 1000 })
+                    return ret
+                } catch (e) {
+                    return { data: {} }
+                }
+            }
             for (let i = 0; i < config.signatureServer.length; i++) {
-                r.push(axios.post(config.signatureServer[i] + '/request-withdraw', body))
+                r.push(requestSignatureFromOther(i))
             }
 
             const responses = await Promise.all(r)
@@ -382,11 +391,36 @@ router.post('/request-withdraw', [
         //dont sign
         if (otherSignature.length > 0) {
             for (let i = 0; i < otherSignature.length; i++) {
-                r.push(otherSignature[i].r[0])
-                s.push(otherSignature[i].s[0])
-                v.push(otherSignature[i].v[0])
+                if (otherSignature[i].r) {
+                    r.push(otherSignature[i].r[0])
+                    s.push(otherSignature[i].s[0])
+                    v.push(otherSignature[i].v[0])
+                }
             }
         }
+
+        //reading required number of signature
+        let minApprovers = 0
+        let retry = 10
+        while(retry > 0) {
+            try {
+                let bridgeContract = await Web3Utils.getBridgeContract(transaction.toChainId)
+                minApprovers = await bridgeContract.methods.minApprovers().call()
+                minApprovers = parseInt(minApprovers)
+                break
+            } catch(e) {
+                await GeneralHelper.sleep(5 * 1000)
+            }
+            retry--
+        }
+
+        if (r.length < minApprovers) {
+            return res.status(400).json({ errors: 'Validators data are not fully synced yet, please try again later' })
+        }
+
+        r = r.slice(0, minApprovers)
+        s = s.slice(0, minApprovers)
+        v = v.slice(0, minApprovers)
 
         return res.json({ r: r, s: s, v: v, msgHash: otherSignature[0].msgHash, name: name, symbol: symbol, decimals: decimals })
     } else {
