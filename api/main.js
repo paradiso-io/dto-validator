@@ -195,7 +195,10 @@ router.get('/verify-transaction/:requestHash/:fromChainId/:index', [
     let requestHash = req.params.requestHash
     let fromChainId = req.params.fromChainId
     let index = req.params.index
-    let transaction = await eventHelper.getRequestEvent(fromChainId, requestHash, index)
+    let transaction = {}
+    if (fromChainId != casperConfig.networkId) {
+        transaction = await eventHelper.getRequestEvent(fromChainId, requestHash, index)
+    }
     if (!transaction || (fromChainId != casperConfig.networkId && !transaction.requestHash)) {
         return res.json({ success: false })
     }
@@ -340,9 +343,12 @@ router.post('/request-withdraw', [
             let r = []
             const requestSignatureFromOther = async function (i) {
                 try {
+                    console.log("requesting signature from ", config.signatureServer[i])
                     let ret = await axios.post(config.signatureServer[i] + '/request-withdraw', body, { timeout: 20 * 1000 })
+                    console.log("signature data ", ret, config.signatureServer[i])
                     return ret
                 } catch (e) {
+                    console.log("failed to get signature from ", config.signatureServer[i], e)
                     return { data: {} }
                 }
             }
