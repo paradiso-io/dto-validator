@@ -106,12 +106,17 @@ router.get('/transaction-status/:requestHash/:fromChainId', [
     if (!req.query.index) {
         {
             //check transaction on-chain
-            let transaction = await eventHelper.getRequestEvent(fromChainId, requestHash)
-            if (!transaction || !transaction.requestHash) {
-                //cant find transaction on-chain
-                return res.status(400).json({ errors: "transaction not found" })
+            if (fromChainId != casperConfig.networkId) {
+                let transaction = await eventHelper.getRequestEvent(fromChainId, requestHash)
+                if (!transaction || !transaction.requestHash) {
+                    //cant find transaction on-chain
+                    return res.status(400).json({ errors: "transaction not found" })
+                }
+                index = transaction.index
+            } else {
+                transaction = await db.Transaction.findOne({ requestHash: requestHash, fromChainId: fromChainId })
+                index = transaction.index
             }
-            index = transaction.index
         }
     }
 
