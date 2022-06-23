@@ -429,6 +429,7 @@ router.post('/request-withdraw', [
         }
         console.log("done reading minApprovers", minApprovers)
         if (r.length < minApprovers) {
+            console.warn('Validators data are not fully synced yet, please try again later')
             return res.status(400).json({ errors: 'Validators data are not fully synced yet, please try again later' })
         }
 
