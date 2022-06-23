@@ -11,7 +11,7 @@
     "host": "localhost",
     "port": 6379
   },
-  "crawlChainIds": [1],
+  "crawlChainIds": [1, 56, 1284, 43114],
   "blockchain": {
     "1": {
       "httpProvider": "",
@@ -21,6 +21,28 @@
       "nativeName": "Ethereum",
       "nativeSymbol": "ETH"
     },
+    "56": {
+      "httpProvider": ["https://bsc-dataseed1.binance.org", "https://bsc-dataseed2.binance.org", "https://bsc-dataseed1.defibit.io/", "https://bsc-dataseed2.defibit.io/", "https://bsc-dataseed1.ninicoin.io/", "https://bsc-dataseed2.ninicoin.io/"],
+      "wsProvider": "wss://bsc-ws-node.nariox.org:443",
+      "explorer": "https://bscscan.com",
+      "confirmations": 30,
+      "nativeName": "Binance",
+      "nativeSymbol": "BNB"
+    },
+    "1284": {
+      "httpProvider": ["https://rpc.api.moonbeam.network"],
+      "explorer": "https://moonbeamscan.io",
+      "confirmations": 30,
+      "nativeName": "MoonBeam",
+      "nativeSymbol": "GLMR"
+    },
+    "43114": {
+      "httpProvider": ["https://api.avax.network/ext/bc/C/rpc"],
+      "explorer": "https://snowtrace.io",
+      "confirmations": 30,
+      "nativeName": "Avalaunche",
+      "nativeSymbol": "AVAX"
+    },
     "42": {
       "httpProvider": "",
       "wsProvider": "",
@@ -28,14 +50,6 @@
       "confirmations": 6,
       "nativeName": "Kethereum",
       "nativeSymbol": "KETH"
-    },
-    "56": {
-      "httpProvider": "https://bsc-dataseed.binance.org",
-      "wsProvider": "wss://bsc-ws-node.nariox.org:443",
-      "explorer": "https://bscscan.com",
-      "confirmations": 30,
-      "nativeName": "Binance",
-      "nativeSymbol": "BNB"
     },
     "88": {
       "httpProvider": "https://rpc.tomochain.com",
@@ -113,6 +127,18 @@
       "wrapToken": "",
       "usdt": "0xdac17f958d2ee523a2206206994597c13d831ec7",
       "usdc": "0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48"
+    },
+    "1284": {
+      "bridge": "0x328A523B71545ddE8CD12a685318F2777D68798D",
+      "firstBlockCrawl": 1288563 
+    },
+    "43114": {
+      "bridge": "0x328A523B71545ddE8CD12a685318F2777D68798D",
+      "firstBlockCrawl": 16366110
+    },
+    "56": {
+      "bridge": "0x328A523B71545ddE8CD12a685318F2777D68798D",
+      "firstBlockCrawl": 18934638
     },
     "42": {
       "bridge": "0xF1f62E51766037BDc5202CfDED157fF688A09C5f",
