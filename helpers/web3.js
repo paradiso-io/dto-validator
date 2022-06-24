@@ -33,6 +33,16 @@ let Web3Util = {
     let msgHash = web3.utils.sha3(encoded);
     let sig = web3.eth.accounts.sign(msgHash, signer);
     return {msgHash: msgHash, r: sig.r, s: sig.s, v: sig.v}
+  },
+  recoverSignerFromSignature: (msgHash, r, s, v) => {
+    let web3 = new Web3()
+    let recovered = web3.eth.accounts.recover({
+      messageHash: msgHash,
+      r: r,
+      s: s,
+      v: v
+    });
+    return recovered
   }
 }
 

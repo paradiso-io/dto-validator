@@ -351,10 +351,11 @@ router.post('/request-withdraw', [
                 try {
                     console.log("requesting signature from ", config.signatureServer[i])
                     let ret = await axios.post(config.signatureServer[i] + '/request-withdraw', body, { timeout: 20 * 1000 })
-                    console.log("signature data ok ", config.signatureServer[i])
+                    let recoveredAddress = Web3Utils.recoverSignerFromSignature(ret.data.msgHash, ret.data.r[0], ret.data.s[0], ret.data.v[0])
+                    console.log("signature data ok ", config.signatureServer[i], recoveredAddress)
                     return ret
                 } catch (e) {
-                    console.log("failed to get signature from ", config.signatureServer[i], e)
+                    console.log("failed to get signature from ", config.signatureServer[i], e.toString())
                     return { data: {} }
                 }
             }
