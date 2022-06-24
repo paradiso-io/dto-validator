@@ -401,10 +401,12 @@ router.post('/request-withdraw', [
     let s = []
     let v = []
     if (config.proxy) {
+        let msgHash = ""
         //dont sign
         if (otherSignature.length > 0) {
             for (let i = 0; i < otherSignature.length; i++) {
                 if (otherSignature[i].r) {
+                    msgHash = otherSignature[i].msgHash
                     r.push(otherSignature[i].r[0])
                     s.push(otherSignature[i].s[0])
                     v.push(otherSignature[i].v[0])
@@ -414,12 +416,14 @@ router.post('/request-withdraw', [
 
         //reading required number of signature
         let minApprovers = 0
+        let approverList = []
         let retry = 10
         console.log("reading minApprovers", minApprovers)
         while(retry > 0) {
             try {
                 let bridgeContract = await Web3Utils.getBridgeContract(transaction.toChainId)
                 minApprovers = await bridgeContract.methods.minApprovers().call()
+                approverList = await bridgeContract.methods.getBridgeApprovers().call()
                 minApprovers = parseInt(minApprovers)
                 break
             } catch(e) {
@@ -428,17 +432,34 @@ router.post('/request-withdraw', [
             }
             retry--
         }
+        approverList = approverList.map(e => e.toLowerCase())
+        //filtering only good signature
         console.log("done reading minApprovers", minApprovers)
+        let goodR = []
+        let goodS = []
+        let goodV = []
+        for(var i = 0; i < r.length; i++) {
+            let recoveredAddress = Web3Utils.recoverSignerFromSignature(msgHash, r[i], s[i], v[i])
+            if (approverList.includes(recoveredAddress.toLowerCase())) {
+                goodR.push(r[i])
+                goodS.push(s[i])
+                goodV.push(v[i])
+            }
+        }
+        r = goodR
+        s = goodS
+        v = goodV
+        
         if (r.length < minApprovers) {
             console.warn('Validators data are not fully synced yet, please try again later')
             return res.status(400).json({ errors: 'Validators data are not fully synced yet, please try again later' })
         }
 
-        r = r.slice(0, minApprovers + 2)
-        s = s.slice(0, minApprovers + 2)
-        v = v.slice(0, minApprovers + 2)
+        r = r.slice(0, minApprovers)
+        s = s.slice(0, minApprovers)
+        v = v.slice(0, minApprovers)
 
-        return res.json({ r: r, s: s, v: v, msgHash: otherSignature[0].msgHash, name: name, symbol: symbol, decimals: decimals })
+        return res.json({ r: r, s: s, v: v, msgHash: msgHash, name: name, symbol: symbol, decimals: decimals })
     } else {
         let txHashToSign = transaction.requestHash.includes("0x") ? transaction.requestHash : ("0x" + transaction.requestHash)
         logger.info("txHashToSign %s", txHashToSign)
