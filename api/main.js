@@ -433,9 +433,9 @@ router.post('/request-withdraw', [
             return res.status(400).json({ errors: 'Validators data are not fully synced yet, please try again later' })
         }
 
-        r = r.slice(0, minApprovers)
-        s = s.slice(0, minApprovers)
-        v = v.slice(0, minApprovers)
+        r = r.slice(0, minApprovers + 2)
+        s = s.slice(0, minApprovers + 2)
+        v = v.slice(0, minApprovers + 2)
 
         return res.json({ r: r, s: s, v: v, msgHash: otherSignature[0].msgHash, name: name, symbol: symbol, decimals: decimals })
     } else {
