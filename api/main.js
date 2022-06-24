@@ -434,12 +434,13 @@ router.post('/request-withdraw', [
         }
         approverList = approverList.map(e => e.toLowerCase())
         //filtering only good signature
-        console.log("done reading minApprovers", minApprovers)
+        console.log("done reading minApprovers", minApprovers, approverList)
         let goodR = []
         let goodS = []
         let goodV = []
         for(var i = 0; i < r.length; i++) {
             let recoveredAddress = Web3Utils.recoverSignerFromSignature(msgHash, r[i], s[i], v[i])
+            console.log('recoveredAddress', recoveredAddress)
             if (approverList.includes(recoveredAddress.toLowerCase())) {
                 goodR.push(r[i])
                 goodS.push(s[i])
