@@ -21,7 +21,7 @@ let Web3Util = {
     let len = list.length
     let random = Math.floor(Math.random() * len)
     let rpc = list[random]
-    return { web3: new Web3(new Web3.providers.HttpProvider(rpc)), rpc: rpc}
+    return { web3: new Web3(new Web3.providers.HttpProvider(rpc)), rpc: rpc }
   },
   getWeb3Socket: async (networkId) => {
     return new Web3(new Web3.providers.WebsocketProvider(config.get('blockchain')[networkId].wsProvider))
@@ -32,16 +32,11 @@ let Web3Util = {
     let encoded = web3.eth.abi.encodeParameters(['address', 'address', 'uint256', 'uint256[]', 'bytes32', 'string', 'string', 'uint8'], [_originToken, _to, _amount, _chainIdsIndex, _txHash, _name, _symbol, _decimals])
     let msgHash = web3.utils.sha3(encoded);
     let sig = web3.eth.accounts.sign(msgHash, signer);
-    return {msgHash: msgHash, r: sig.r, s: sig.s, v: sig.v}
+    return { msgHash: msgHash, r: sig.r, s: sig.s, v: sig.v }
   },
   recoverSignerFromSignature: (msgHash, r, s, v) => {
     let web3 = new Web3()
-    let recovered = web3.eth.accounts.recover({
-      messageHash: msgHash,
-      r: r,
-      s: s,
-      v: v
-    });
+    let recovered = web3.eth.accounts.recover(msgHash, v, r, s);
     return recovered
   }
 }

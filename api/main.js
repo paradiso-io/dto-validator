@@ -447,9 +447,9 @@ router.post('/request-withdraw', [
                 goodV.push(v[i])
             }
         }
-        // r = goodR
-        // s = goodS
-        // v = goodV
+        r = goodR
+        s = goodS
+        v = goodV
         
         if (r.length < minApprovers) {
             console.warn('Validators data are not fully synced yet, please try again later')
