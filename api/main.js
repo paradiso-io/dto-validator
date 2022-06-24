@@ -447,18 +447,18 @@ router.post('/request-withdraw', [
                 goodV.push(v[i])
             }
         }
-        r = goodR
-        s = goodS
-        v = goodV
+        // r = goodR
+        // s = goodS
+        // v = goodV
         
         if (r.length < minApprovers) {
             console.warn('Validators data are not fully synced yet, please try again later')
             return res.status(400).json({ errors: 'Validators data are not fully synced yet, please try again later' })
         }
 
-        r = r.slice(0, minApprovers)
-        s = s.slice(0, minApprovers)
-        v = v.slice(0, minApprovers)
+        r = r.slice(0, minApprovers + 2)
+        s = s.slice(0, minApprovers + 2)
+        v = v.slice(0, minApprovers + 2)
 
         return res.json({ r: r, s: s, v: v, msgHash: msgHash, name: name, symbol: symbol, decimals: decimals })
     } else {
