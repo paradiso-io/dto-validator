@@ -147,6 +147,10 @@
       "bridge": "0x328A523B71545ddE8CD12a685318F2777D68798D",
       "firstBlockCrawl": 18934638
     },
+    "66": {
+      "bridge": "0x328A523B71545ddE8CD12a685318F2777D68798D",
+      "firstBlockCrawl": 12176533
+    },
     "42": {
       "bridge": "0xF1f62E51766037BDc5202CfDED157fF688A09C5f",
       "firstBlockCrawl": 31131932,
