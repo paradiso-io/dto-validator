@@ -11,7 +11,7 @@
     "host": "localhost",
     "port": 6379
   },
-  "crawlChainIds": [1, 56, 1284, 43114],
+  "crawlChainIds": [1, 56, 1284, 43114, 66],
   "blockchain": {
     "1": {
       "httpProvider": "",
