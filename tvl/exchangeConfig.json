@@ -15,7 +15,8 @@
     "busd": "binance-usd",
     "aave": "aave",
     "mkr": "maker",
-    "ptp": "platypus-finance"
+    "ptp": "platypus-finance",
+    "okt": "oec-token"
   },
   "exchanges": [
     "CGK"
