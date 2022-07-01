@@ -43,6 +43,13 @@
       "nativeName": "Avalaunche",
       "nativeSymbol": "AVAX"
     },
+    "66": {
+      "httpProvider": ["https://exchainrpc.okex.org"],
+      "explorer": "https://www.oklink.com/en/okc",
+      "confirmations": 30,
+      "nativeName": "OKEX Chain",
+      "nativeSymbol": "OKT"
+    },
     "42": {
       "httpProvider": "",
       "wsProvider": "",
