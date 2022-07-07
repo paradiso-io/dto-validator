@@ -24,6 +24,12 @@ router.get('/tvl', [], async function (req, res) {
         tvl
     })
 })
+router.get('/tokenmap', [], async function (req, res) {
+    let tokenMap = await db.TokenMap.find({})
+    return res.json({
+        tokenMap
+    })
+})
 
 router.get('/transactions/:account/:networkId', [
     check('account').exists().isLength({ min: 42, max: 68 }).withMessage('address is incorrect.'),
