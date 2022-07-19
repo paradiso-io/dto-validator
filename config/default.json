@@ -11,7 +11,22 @@
     "host": "localhost",
     "port": 6379
   },
-  "crawlChainIds": [1, 56, 1284, 43114, 66],
+  "p2pport": {
+    "mainnet": 63888,
+    "testnet": 63785
+  },
+  "producerport": {
+    "mainnet": 223,
+    "testnet": 222
+  },
+  "bootstrap": {
+    "mainnet": "/ip4/139.99.9.174/tcp/63888/ipfs/Qma4m1FwcatqKtE5rYFLrepoZuUSYM3CorXSLki818sdrQ",
+    "testnet": "/ip4/139.99.9.174/tcp/63785/ipfs/QmVASRfp5mxD21XaAcSJFmbaAdukUwqK1AMs8tT4RT4b1n"
+  },
+  "crawlChainIds": {
+    "mainnet": [1, 56, 1284, 43114, 66],
+    "testnet": []
+  },
   "blockchain": {
     "1": {
       "httpProvider": "",
@@ -51,7 +66,7 @@
       "nativeSymbol": "OKT"
     },
     "42": {
-      "httpProvider": "",
+      "httpProvider": ["https://speedy-nodes-nyc.moralis.io/6f1c50d092cad31805b2371f/eth/kovan"],
       "wsProvider": "",
       "explorer": "https://kovan.etherscan.io",
       "confirmations": 6,
@@ -75,7 +90,7 @@
       "nativeSymbol": "fTOMO"
     },
     "97": {
-      "httpProvider": "",
+      "httpProvider": ["https://speedy-nodes-nyc.moralis.io/6f1c50d092cad31805b2371f/bsc/testnet"],
       "wsProvider": "",
       "explorer": "https://testnet.bscscan.com",
       "confirmations": 30,
@@ -99,7 +114,7 @@
       "nativeSymbol": "fFTM"
     },
     "43113": {
-      "httpProvider": "",
+      "httpProvider": ["https://speedy-nodes-nyc.moralis.io/6f1c50d092cad31805b2371f/avalanche/testnet"],
       "wsProvider": "",
       "explorer": "https://testnet.snowtrace.io/",
       "confirmations": 30,
@@ -189,7 +204,10 @@
     }
   },
   "db": {
-    "uri": "mongodb://localhost:27017/dtoBridgeMainnet"
+    "uri": {
+      "mainnet": "mongodb://localhost:27017/dtoBridgeMainnet",
+      "testnet": "mongodb://localhost:27017/dtoBridge"
+    }
   },
   "caspernetwork": "mainnet",
   "signer": "",

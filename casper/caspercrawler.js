@@ -229,6 +229,9 @@ async function crawl(from, to, lastBlockHeight) {
                   )
 
                   id = await erc20.readRequestIndex(id)
+                  if (parseInt(id) == 0) {
+                    throw "RPC error"
+                  }
                   //amount after fee
                   amount = new BigNumber(amount).minus(fee).toString();
 

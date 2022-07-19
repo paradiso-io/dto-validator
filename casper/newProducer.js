@@ -29,12 +29,13 @@ const { DeployUtil } = require("casper-js-sdk");
 const { sleep } = require('../helpers/general')
 
   //console.log(config.get(rabbitmq.hostname))
-  ; (async () => {
+  ;const { CasperContractClient } = require('casper-js-client-helper')
+ (async () => {
     // Create the Node
     const libp2p = await Libp2p.create({
       addresses: {
         listen: [
-          '/ip4/0.0.0.0/tcp/223'
+          `/ip4/0.0.0.0/tcp/${config.producerport[config.caspernetwork]}`
         ]
       },
       modules: {
@@ -53,7 +54,7 @@ const { sleep } = require('../helpers/general')
         },
         peerDiscovery: {
           bootstrap: {
-            list: ['/ip4/139.99.9.174/tcp/63888/ipfs/Qma4m1FwcatqKtE5rYFLrepoZuUSYM3CorXSLki818sdrQ']
+            list: [config.bootstrap[config.caspernetwork]]
           }
         },
       }

@@ -7,7 +7,7 @@ let generalHelper = require('../helpers/general')
 const db = require('../models')
 const Helper = {
     getTokenInfo: async (token) => {
-        let supportedEVMChains = config.crawlChainIds
+        let supportedEVMChains = config.crawlChainIds[config.caspernetwork]
         //reading token info
         // {
         //     "name": "ETH",

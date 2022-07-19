@@ -7,7 +7,7 @@ const config = require('config')
 if (!config.checkTxOnChain) {
     mongoose.Promise = global.Promise
     mongoose.set('useCreateIndex', true)
-    mongoose.connect(config.get('db.uri'), {
+    mongoose.connect(config.get(`db.uri.${config.caspernetwork}`), {
             useNewUrlParser: true,
             useFindAndModify: false,
             useUnifiedTopology: true
