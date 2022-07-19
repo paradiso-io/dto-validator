@@ -1,7 +1,7 @@
-sudo apt-get update &&
+apt update &&
 echo "deb http://security.ubuntu.com/ubuntu impish-security main" | sudo tee /etc/apt/sources.list.d/impish-security.list &&
-sudo apt-get update &&
-sudo apt-get install libssl1.1 &&
+apt update &&
+apt install libssl1.1 &&
 
 apt install mongodb-org &&
 
@@ -13,11 +13,10 @@ export NVM_DIR="$HOME/.nvm"
 [ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion"
 source ~/.bashrc &&
 source ~/.profile &&
+apt install nodejs &&
+apt install npm &&
 nvm install 17 &&
 nvm use 17 &&
-
-git clone https://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@github.com/dotoracle/bridge-validator.git &&
-git clone https://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@github.com/dotoracle/casper-consumer.git &&
 
 cd bridge-validator &&
 git pull &&
@@ -26,7 +25,7 @@ rm -rf node_modules &&
 npm i &&
 git submodule update --init &&
 cd casper-contract-hash &&
-git pull &&
+git pull origin master &&
 git checkout master &&
 cd .. &&
 
