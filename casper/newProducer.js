@@ -26,7 +26,7 @@ const generalHelper = require("../helpers/general");
 const db = require("../models");
 const logger = require("../helpers/logger");
 const { DeployUtil } = require("casper-js-sdk");
-const { sleep } = require("../helpers/general")
+const { sleep } = require("../helpers/general");
 (
   //console.log(config.get(rabbitmq.hostname))
   async () => {
