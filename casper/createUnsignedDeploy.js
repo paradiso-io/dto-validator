@@ -44,10 +44,12 @@ async function main() {
             if (!token) {
                 continue
             }
-            if (new BigNumber(tx.amount).comparedTo(token.minBridge) < 0) {
+            let minBridge = token.minBridge ? token.minBridge : '0'
+            minBridge = new BigNumber(minBridge).multipliedBy('999').dividedBy('1000').toFixed(0)
+            if (new BigNumber(tx.amount).comparedTo(minBridge) < 0) {
                 logger.info(
                     "Amount swap token %s too small, swap amount %s, minAmount %s",
-                    tx.originToken, tx.amount, token.minBridge
+                    tx.originToken, tx.amount, minBridge
                 );
                 continue
             }

@@ -11,7 +11,12 @@
     "dai": "dai",
     "usdc": "usd-coin",
     "avax": "avalanche-2",
-    "glmr": "moonbeam"
+    "glmr": "moonbeam",
+    "busd": "binance-usd",
+    "aave": "aave",
+    "mkr": "maker",
+    "ptp": "platypus-finance",
+    "okt": "oec-token"
   },
   "exchanges": [
     "CGK"

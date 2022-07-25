@@ -10,7 +10,7 @@ const db = require('../models')
 const TVLHelper = {
     computeTVLForToken: async () => {
         let tokenConfigInfo = casperHelper.getConfigInfo();
-        let supportedEVMChains = config.crawlChainIds
+        let supportedEVMChains = config.crawlChainIds[config.caspernetwork]
         let tokens = tokenConfigInfo.tokens
         let bridgeContracts = config.contracts
         let balances = {}
@@ -18,8 +18,12 @@ const TVLHelper = {
         let addTokens = []
         let tvl = 0
         for (const token of tokens) {
+            console.log('token', token)
             if (supportedEVMChains.includes(token.originChainId)) {
                 let originContractAddress = token.originContractAddress
+                if (originContractAddress == "0x9f8f72aa9304c8b593d555f12ef6589cc3a579a2") {
+                    continue
+                }
                 let web3 = await Web3Helper.getWeb3(token.originChainId)
                 let tokenSymbol = token.symbol
                 let tokenBalance = '0'
@@ -27,9 +31,12 @@ const TVLHelper = {
                 if (token.originContractAddress === "0x1111111111111111111111111111111111111111") {
                     tokenBalance = await web3.eth.getBalance(bridgeContractAddress)
                 } else {
+                    console.log('originContractAddress', originContractAddress)
                     let originTokenContract = await new web3.eth.Contract(ERC20ABI, originContractAddress)
                     tokenSymbol = await originTokenContract.methods.symbol().call()
+                    console.log('tokenSymbol', tokenSymbol)
                     tokenBalance = await originTokenContract.methods.balanceOf(bridgeContractAddress).call()
+                    console.log('tokenBalance', tokenBalance)
                 }
                 
                 console.log('token ', tokenSymbol, tokenBalance)

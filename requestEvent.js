@@ -267,7 +267,7 @@ async function watch(networkId, bridgeAddress) {
 
 function main() {
   let contracts = config.contracts;
-  let crawlChainIds = config.crawlChainIds ? config.crawlChainIds : []
+  let crawlChainIds = config.crawlChainIds[config.caspernetwork] ? config.crawlChainIds[config.caspernetwork] : []
   crawlChainIds = crawlChainIds.map(e => parseInt(e))
   let networks = Object.keys(contracts);
   networks.forEach((networkId) => {

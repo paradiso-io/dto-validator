@@ -229,6 +229,9 @@ async function crawl(from, to, lastBlockHeight) {
                   )
 
                   id = await erc20.readRequestIndex(id)
+                  if (parseInt(id) == 0) {
+                    throw "RPC error"
+                  }
                   //amount after fee
                   amount = new BigNumber(amount).minus(fee).toString();
 
@@ -313,7 +316,7 @@ const getPastEvent = async () => {
     currentBlock.block.header.height.toString()
   );
 
-  currentBlockHeight -= 1
+  currentBlockHeight -= 5
   console.log(fromBlock, currentBlockHeight)
 
   let blockPerBatch = 100

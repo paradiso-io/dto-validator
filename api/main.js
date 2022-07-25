@@ -12,6 +12,7 @@ const CasperHelper = require('../helpers/casper')
 const logger = require('../helpers/logger')
 const casperConfig = CasperHelper.getConfigInfo()
 const tokenHelper = require("../helpers/token");
+const GeneralHelper = require('../helpers/general')
 
 router.get('/status', [], async function (req, res) {
     return res.json({ status: 'ok' })
@@ -21,6 +22,12 @@ router.get('/tvl', [], async function (req, res) {
     let tvl = await db.TVL.findOne({})
     return res.json({
         tvl
+    })
+})
+router.get('/tokenmap', [], async function (req, res) {
+    let tokenMap = await db.TokenMap.find({})
+    return res.json({
+        tokenMap
     })
 })
 
@@ -105,12 +112,17 @@ router.get('/transaction-status/:requestHash/:fromChainId', [
     if (!req.query.index) {
         {
             //check transaction on-chain
-            let transaction = await eventHelper.getRequestEvent(fromChainId, requestHash)
-            if (!transaction || !transaction.requestHash) {
-                //cant find transaction on-chain
-                return res.status(400).json({ errors: "transaction not found" })
+            if (fromChainId != casperConfig.networkId) {
+                let transaction = await eventHelper.getRequestEvent(fromChainId, requestHash)
+                if (!transaction || !transaction.requestHash) {
+                    //cant find transaction on-chain
+                    return res.status(400).json({ errors: "transaction not found" })
+                }
+                index = transaction.index
+            } else {
+                transaction = await db.Transaction.findOne({ requestHash: requestHash, fromChainId: fromChainId })
+                index = transaction.index
             }
-            index = transaction.index
         }
     }
 
@@ -123,7 +135,7 @@ router.get('/transaction-status/:requestHash/:fromChainId', [
     const readStatus = async (i) => {
         try {
             console.log('reading from', config.signatureServer[i])
-            let ret = await axios.get(config.signatureServer[i] + `/${requestData}`, {timeout: 10 * 1000})
+            let ret = await axios.get(config.signatureServer[i] + `/${requestData}`, { timeout: 10 * 1000 })
             ret = ret.data
             console.log('reading from ret ', ret)
             ret = ret.success ? ret.success : false
@@ -194,8 +206,11 @@ router.get('/verify-transaction/:requestHash/:fromChainId/:index', [
     let requestHash = req.params.requestHash
     let fromChainId = req.params.fromChainId
     let index = req.params.index
-    let transaction = await eventHelper.getRequestEvent(fromChainId, requestHash, index)
-    if (!transaction || !transaction.requestHash) {
+    let transaction = {}
+    if (fromChainId != casperConfig.networkId) {
+        transaction = await eventHelper.getRequestEvent(fromChainId, requestHash, index)
+    }
+    if (!transaction || (fromChainId != casperConfig.networkId && !transaction.requestHash)) {
         return res.json({ success: false })
     }
     if (fromChainId != casperConfig.networkId) {
@@ -233,6 +248,7 @@ router.get('/verify-transaction/:requestHash/:fromChainId/:index', [
         //casper
         let casperRPC = CasperHelper.getCasperRPC()
         try {
+            transaction = await db.Transaction.findOne({ requestHash: requestHash, fromChainId: fromChainId })
             let deployResult = await casperRPC.getDeployInfo(CasperHelper.toCasperDeployHash(transaction.requestHash))
             let eventData = await CasperHelper.parseRequestFromCasper(deployResult)
             if (eventData.toAddr.toLowerCase() != transaction.account.toLowerCase()
@@ -337,8 +353,20 @@ router.post('/request-withdraw', [
                 index: req.body.index
             }
             let r = []
+            const requestSignatureFromOther = async function (i) {
+                try {
+                    console.log("requesting signature from ", config.signatureServer[i])
+                    let ret = await axios.post(config.signatureServer[i] + '/request-withdraw', body, { timeout: 20 * 1000 })
+                    let recoveredAddress = Web3Utils.recoverSignerFromSignature(ret.data.msgHash, ret.data.r[0], ret.data.s[0], ret.data.v[0])
+                    console.log("signature data ok ", config.signatureServer[i], recoveredAddress)
+                    return ret
+                } catch (e) {
+                    console.log("failed to get signature from ", config.signatureServer[i], e.toString())
+                    return { data: {} }
+                }
+            }
             for (let i = 0; i < config.signatureServer.length; i++) {
-                r.push(axios.post(config.signatureServer[i] + '/request-withdraw', body))
+                r.push(requestSignatureFromOther(i))
             }
 
             const responses = await Promise.all(r)
@@ -379,16 +407,65 @@ router.post('/request-withdraw', [
     let s = []
     let v = []
     if (config.proxy) {
+        let msgHash = ""
         //dont sign
         if (otherSignature.length > 0) {
             for (let i = 0; i < otherSignature.length; i++) {
-                r.push(otherSignature[i].r[0])
-                s.push(otherSignature[i].s[0])
-                v.push(otherSignature[i].v[0])
+                if (otherSignature[i].r) {
+                    msgHash = otherSignature[i].msgHash
+                    r.push(otherSignature[i].r[0])
+                    s.push(otherSignature[i].s[0])
+                    v.push(otherSignature[i].v[0])
+                }
             }
         }
 
-        return res.json({ r: r, s: s, v: v, msgHash: otherSignature[0].msgHash, name: name, symbol: symbol, decimals: decimals })
+        //reading required number of signature
+        let minApprovers = 0
+        let approverList = []
+        let retry = 10
+        console.log("reading minApprovers", minApprovers)
+        while(retry > 0) {
+            try {
+                let bridgeContract = await Web3Utils.getBridgeContract(transaction.toChainId)
+                minApprovers = await bridgeContract.methods.minApprovers().call()
+                approverList = await bridgeContract.methods.getBridgeApprovers().call()
+                minApprovers = parseInt(minApprovers)
+                break
+            } catch(e) {
+                console.log("error in reading approver", minApprovers)
+                await GeneralHelper.sleep(5 * 1000)
+            }
+            retry--
+        }
+        approverList = approverList.map(e => e.toLowerCase())
+        //filtering only good signature
+        console.log("done reading minApprovers", minApprovers)
+        let goodR = []
+        let goodS = []
+        let goodV = []
+        for(var i = 0; i < r.length; i++) {
+            let recoveredAddress = Web3Utils.recoverSignerFromSignature(msgHash, r[i], s[i], v[i])
+            if (approverList.includes(recoveredAddress.toLowerCase())) {
+                goodR.push(r[i])
+                goodS.push(s[i])
+                goodV.push(v[i])
+            }
+        }
+        r = goodR
+        s = goodS
+        v = goodV
+        
+        if (r.length < minApprovers) {
+            console.warn('Validators data are not fully synced yet, please try again later')
+            return res.status(400).json({ errors: 'Validators data are not fully synced yet, please try again later' })
+        }
+
+        r = r.slice(0, minApprovers + 2)
+        s = s.slice(0, minApprovers + 2)
+        v = v.slice(0, minApprovers + 2)
+
+        return res.json({ r: r, s: s, v: v, msgHash: msgHash, name: name, symbol: symbol, decimals: decimals })
     } else {
         let txHashToSign = transaction.requestHash.includes("0x") ? transaction.requestHash : ("0x" + transaction.requestHash)
         logger.info("txHashToSign %s", txHashToSign)
