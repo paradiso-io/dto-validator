@@ -25,13 +25,24 @@
   },
   "crawlChainIds": {
     "mainnet": [1, 56, 1284, 43114, 66],
-    "testnet": []
+    "testnet": [],
+//    "nft721testnet": [4, 42, 97, 1287, 4002, 43113, 80001],
+    "nft721testnet": [42],
+    "nft721mainnet": []
   },
   "blockchain": {
     "1": {
       "httpProvider": "",
       "wsProvider": "",
       "explorer": "https://etherscan.io",
+      "confirmations": 12,
+      "nativeName": "Ethereum",
+      "nativeSymbol": "ETH"
+    },
+    "4": {
+      "httpProvider": "https://rinkeby.infura.io/v3/99d4e19c704546fbbbdfe408d354b9c8",
+      "wsProvider": "",
+      "explorer": "https://rinkeby.etherscan.io",
       "confirmations": 12,
       "nativeName": "Ethereum",
       "nativeSymbol": "ETH"
@@ -150,6 +161,11 @@
       "usdt": "0xdac17f958d2ee523a2206206994597c13d831ec7",
       "usdc": "0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48"
     },
+    "4": {
+      "bridge": "",
+      "nft721": "0x9de8C0Bc516c26e3Eb25c4C8995c5636084fB4C8",
+      "firstBlockNft721": 11130328
+    },
     "1284": {
       "bridge": "0x328A523B71545ddE8CD12a685318F2777D68798D",
       "firstBlockCrawl": 1288563 
@@ -168,7 +184,9 @@
     },
     "42": {
       "bridge": "0xF1f62E51766037BDc5202CfDED157fF688A09C5f",
+      "nft721": "0x9de8C0Bc516c26e3Eb25c4C8995c5636084fB4C8",
       "firstBlockCrawl": 31131932,
+      "firstBlockNft721": 33059527,
       "wrapToken": "",
       "usdt": "",
       "usdc": "",
@@ -180,7 +198,9 @@
     },
     "97": {
       "bridge": "0x9927e816cCF2964a18AB0444A22B91cCe8a1f29D",
+      "nft721": "0x9de8C0Bc516c26e3Eb25c4C8995c5636084fB4C8",
       "firstBlockCrawl": 18613003,
+      "firstBlockNft721": 21590493,
       "wrapToken": "",
       "usdt": "",
       "usdc": "",
@@ -188,19 +208,27 @@
     },
     "1287": {
       "bridge": "0xEdB7b5c85B3ad1f309f02a5cc9D035FEb0F9A213",
-      "firstBlockCrawl": 2026697
+      "nft721": "0x9de8C0Bc516c26e3Eb25c4C8995c5636084fB4C8",
+      "firstBlockCrawl": 2026697,
+      "firstBlockNft721": 2528035
     },
     "4002": {
       "bridge": "0x106F6E9Ba8A93297b0a94A75BB7863e37a663A80",
-      "firstBlockCrawl": 5934008
+      "nft721": "0x9de8C0Bc516c26e3Eb25c4C8995c5636084fB4C8",
+      "firstBlockCrawl": 5934008,
+      "firstBlockNft721": 9584232
     },
     "43113": {
       "bridge": "0x7e3226239dbfd6bea1ce22208001dc28194cbec2",
-      "firstBlockCrawl": 8754306
+      "nft721": "0x9de8C0Bc516c26e3Eb25c4C8995c5636084fB4C8",
+      "firstBlockCrawl": 8754306,
+      "firstBlockNft721": 11803358
     },
     "80001": {
       "bridge": "0xAbB7ae870c54b893d20f75143BB8Fc389799ff42",
-      "firstBlockCrawl": 26010084
+      "nft721": "0x9de8C0Bc516c26e3Eb25c4C8995c5636084fB4C8",
+      "firstBlockCrawl": 26010084,
+      "firstBlockNft721": 27268507
     }
   },
   "db": {
@@ -209,7 +237,7 @@
       "testnet": "mongodb://localhost:27017/dtoBridge"
     }
   },
-  "caspernetwork": "mainnet",
+  "caspernetwork": "testnet",
   "signer": "",
   "checkTxOnChain": false,
   "signatureServer": []
