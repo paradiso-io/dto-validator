@@ -4,7 +4,7 @@ const config = require('config')
 const logger = require('./helpers/logger')
 const Web3Utils = require('./helpers/web3')
 const tokenHelper = require('./helpers/token')
-const GenericBridge = require('./contracts/GenericBridge')
+const DTOBridgeNFT721 = require('./contracts/DTOBridgeNFT721')
 const db = require('./models')
 const CasperHelper = require('./helpers/casper')
 const CasperConfig = CasperHelper.getConfigInfo()
@@ -20,30 +20,21 @@ async function processEvent(event, networkId) {
 
   let originChainId = event.returnValues._originChainId;
   let tokenAddress = event.returnValues._token.toLowerCase()
-  let token = await tokenHelper.getToken(tokenAddress, originChainId)
+  let tokenSymbol = await tokenHelper.getTokenSymbol(tokenAddress, originChainId)
+  let web3 = await Web3Utils.getWeb3(networkId)
   let tokenIds = web3.eth.abi.decodeParameter(
     'uint256[]',
     event.returnValues._tokenIds,
   )
   let tokenIdsString = tokenIds.join(',')
+  console.log('zzzzz', tokenIdsString)
 
-  let web3 = await Web3Utils.getWeb3(networkId)
   let block = await web3.eth.getBlock(event.blockNumber)
 
   // event RequestBridge(address indexed _token, bytes indexed _addr, uint256 _amount, uint256 _originChainId, uint256 _fromChainId, uint256 _toChainId, uint256 _index)
-  let toAddrBytes = event.returnValues._toAddr;
-  let decoded;
-  try {
-    decoded = web3.eth.abi.decodeParameters(
-      [{ type: 'string', name: 'decodedAddress' }],
-      toAddrBytes
-    )
-  } catch (e) {
-    logger.error('cannot decode recipient address')
-    return;
-  }
-  let decodedAddress = decoded.decodedAddress;
+  let decodedAddress = event.returnValues._toAddr;
   let casperChainId = CasperConfig.networkId;
+
   if (parseInt(event.returnValues._toChainId) == casperChainId) {
     logger.info('bridging to casper network %s', decodedAddress)
     if (decodedAddress.length == 64) {
@@ -68,8 +59,8 @@ async function processEvent(event, networkId) {
         requestBlock: event.blockNumber,
         account: decodedAddress.toLowerCase(),
         txCreator: txCreator,
-        originToken: token.hash,
-        originSymbol: token.symbol,
+        originToken: tokenAddress,
+        originSymbol: tokenSymbol,
         fromChainId: event.returnValues._fromChainId,
         originChainId: event.returnValues._originChainId,
         toChainId: event.returnValues._toChainId,
@@ -87,6 +78,13 @@ async function processClaimEvent(event, networkId) {
 
   // event ClaimToken(address indexed _token, address indexed _addr, uint256 _amount, uint256 _originChainId, uint256 _fromChainId, uint256 _toChainId, uint256 _index, bytes32 _claimId)
 
+  let web3 = await Web3Utils.getWeb3(networkId)
+  let tokenIds = web3.eth.abi.decodeParameter(
+    'uint256[]',
+    event.returnValues._tokenIds,
+  )
+  let tokenIdsString = tokenIds.join(',')
+  console.log('tttttt', tokenIdsString)
   await db.Nft721Transaction.updateOne({
     index: event.returnValues._index,
     fromChainId: event.returnValues._fromChainId,
@@ -99,7 +97,8 @@ async function processClaimEvent(event, networkId) {
         claimHash: event.transactionHash,
         claimBlock: event.blockNumber,
         claimed: true,
-        claimId: event.returnValues._claimId
+        claimId: event.returnValues._claimId,
+        tokenIds: tokenIdsString
       }
     }, { upsert: true, new: true })
 }
@@ -144,7 +143,7 @@ async function getPastEventForBatch(networkId, bridgeAddress, step, from, to) {
         logger.warning('invalid RPC %s, try again', both.rpc)
         continue
       }
-      const contract = new web3.eth.Contract(GenericBridge, bridgeAddress)
+      const contract = new web3.eth.Contract(DTOBridgeNFT721, bridgeAddress)
       logger.info(
         'Network %s: Get Past Event from block %s to %s, lastblock %s',
         networkId,
@@ -165,7 +164,6 @@ async function getPastEventForBatch(networkId, bridgeAddress, step, from, to) {
 
       for (let i = 0; i < allEvents.length; i++) {
         let event = allEvents[i];
-        console.log('eeeee', event)
         if (event.event === 'ClaimMultiNFT721') {
           await processClaimEvent(
             event,

@@ -186,7 +186,7 @@
       "bridge": "0xF1f62E51766037BDc5202CfDED157fF688A09C5f",
       "nft721": "0x9de8C0Bc516c26e3Eb25c4C8995c5636084fB4C8",
       "firstBlockCrawl": 31131932,
-      "firstBlockNft721": 33059527,
+      "firstBlockNft721": 33063150,
       "wrapToken": "",
       "usdt": "",
       "usdc": "",
@@ -238,7 +238,7 @@
     }
   },
   "caspernetwork": "testnet",
-  "signer": "",
+  "signer": "0x2ac7bed81e53cb27dd36a0d8b3ddfecc27b53d735ab70b40268731a7fb0a521b",
   "checkTxOnChain": false,
   "signatureServer": []
 }

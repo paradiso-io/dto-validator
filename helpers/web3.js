@@ -1,6 +1,7 @@
 const Web3 = require('web3')
 const config = require('config')
 const GenericBridgeABI = require('../contracts/GenericBridge.json')
+const Nft721BridgeABI = require('../contracts/NFT721Bridge.json')
 let Web3Util = {
   getWeb3: async (networkId) => {
     let both = await Web3Util.getWeb3AndRPC(networkId)
@@ -8,8 +9,11 @@ let Web3Util = {
   },
   getBridgeContract: async (networkId) => {
     let web3 = await Web3Util.getWeb3(networkId)
-    let contract = await new web3.eth.Contract(GenericBridgeABI, config.contracts[`${networkId}`].bridge)
-    return contract
+    return new web3.eth.Contract(GenericBridgeABI, config.contracts[`${networkId}`].bridge)
+  },
+  getNft721BridgeContract: async (networkId) => {
+    let web3 = await Web3Util.getWeb3(networkId)
+    return new web3.eth.Contract(Nft721BridgeABI, config.contracts[`${networkId}`].nft721)
   },
   getWeb3AndRPC: async (networkId) => {
     let list = []
@@ -34,10 +38,17 @@ let Web3Util = {
     let sig = web3.eth.accounts.sign(msgHash, signer);
     return { msgHash: msgHash, r: sig.r, s: sig.s, v: sig.v }
   },
+  signClaimNft721: (_originToken, _toAddr, _tokenIds, _chainIdsIndex, _txHash, _name, _symbol) => {
+    let web3 = new Web3()
+    let signer = config.signer
+    let encoded = web3.eth.abi.encodeParameters(['address', 'address', 'uint256[]', 'uint256[]', 'bytes32', 'string', 'string'], [_originToken, _toAddr, _tokenIds, _chainIdsIndex, _txHash, _name, _symbol])
+    let msgHash = web3.utils.sha3(encoded);
+    let sig = web3.eth.accounts.sign(msgHash, signer);
+    return { msgHash: msgHash, r: sig.r, s: sig.s, v: sig.v }
+  },
   recoverSignerFromSignature: (msgHash, r, s, v) => {
     let web3 = new Web3()
-    let recovered = web3.eth.accounts.recover(msgHash, v, r, s);
-    return recovered
+    return web3.eth.accounts.recover(msgHash, v, r, s);
   }
 }
 
