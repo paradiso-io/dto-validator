@@ -16,7 +16,6 @@ let sleep = (time) => new Promise((resolve) => setTimeout(resolve, time))
 
 async function processEvent(event, networkId) {
   logger.info('New event at block %s', event.blockNumber)
-  console.log('eeee', event)
 
   let originChainId = event.returnValues._originChainId;
   let tokenAddress = event.returnValues._token.toLowerCase()
@@ -27,7 +26,6 @@ async function processEvent(event, networkId) {
     event.returnValues._tokenIds,
   )
   let tokenIdsString = tokenIds.join(',')
-  console.log('zzzzz', tokenIdsString)
 
   let block = await web3.eth.getBlock(event.blockNumber)
 
@@ -84,7 +82,6 @@ async function processClaimEvent(event, networkId) {
     event.returnValues._tokenIds,
   )
   let tokenIdsString = tokenIds.join(',')
-  console.log('tttttt', tokenIdsString)
   await db.Nft721Transaction.updateOne({
     index: event.returnValues._index,
     fromChainId: event.returnValues._fromChainId,
@@ -163,7 +160,7 @@ async function getPastEventForBatch(networkId, bridgeAddress, step, from, to) {
       }
 
       for (let i = 0; i < allEvents.length; i++) {
-        let event = allEvents[i];
+        let event = allEvents[i]
         if (event.event === 'ClaimMultiNFT721') {
           await processClaimEvent(
             event,
