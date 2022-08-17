@@ -9,6 +9,11 @@ const CasperHelper = {
         const CasperContractConfig = require("../casper-contract-hash/config.json")
         return CasperContractConfig[network]
     },
+    getNFTConfig: () => {
+        let network = config.caspernetwork;
+        const CasperContractConfig = require("../casper-contract-hash/nftconfig.json")
+        return CasperContractConfig[network]
+    },
     getRandomCasperRPCLink: () => {
         let casperConfigInfo = CasperHelper.getConfigInfo();
         let rpcList = []
@@ -27,7 +32,6 @@ const CasperHelper = {
                 rpcList.push(casperConfigInfo.rpcs)
             }
         }
-
         let random = Math.floor(Math.random() * rpcList.length)
         return rpcList[random]
     },
@@ -62,6 +66,10 @@ const CasperHelper = {
     },
     findArg: (args, argName) => {
         return args.find((e) => e[0] == argName);
+    },
+    findArgParsed: function(args, argName) {
+        let arg = CasperHelper.findArg(args, argName)
+        return arg[1].parsed
     },
     getCasperRPC: () => {
         let casperConfig = CasperHelper.getConfigInfo()

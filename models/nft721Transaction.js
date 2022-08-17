@@ -23,7 +23,8 @@ const Nft721Transaction = new Schema({
     claimId: String,
     requestTime: { type: Number, index: true},
     casperDeployCreated: { type: Boolean, index: true },
-    casperCreatedFailedReason: String
+    casperCreatedFailedReason: String,
+    identifierMode: Number
 }, { timestamps: false, versionKey: false })
 
 module.exports = mongoose.model('Nft721Transaction', Nft721Transaction)
