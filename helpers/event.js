@@ -98,7 +98,6 @@ const EventHelper = {
             decoded.tokenIds,
           ).join(',')
 
-          console.log('xxxxxx', decoded)
           let account = toAddrBytes.toLowerCase()
           let originChainId = parseInt(decoded.originChainId)
           let fromChainId = parseInt(decoded.fromChainId)

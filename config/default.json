@@ -120,15 +120,15 @@
       "httpProvider": "https://rpc.testnet.fantom.network/",
       "wsProvider": "",
       "explorer": "https://testnet.ftmscan.com/",
-      "confirmations": 30,
+      "confirmations": 2,
       "nativeName": "Fantom Testnet",
       "nativeSymbol": "fFTM"
     },
     "43113": {
-      "httpProvider": ["https://speedy-nodes-nyc.moralis.io/6f1c50d092cad31805b2371f/avalanche/testnet"],
+      "httpProvider": ["https://api.avax-test.network/ext/bc/C/rpc"],
       "wsProvider": "",
       "explorer": "https://testnet.snowtrace.io/",
-      "confirmations": 30,
+      "confirmations": 2,
       "nativeName": "Avalanche Testnet",
       "nativeSymbol": "fAVAX"
     },
@@ -163,8 +163,8 @@
     },
     "4": {
       "bridge": "",
-      "nft721": "0x9de8C0Bc516c26e3Eb25c4C8995c5636084fB4C8",
-      "firstBlockNft721": 11130328
+      "nft721": "0xB4D46B3ffd8079bd2b5d69A826bb3014b4153bB4",
+      "firstBlockNft721": 11130799
     },
     "1284": {
       "bridge": "0x328A523B71545ddE8CD12a685318F2777D68798D",
@@ -184,9 +184,9 @@
     },
     "42": {
       "bridge": "0xF1f62E51766037BDc5202CfDED157fF688A09C5f",
-      "nft721": "0x9de8C0Bc516c26e3Eb25c4C8995c5636084fB4C8",
+      "nft721": "0xB4D46B3ffd8079bd2b5d69A826bb3014b4153bB4",
       "firstBlockCrawl": 31131932,
-      "firstBlockNft721": 33063150,
+      "firstBlockNft721": 33331500,
       "wrapToken": "",
       "usdt": "",
       "usdc": "",
@@ -198,7 +198,7 @@
     },
     "97": {
       "bridge": "0x9927e816cCF2964a18AB0444A22B91cCe8a1f29D",
-      "nft721": "0x9de8C0Bc516c26e3Eb25c4C8995c5636084fB4C8",
+      "nft721": "0xB4D46B3ffd8079bd2b5d69A826bb3014b4153bB4",
       "firstBlockCrawl": 18613003,
       "firstBlockNft721": 21590493,
       "wrapToken": "",
@@ -208,25 +208,25 @@
     },
     "1287": {
       "bridge": "0xEdB7b5c85B3ad1f309f02a5cc9D035FEb0F9A213",
-      "nft721": "0x9de8C0Bc516c26e3Eb25c4C8995c5636084fB4C8",
+      "nft721": "0xB4D46B3ffd8079bd2b5d69A826bb3014b4153bB4",
       "firstBlockCrawl": 2026697,
       "firstBlockNft721": 2528035
     },
     "4002": {
       "bridge": "0x106F6E9Ba8A93297b0a94A75BB7863e37a663A80",
-      "nft721": "0x9de8C0Bc516c26e3Eb25c4C8995c5636084fB4C8",
+      "nft721": "0xB4D46B3ffd8079bd2b5d69A826bb3014b4153bB4",
       "firstBlockCrawl": 5934008,
-      "firstBlockNft721": 9584232
+      "firstBlockNft721": 10109943
     },
     "43113": {
       "bridge": "0x7e3226239dbfd6bea1ce22208001dc28194cbec2",
-      "nft721": "0x9de8C0Bc516c26e3Eb25c4C8995c5636084fB4C8",
+      "nft721": "0xB4D46B3ffd8079bd2b5d69A826bb3014b4153bB4",
       "firstBlockCrawl": 8754306,
-      "firstBlockNft721": 11803358
+      "firstBlockNft721": 12610250
     },
     "80001": {
       "bridge": "0xAbB7ae870c54b893d20f75143BB8Fc389799ff42",
-      "nft721": "0x9de8C0Bc516c26e3Eb25c4C8995c5636084fB4C8",
+      "nft721": "0xB4D46B3ffd8079bd2b5d69A826bb3014b4153bB4",
       "firstBlockCrawl": 26010084,
       "firstBlockNft721": 27268507
     }
@@ -238,7 +238,12 @@
     }
   },
   "caspernetwork": "testnet",
-  "signer": "0x2ac7bed81e53cb27dd36a0d8b3ddfecc27b53d735ab70b40268731a7fb0a521b",
+  "signer": "0x2bfb1a302e0b0633b86d209607a747293ab588eeb5e955ca39a5b3f073e66f03",
   "checkTxOnChain": false,
-  "signatureServer": []
+  "proxy": true,
+  "signatureServer": [
+    "http://localhost:4002/",
+    "http://localhost:4003/",
+    "http://localhost:4004/"
+  ]
 }
