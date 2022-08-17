@@ -244,7 +244,8 @@ router.post('/request-withdraw', [
     check('fromChainId').exists().isNumeric({ no_symbols: true }).withMessage('fromChainId is incorrect'),
     check('toChainId').exists().isNumeric({ no_symbols: true }).withMessage('fromChainId is incorrect'),
     check('index').exists().withMessage('index is require')
-], async function (req, res, next) {
+],
+  async function (req, res, next) {
     const errors = validationResult(req)
     if (!errors.isEmpty()) {
         return res.status(400).json({ errors: errors.array() })
@@ -313,46 +314,15 @@ router.post('/request-withdraw', [
             return res.status(400).json({ errors: 'failed to get on-chain casper transction for ' + transaction.requestHash })
         }
     }
-    let otherSignature = []
-    if (config.signatureServer.length > 0) {
-        try {
-            let body = {
-                requestHash: req.body.requestHash,
-                fromChainId: req.body.fromChainId,
-                toChainId: req.body.toChainId,
-                index: req.body.index
-            }
-            let r = []
-            const requestSignatureFromOther = async function (i) {
-                try {
-                    console.log("requesting signature from ", config.signatureServer[i])
-                    let ret = await axios.post(config.signatureServer[i] + 'nft721/request-withdraw', body, { timeout: 20 * 1000 })
-                    let recoveredAddress = Web3Utils.recoverSignerFromSignature(ret.data.msgHash, ret.data.r[0], ret.data.s[0], ret.data.v[0])
-                    console.log("signature data ok ", config.signatureServer[i], recoveredAddress)
-                    return ret
-                } catch (e) {
-                    console.log("failed to get signature from ", config.signatureServer[i], e.toString())
-                    return { data: {} }
-                }
-            }
-            for (let i = 0; i < config.signatureServer.length; i++) {
-                r.push(requestSignatureFromOther(i))
-            }
 
-            const responses = await Promise.all(r)
-
-            for (let i = 0; i < config.signatureServer.length; i++) {
-                otherSignature.push(responses[i].data)
-            }
-
-        } catch (e) {
-            console.log(e)
-        }
-    }
-
-    let name, symbol
+    let tokenIds = transaction.tokenIds.split(',')
+    let name, symbol, tokenUris = []
     let web3Origin = await Web3Utils.getWeb3(transaction.originChainId)
     let originTokenContract = await new web3Origin.eth.Contract(IERC20ABI, transaction.originToken)
+
+    for (let i = 0; i < tokenIds.length; i++) {
+        tokenUris.push(await originTokenContract.methods.tokenURI(tokenIds[i]).call())
+    }
     name = await originTokenContract.methods.name().call()
     symbol = await originTokenContract.methods.symbol().call()
     if (transaction.toChainId !== transaction.originChainId) {
@@ -371,6 +341,44 @@ router.post('/request-withdraw', [
     if (config.proxy) {
         let msgHash = ""
         //dont sign
+
+        let otherSignature = []
+        if (config.signatureServer.length > 0) {
+            try {
+                let body = {
+                    requestHash: req.body.requestHash,
+                    fromChainId: req.body.fromChainId,
+                    toChainId: req.body.toChainId,
+                    index: req.body.index
+                }
+                let r = []
+                const requestSignatureFromOther = async function (i) {
+                    try {
+                        console.log("requesting signature from ", config.signatureServer[i])
+                        let ret = await axios.post(config.signatureServer[i] + 'nft721/request-withdraw', body, { timeout: 20 * 1000 })
+                        let recoveredAddress = Web3Utils.recoverSignerFromSignature(ret.data.msgHash, ret.data.r[0], ret.data.s[0], ret.data.v[0])
+                        console.log("signature data ok ", config.signatureServer[i], recoveredAddress)
+                        return ret
+                    } catch (e) {
+                        console.log("failed to get signature from ", config.signatureServer[i], e.toString())
+                        return { data: {} }
+                    }
+                }
+                for (let i = 0; i < config.signatureServer.length; i++) {
+                    r.push(requestSignatureFromOther(i))
+                }
+
+                const responses = await Promise.all(r)
+
+                for (let i = 0; i < config.signatureServer.length; i++) {
+                    otherSignature.push(responses[i].data)
+                }
+
+            } catch (e) {
+                console.log(e)
+            }
+        }
+
         if (otherSignature.length > 0) {
             for (let i = 0; i < otherSignature.length; i++) {
                 if (otherSignature[i].r) {
@@ -438,7 +446,8 @@ router.post('/request-withdraw', [
             [transaction.originChainId, transaction.fromChainId, transaction.toChainId, transaction.index],
             txHashToSign,
             name,
-            symbol
+            symbol,
+            tokenUris
         )
 
         let r = [sig.r]

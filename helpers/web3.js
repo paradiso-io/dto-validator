@@ -38,10 +38,10 @@ let Web3Util = {
     let sig = web3.eth.accounts.sign(msgHash, signer);
     return { msgHash: msgHash, r: sig.r, s: sig.s, v: sig.v }
   },
-  signClaimNft721: (_originToken, _toAddr, _tokenIds, _chainIdsIndex, _txHash, _name, _symbol) => {
+  signClaimNft721: (_originToken, _toAddr, _tokenIds, _chainIdsIndex, _txHash, _name, _symbol, _tokenUris) => {
     let web3 = new Web3()
     let signer = config.signer
-    let encoded = web3.eth.abi.encodeParameters(['address', 'address', 'uint256[]', 'uint256[]', 'bytes32', 'string', 'string'], [_originToken, _toAddr, _tokenIds, _chainIdsIndex, _txHash, _name, _symbol])
+    let encoded = web3.eth.abi.encodeParameters(['address', 'address', 'uint256[]', 'uint256[]', 'bytes32', 'string', 'string', 'string[]'], [_originToken, _toAddr, _tokenIds, _chainIdsIndex, _txHash, _name, _symbol, _tokenUris])
     let msgHash = web3.utils.sha3(encoded);
     let sig = web3.eth.accounts.sign(msgHash, signer);
     return { msgHash: msgHash, r: sig.r, s: sig.s, v: sig.v }
