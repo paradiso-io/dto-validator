@@ -6,7 +6,7 @@ const { check, validationResult, query } = require('express-validator')
 require('dotenv').config()
 const config = require('config')
 const eventHelper = require('../helpers/event')
-const IERC20ABI = require('../contracts/ERC20.json')
+const ERC721 = require('../contracts/ERC721.json')
 const axios = require('axios')
 const CasperHelper = require('../helpers/casper')
 const logger = require('../helpers/logger')
@@ -318,10 +318,14 @@ router.post('/request-withdraw', [
     let tokenIds = transaction.tokenIds.split(',')
     let name, symbol, tokenUris = []
     let web3Origin = await Web3Utils.getWeb3(transaction.originChainId)
-    let originTokenContract = await new web3Origin.eth.Contract(IERC20ABI, transaction.originToken)
+    let originTokenContract = await new web3Origin.eth.Contract(ERC721, transaction.originToken)
 
     for (let i = 0; i < tokenIds.length; i++) {
-        tokenUris.push(await originTokenContract.methods.tokenURI(tokenIds[i]).call())
+        try {
+            tokenUris.push(await originTokenContract.methods.tokenURI(tokenIds[i]).call())
+        } catch (e) {
+            tokenUris.push('')
+        }
     }
     name = await originTokenContract.methods.name().call()
     symbol = await originTokenContract.methods.symbol().call()
@@ -403,6 +407,7 @@ router.post('/request-withdraw', [
                 minApprovers = parseInt(minApprovers)
                 break
             } catch(e) {
+                console.log(e)
                 console.log("error in reading approver", minApprovers)
                 await GeneralHelper.sleep(5 * 1000)
             }
@@ -435,7 +440,7 @@ router.post('/request-withdraw', [
         s = s.slice(0, minApprovers + 2)
         v = v.slice(0, minApprovers + 2)
 
-        return res.json({ r: r, s: s, v: v, msgHash: msgHash, name: name, symbol: symbol })
+        return res.json({ r: r, s: s, v: v, msgHash: msgHash, name: name, symbol: symbol, tokenUris: tokenUris })
     } else {
         let txHashToSign = transaction.requestHash.includes("0x") ? transaction.requestHash : ("0x" + transaction.requestHash)
         logger.info("txHashToSign %s", txHashToSign)
@@ -455,7 +460,7 @@ router.post('/request-withdraw', [
         let v = [sig.v]
 
 
-        return res.json({ r: r, s: s, v: v, msgHash: sig.msgHash, name: name, symbol: symbol })
+        return res.json({ r: r, s: s, v: v, msgHash: sig.msgHash, name: name, symbol: symbol, tokenUris: tokenUris })
     }
 })
 
