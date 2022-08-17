@@ -27,7 +27,7 @@
     "mainnet": [1, 56, 1284, 43114, 66],
     "testnet": [],
 //    "nft721testnet": [4, 42, 97, 1287, 4002, 43113, 80001],
-    "nft721testnet": [42],
+    "nft721testnet": [97],
     "nft721mainnet": []
   },
   "blockchain": {
@@ -101,7 +101,7 @@
       "nativeSymbol": "fTOMO"
     },
     "97": {
-      "httpProvider": ["https://speedy-nodes-nyc.moralis.io/6f1c50d092cad31805b2371f/bsc/testnet"],
+      "httpProvider": ["https://data-seed-prebsc-1-s1.binance.org:8545/"],
       "wsProvider": "",
       "explorer": "https://testnet.bscscan.com",
       "confirmations": 30,
@@ -238,12 +238,11 @@
     }
   },
   "caspernetwork": "testnet",
-  "signer": "0x2bfb1a302e0b0633b86d209607a747293ab588eeb5e955ca39a5b3f073e66f03",
+  "signer": "0x2ac7bed81e53cb27dd36a0d8b3ddfecc27b53d735ab70b40268731a7fb0a521b",
   "checkTxOnChain": false,
   "proxy": true,
   "signatureServer": [
     "http://localhost:4002/",
-    "http://localhost:4003/",
-    "http://localhost:4004/"
+    "http://localhost:4003/"
   ]
 }

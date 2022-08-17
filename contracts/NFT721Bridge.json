@@ -460,13 +460,7 @@
     "type": "function"
   },
   {
-    "inputs": [
-      {
-        "internalType": "address",
-        "name": "",
-        "type": "address"
-      }
-    ],
+    "inputs": [],
     "name": "chainId",
     "outputs": [
       {
@@ -556,74 +550,12 @@
       }
     ],
     "name": "claimMultiNFT721Token",
-    "outputs": [
-      {
-        "internalType": "bool",
-        "name": "",
-        "type": "bool"
-      }
-    ],
+    "outputs": [],
     "stateMutability": "payable",
     "type": "function"
   },
   {
-    "inputs": [
-      {
-        "internalType": "bytes",
-        "name": "_originToken",
-        "type": "bytes"
-      },
-      {
-        "internalType": "address",
-        "name": "_toAddr",
-        "type": "address"
-      },
-      {
-        "internalType": "uint256[]",
-        "name": "_tokenIds",
-        "type": "uint256[]"
-      },
-      {
-        "internalType": "uint256[]",
-        "name": "_chainIdsIndex",
-        "type": "uint256[]"
-      },
-      {
-        "internalType": "bytes32",
-        "name": "_txHash",
-        "type": "bytes32"
-      },
-      {
-        "internalType": "bytes32[]",
-        "name": "r",
-        "type": "bytes32[]"
-      },
-      {
-        "internalType": "bytes32[]",
-        "name": "s",
-        "type": "bytes32[]"
-      },
-      {
-        "internalType": "uint8[]",
-        "name": "v",
-        "type": "uint8[]"
-      },
-      {
-        "internalType": "string",
-        "name": "_name",
-        "type": "string"
-      },
-      {
-        "internalType": "string",
-        "name": "_symbol",
-        "type": "string"
-      },
-      {
-        "internalType": "string",
-        "name": "_uri",
-        "type": "string"
-      }
-    ],
+    "inputs": [],
     "name": "defaultFeePercentage",
     "outputs": [
       {
@@ -681,43 +613,7 @@
     "type": "function"
   },
   {
-    "inputs": [
-      {
-        "internalType": "bytes",
-        "name": "_originToken",
-        "type": "bytes"
-      },
-      {
-        "internalType": "address",
-        "name": "_toAddr",
-        "type": "address"
-      },
-      {
-        "internalType": "uint256[]",
-        "name": "_tokenIds",
-        "type": "uint256[]"
-      },
-      {
-        "internalType": "uint256[]",
-        "name": "_chainIdsIndex",
-        "type": "uint256[]"
-      },
-      {
-        "internalType": "bytes32",
-        "name": "_txHash",
-        "type": "bytes32"
-      },
-      {
-        "internalType": "string",
-        "name": "_name",
-        "type": "string"
-      },
-      {
-        "internalType": "string",
-        "name": "_symbol",
-        "type": "string"
-      }
-    ],
+    "inputs": [],
     "name": "governance",
     "outputs": [
       {
@@ -730,13 +626,7 @@
     "type": "function"
   },
   {
-    "inputs": [
-      {
-        "internalType": "address",
-        "name": "_token",
-        "type": "address"
-      }
-    ],
+    "inputs": [],
     "name": "index",
     "outputs": [
       {
@@ -757,13 +647,7 @@
       }
     ],
     "name": "initialize",
-    "outputs": [
-      {
-        "internalType": "address",
-        "name": "",
-        "type": "address"
-      }
-    ],
+    "outputs": [],
     "stateMutability": "nonpayable",
     "type": "function"
   },
@@ -825,13 +709,7 @@
     "type": "function"
   },
   {
-    "inputs": [
-      {
-        "internalType": "address",
-        "name": "nftAddress",
-        "type": "address"
-      }
-    ],
+    "inputs": [],
     "name": "minApprovers",
     "outputs": [
       {
@@ -844,13 +722,7 @@
     "type": "function"
   },
   {
-    "inputs": [
-      {
-        "internalType": "address",
-        "name": "nftAddress",
-        "type": "address"
-      }
-    ],
+    "inputs": [],
     "name": "nativeFee",
     "outputs": [
       {
@@ -916,28 +788,7 @@
     "type": "function"
   },
   {
-    "inputs": [
-      {
-        "internalType": "address",
-        "name": "operator",
-        "type": "address"
-      },
-      {
-        "internalType": "address",
-        "name": "from",
-        "type": "address"
-      },
-      {
-        "internalType": "uint256",
-        "name": "tokenId",
-        "type": "uint256"
-      },
-      {
-        "internalType": "bytes",
-        "name": "data",
-        "type": "bytes"
-      }
-    ],
+    "inputs": [],
     "name": "owner",
     "outputs": [
       {
@@ -958,47 +809,14 @@
       }
     ],
     "name": "removeApprover",
-    "outputs": [
-      {
-        "internalType": "bool",
-        "name": "",
-        "type": "bool"
-      }
-    ],
+    "outputs": [],
     "stateMutability": "nonpayable",
     "type": "function"
   },
   {
-    "inputs": [
-      {
-        "internalType": "address",
-        "name": "_tokenAddress",
-        "type": "address"
-      },
-      {
-        "internalType": "bytes",
-        "name": "_toAddr",
-        "type": "bytes"
-      },
-      {
-        "internalType": "uint256[]",
-        "name": "_tokenIds",
-        "type": "uint256[]"
-      },
-      {
-        "internalType": "uint256",
-        "name": "_toChainId",
-        "type": "uint256"
-      }
-    ],
+    "inputs": [],
     "name": "renounceOwnership",
-    "outputs": [
-      {
-        "internalType": "address",
-        "name": "",
-        "type": "address"
-      }
-    ],
+    "outputs": [],
     "stateMutability": "nonpayable",
     "type": "function"
   },
@@ -1049,21 +867,6 @@
         "internalType": "address",
         "name": "_gov",
         "type": "address"
-      },
-      {
-        "internalType": "bytes",
-        "name": "_toAddr",
-        "type": "bytes"
-      },
-      {
-        "internalType": "uint256[]",
-        "name": "_tokenIds",
-        "type": "uint256[]"
-      },
-      {
-        "internalType": "uint256",
-        "name": "_toChainId",
-        "type": "uint256"
       }
     ],
     "name": "setGovernance",
@@ -1090,11 +893,6 @@
         "internalType": "uint256",
         "name": "_val",
         "type": "uint256"
-      },
-      {
-        "internalType": "bool",
-        "name": "_val",
-        "type": "bool"
       }
     ],
     "name": "setMinApprovers",
@@ -1145,11 +943,6 @@
         "internalType": "bytes4",
         "name": "interfaceId",
         "type": "bytes4"
-      },
-      {
-        "internalType": "bool",
-        "name": "_val",
-        "type": "bool"
       }
     ],
     "name": "supportsInterface",
@@ -1265,161 +1058,11 @@
         "internalType": "address",
         "name": "newOwner",
         "type": "address"
-      },
-      {
-        "internalType": "uint256",
-        "name": "",
-        "type": "uint256"
       }
     ],
     "name": "transferOwnership",
-    "outputs": [
-      {
-        "internalType": "uint256",
-        "name": "",
-        "type": "uint256"
-      }
-    ],
-    "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "address",
-        "name": "newImplementation",
-        "type": "address"
-      },
-      {
-        "internalType": "address",
-        "name": "_currentToken",
-        "type": "address"
-      },
-      {
-        "internalType": "uint256",
-        "name": "_originChainId",
-        "type": "uint256"
-      },
-      {
-        "internalType": "bytes32[]",
-        "name": "r",
-        "type": "bytes32[]"
-      },
-      {
-        "internalType": "bytes32[]",
-        "name": "s",
-        "type": "bytes32[]"
-      },
-      {
-        "internalType": "uint8[]",
-        "name": "v",
-        "type": "uint8[]"
-      },
-      {
-        "internalType": "string",
-        "name": "_uri",
-        "type": "string"
-      }
-    ],
-    "name": "upgradeTo",
-    "outputs": [
-      {
-        "internalType": "bytes",
-        "name": "addr",
-        "type": "bytes"
-      },
-      {
-        "internalType": "uint256",
-        "name": "chainId",
-        "type": "uint256"
-      }
-    ],
-    "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "address",
-        "name": "newImplementation",
-        "type": "address"
-      },
-      {
-        "internalType": "bytes",
-        "name": "data",
-        "type": "bytes"
-      }
-    ],
-    "name": "upgradeToAndCall",
-    "outputs": [
-      {
-        "internalType": "bool",
-        "name": "",
-        "type": "bool"
-      }
-    ],
-    "stateMutability": "payable",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "address",
-        "name": "newImplementation",
-        "type": "address"
-      },
-      {
-        "internalType": "bytes",
-        "name": "data",
-        "type": "bytes"
-      }
-    ],
-    "name": "upgradeToAndCall",
     "outputs": [],
-    "stateMutability": "payable",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "bytes",
-        "name": "_originToken",
-        "type": "bytes"
-      },
-      {
-        "internalType": "address",
-        "name": "_currentToken",
-        "type": "address"
-      },
-      {
-        "internalType": "uint256",
-        "name": "_originChainId",
-        "type": "uint256"
-      },
-      {
-        "internalType": "bytes32[]",
-        "name": "r",
-        "type": "bytes32[]"
-      },
-      {
-        "internalType": "bytes32[]",
-        "name": "s",
-        "type": "bytes32[]"
-      },
-      {
-        "internalType": "uint8[]",
-        "name": "v",
-        "type": "uint8[]"
-      },
-      {
-        "internalType": "string",
-        "name": "_uri",
-        "type": "string"
-      }
-    ],
-    "name": "updateTokenURI",
-    "outputs": [],
-    "stateMutability": "payable",
+    "stateMutability": "nonpayable",
     "type": "function"
   },
   {
