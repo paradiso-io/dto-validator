@@ -57,7 +57,7 @@ const { sleep } = require('../helpers/general')
 
         // Start libp2p
         await libp2p.start()
-        console.log('ID  node PRODUCER : ', libp2p.peerId.toB58String())
+        console.log('ID  node NFT PRODUCER : ', libp2p.peerId.toB58String())
 
         //Create our PubsubChat client 
         const pubsubChat = new PubsubChat(libp2p, PubsubChat.TOPIC, async ({ from, message }) => {

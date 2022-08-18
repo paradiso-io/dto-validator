@@ -2,7 +2,6 @@ const db = require('../models')
 const crypto = require('crypto')
 const generalHelper = require('../helpers/general')
 const CasperHelper = require('../helpers/casper')
-const CEP78 = require("../utils/index") // CEP78 NFT
 const { sha256 } = require("ethereum-cryptography/sha256");
 const logger = require("../helpers/logger");
 //const { CLAccountHash, DeployUtil } = require("casper-js-sdk");
@@ -32,11 +31,6 @@ async function main() {
         let casperChainId = 5678
         let mpcPubkey = CasperHelper.getMPCPubkey()
 
-        const cep78 = new CEP78(
-            CasperHelper.getRandomCasperRPCLink(),
-            casperConfig.chainName,
-            casperConfig.eventStream
-        );
         //scan for tx without casperDeployCreated
         let pendingTxes = await db.Nft721Transaction.find(
             {
@@ -118,7 +112,7 @@ async function main() {
             let deployJson = JSON.stringify(DeployUtil.deployToJson(deploy));
             let hashToSign = sha256(Buffer.from(deploy.hash)).toString("hex")
             let deployHash = Buffer.from(deploy.hash).toString('hex')
-            console.log("deployHash2: ", deployHash)
+            //console.log("deployHash2: ", deployHash)
 
             logger.info(
                 "new transactions to casper %s",
@@ -135,7 +129,7 @@ async function main() {
                         index: tx.index,
                         deployHash: deployHash,
                         deployHashToSign: hashToSign,
-                        account: tx.account,
+                        toWallet: tx.account,
                         fromChainId: tx.fromChainId,
                         toChainId: tx.toChainId,
                         originChainId: tx.originChainId,
@@ -154,6 +148,7 @@ async function main() {
                         isNFT: tx.isNFT,
                         tokenIds: tx.tokenIds,
                         tokenHashes: tx.tokenHashes,
+                        identifierMode: tx.identifierMode,
                     },
                 },
                 { upsert: true, new: true }
@@ -270,7 +265,7 @@ async function main() {
                             index: req.index,
                             deployHash: deployHash,
                             deployHashToSign: hashToSign,
-                            account: req.account,
+                            toWallet: req.account,
                             fromChainId: req.fromChainId,
                             toChainId: req.toChainId,
                             originChainId: req.originChainId,
@@ -289,6 +284,7 @@ async function main() {
                             isNFT: req.isNFT,
                             tokenIds: req.tokenIds,
                             tokenHashes: req.tokenHashes,
+                            identifierMode: req.identifierMode,
                         },
                     },
                     { upsert: true, new: true }
