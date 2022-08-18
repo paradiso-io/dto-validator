@@ -1,12 +1,12 @@
 const mongoose = require('mongoose')
 const Schema = mongoose.Schema
 
-const Nft721Transaction = new Schema({
+const NFTTransaction = new Schema({
     requestHash: { type: String, index: true },
     requestBlock: {type: Number, index: true},
     claimHash: { type: String, index: true },
     claimBlock: Number,
-    account: { type: String, index: true },
+    token_owner: { type: String, index: true },
     txCreator: { type: String, index: true },
     originToken: { type: String, index: true },
     fromToken: { type: String, index: true },
@@ -18,16 +18,15 @@ const Nft721Transaction = new Schema({
     fromChainId: { type: Number, index: true},
     originChainId: { type: Number, index: true},
     toChainId: { type: Number, index: true},
-    tokenIds: [{type:String}],
-    tokenHashes: [{type: String}],
+    amount: String,
+    nft_id: String,
+    token_metadata: {type : Object},
+    amountNumber: Number,
     index: { type: Number, index: true},
     claimId: String,
     requestTime: { type: Number, index: true},
     casperDeployCreated: { type: Boolean, index: true },
-    casperCreatedFailedReason: String,
-    isNFT: Boolean,
-    tokenMetadatas: [{type: String}],
-    identifierMode: Number
+    casperCreatedFailedReason: String
 }, { timestamps: false, versionKey: false })
 
-module.exports = mongoose.model('Nft721Transaction', Nft721Transaction)
+module.exports = mongoose.model('NFTTransaction', NFTTransaction)
