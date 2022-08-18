@@ -24,7 +24,7 @@ async function main() {
             requestHash: '0x' + crypto.randomBytes(32).toString('hex'),
             index: i,
             deployHash: '0x' + crypto.randomBytes(32).toString('hex'),
-            token_owner: "account-hash-11dfd918953707b354b3ace1c23ca282ff1162e868924f8152711669c0f5534f",
+            account: "account-hash-11dfd918953707b354b3ace1c23ca282ff1162e868924f8152711669c0f5534f",
             //fromWallet: '0x' + crypto.randomBytes(20).toString('hex'),
             fromChainId: 1234567,
             originChainId: 123456,
@@ -36,7 +36,7 @@ async function main() {
             amount: Math.random() * 1000,
             tokenMetadatas: [JSON.stringify(meta_data_json1), JSON.stringify(meta_data_json2)],
             isNFT: true,
-            tokenIds: [crypto.randomBytes(20).toString('hex'), crypto.randomBytes(20).toString('hex')],
+            tokenIds: [crypto.randomBytes(25).toString('hex'), crypto.randomBytes(25).toString('hex')],
             tokenHashes: [generalHelper.randomItemInArray(name), generalHelper.randomItemInArray(name)],
 
             timestamp: generalHelper.now(),
