@@ -5,8 +5,7 @@ const CasperHelper = require('../helpers/casper')
 const { sha256 } = require("ethereum-cryptography/sha256");
 const logger = require("../helpers/logger");
 //const { CLAccountHash, DeployUtil } = require("casper-js-sdk");
-import * as constants from "../utils/constants";
-import {
+const {
     DeployUtil,
     CasperClient,
     RuntimeArgs,
@@ -16,7 +15,7 @@ import {
     CLKey,
     CLAccountHash,
     CLValueBuilder,
-} from "casper-js-sdk";
+} = require("casper-js-sdk");
 
 const {
     utils,
@@ -25,8 +24,6 @@ const {
 } = require("casper-js-client-helper");
 const { setClient, contractSimpleGetter, createRecipientAddress } = helpers;
 async function main() {
-    const client = new CasperClient(constants.DEPLOY_NODE_ADDRESS);
-
     //const hash1 = "c21b4b9bb3842a1a4365c3b242bd99ef430d674ba5694813b78d2bcc517bd6a3"
     //const nft_contract = hash1
     //const contracthashbytearray = new CLByteArray(Uint8Array.from(Buffer.from(hash1, 'hex')));
@@ -87,9 +84,7 @@ async function main() {
             let deploy = DeployUtil.makeDeploy(
                 new DeployUtil.DeployParams(
                     mpcPubkey,
-                    casperConfig.chainName,
-                    constants.DEPLOY_GAS_PRICE,
-                    constants.DEPLOY_TTL_MS,
+                    casperConfig.chainName
                 ),
                 DeployUtil.ExecutableDeployItem.newStoredContractByHash(
                     Uint8Array.from(Buffer.from(token.contractHash, "hex")),
@@ -229,9 +224,7 @@ async function main() {
                     new DeployUtil.DeployParams(
                         //pairKeyView.publicKey, // MPC public key
                         mpcPubkey,
-                        "casper-test",
-                        constants.DEPLOY_GAS_PRICE,
-                        constants.DEPLOY_TTL_MS,
+                        casperConfig.chainName
                     ),
                     DeployUtil.ExecutableDeployItem.newStoredContractByHash(
                         Uint8Array.from(Buffer.from(token.contractHash, 'hex')),
