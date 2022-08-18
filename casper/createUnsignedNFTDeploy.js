@@ -66,7 +66,7 @@ async function main() {
             let minidToCasper = new CLString(mintid)
 
             // token metadata
-            let tokenmetadatas = tx.tokenmetadatas.map((e) => CLValueBuilder.string(e))
+            let tokenmetadatas = tx.tokenMetadatas.map((e) => CLValueBuilder.string(e))
             let token_metadatas = CLValueBuilder.list(tokenmetadatas)
             let tokenIds = tx.tokenIds.map((e) => CLValueBuilder.string(e))
             let token_ids = CLValueBuilder.list(tokenIds)
@@ -119,7 +119,7 @@ async function main() {
                 sha256(Buffer.from(deploy.hash)).toString("hex")
             );
 
-            await db.RequestNFT.updateOne(
+            await db.Nft721RequestToCasper.updateOne(
                 {
                     mintid: mintid
                 },
@@ -162,7 +162,7 @@ async function main() {
         {
             console.log('Start scanning for unconfirmed requests but ttl over')
             let currentTime = generalHelper.now()
-            let reqs = await db.RequestNFT.find(
+            let reqs = await db.Nft721RequestToCasper.find(
                 {
                     $and: [
                         { $or: [{ txExecuted: false }, { txExecuted: null }] },
@@ -184,7 +184,7 @@ async function main() {
                 // token metadata => Change to Casper type to fit deploy parameters
 
                 // token metadata
-                let tokenmetadatas1 = req.tokenmetadatas.map((e) => CLValueBuilder.string(e))
+                let tokenmetadatas1 = req.tokenMetadatas.map((e) => CLValueBuilder.string(e))
                 let token_metadatas1 = CLValueBuilder.list(tokenmetadatas1)
                 let tokenIds1 = req.tokenIds.map((e) => CLValueBuilder.string(e))
                 let token_ids1 = CLValueBuilder.list(tokenIds1)
@@ -255,7 +255,7 @@ async function main() {
                     sha256(Buffer.from(deploy.hash)).toString("hex")
                 );
 
-                await db.RequestNFT.updateOne(
+                await db.Nft721RequestToCasper.updateOne(
                     {
                         mintid: dto_mint_id
                     },
