@@ -5,6 +5,7 @@ const logger = require('./helpers/logger')
 const Web3Utils = require('./helpers/web3')
 const tokenHelper = require('./helpers/token')
 const NFT721Bridge = require('./contracts/NFT721Bridge.json')
+const ERC721 = require('./contracts/ERC721.json')
 const db = require('./models')
 const CasperHelper = require('./helpers/casper')
 const CasperConfig = CasperHelper.getConfigInfo()
@@ -26,12 +27,25 @@ async function processEvent(event, networkId) {
       tokenAddress = tokenAddress.replace('0x000000000000000000000000', '0x')
     }
   }
-  let tokenSymbol = await tokenHelper.getTokenSymbol(tokenAddress, originChainId)
+  let tokenContract = await new web3.eth.Contract(ERC721, tokenAddress)
+  let tokenSymbol = await tokenContract.methods.symbol().call()
+  let tokenName = await tokenContract.methods.name().call()
   let tokenIds = web3.eth.abi.decodeParameter(
     'uint256[]',
     event.returnValues._tokenIds,
   )
-  let tokenIdsString = tokenIds.join(',')
+  let tokenIdsString = tokenIds
+  let tokenMetadatas = []
+  for(var i = 0; i < tokenIds.length; i++) {
+    let uri = await tokenContract.methods.tokenURI(tokenIds[i]).call()
+    let metadata = {
+      name: tokenName,
+      token_uri: uri,
+      checksum: "940bffb3f2bba35f84313aa26da09ece3ad47045c6a1292c2bbd2df4ab1a55fb"
+    }
+    metadata = JSON.stringify(metadata)
+    tokenMetadatas.push(metadata)
+  }
 
   let block = await web3.eth.getBlock(event.blockNumber)
 
@@ -82,6 +96,7 @@ async function processEvent(event, networkId) {
         tokenIds: tokenIdsString,
         index: event.returnValues._index,
         requestTime: block.timestamp,
+        tokenMetadatas: tokenMetadatas
       },
     },
     { upsert: true, new: true }
