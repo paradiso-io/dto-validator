@@ -1,6 +1,5 @@
 let CasperHelper = require("../helpers/casper");
-let DotOracleCasperContractBridge = require("dotoracle-casper-contracts").NFTBridge
-let {DTOWrappedNFT} = require("dotoracle-casper-contracts")
+let { DTOWrappedNFT, NFTBridge } = require("casper-nft-utils")
 let findArgParsed = CasperHelper.findArgParsed;
 const logger = require("../helpers/logger");
 
@@ -9,6 +8,7 @@ let db = require('../models')
 const HOOK = {
   updateMintOrUnlock: async (updateData) => {
     {
+      console.log('updateData',)
       // event ClaimToken(address indexed _token, address indexed _addr, uint256 _amount, uint256 _originChainId, uint256 _fromChainId, uint256 _toChainId, uint256 _index, bytes32 _claimId);
       await db.Nft721Transaction.updateOne(
         {
@@ -25,13 +25,13 @@ const HOOK = {
             claimBlock: parseInt(updateData.height),
             claimed: true,
             claimId: updateData.claimId,
-            tokenIds: updateData.tokenIds
-
+            tokenIds: updateData.tokenIds,
+            tokenMetadatas: updateData.tokenMetadatas
           },
         },
         { upsert: true, new: true }
       );
-      logger.info("claimId %s", claimId);
+      logger.info("claimId %s", updateData.claimId);
       await db.Nft721RequestToCasper.updateOne(
         {
           claimId: updateData.claimId
@@ -53,7 +53,7 @@ const HOOK = {
         toChainId: parseInt(updateData.toChainId),
         originChainId: parseInt(updateData.originChainId),
         originToken: updateData.originToken.toLowerCase(),
-        requestHash: CasperHelper.toNormalTxHash(updateData.deployHash)
+        requestHash: CasperHelper.toNormalTxHash(updateData.deployHash),
       },
       {
         $set: {
@@ -64,7 +64,8 @@ const HOOK = {
           originName: updateData.originName,
           tokenIds: updateData.tokenIds,
           requestTime: Math.floor(updateData.timestamp / 1000),
-          identifierMode: updateData.identifierMode
+          identifierMode: updateData.identifierMode,
+          tokenMetadatas: updateData.tokenMetadatas
         },
       },
       { upsert: true, new: true }
@@ -75,12 +76,15 @@ const HOOK = {
     if (identifierMode == 0) {
       tokenIds = findArgParsed(args, "token_ids")
       tokenIds = tokenIds.map(e => e.toString())
-      tokenIds = tokenIds.join(",")
     } else {
       tokenIds = findArgParsed(args, "token_hashes")
-      tokenIds = tokenIds.map(e => new BigNumber(e).toString())
-      tokenIds = tokenIds.join(",")
+      console.log('token_hashes', tokenIds)
+      tokenIds = tokenIds.map(e => new BigNumber(e, 16).toString())
     }
+    return tokenIds
+  },
+  getTokenHashesFromArgs: (args) => {
+    let tokenIds = findArgParsed(args, "token_hashes")
     return tokenIds
   },
   process: async (block, deploy, storedContractByHash) => {
@@ -93,8 +97,8 @@ const HOOK = {
         );
         let args = storedContractByHash.args;
         let entryPoint = storedContractByHash.entry_point;
-        console.log('storedContractByHash', storedContractByHash)
         if (tokenData) {
+          console.log('storedContractByHash', storedContractByHash)
           let nftContractHash = storedContractByHash.hash
           if (entryPoint == "mint") {
             let nftContract = await DTOWrappedNFT.createInstance(nftContractHash, CasperHelper.getRandomCasperRPCLink(), casperConfig.chainName)
@@ -105,7 +109,7 @@ const HOOK = {
             if (recipient.Account) {
               recipient = recipient.Account
             }
-            let mintid = findArg(args, "mintid");
+            let mintid = findArgParsed(args, "mint_id");
             let claimId = mintid
             // mintid = <txHash>-<fromChainId>-<toChainId>-<index>-<originContractAddress>-<originChainId>
 
@@ -117,7 +121,7 @@ const HOOK = {
             let originContractAddress = mintidSplits[4];
             let originChainId = parseInt(mintidSplits[5]);
 
-            logger.info("Casper Network Minting: %s", deploy.hash);
+            logger.info("Casper Network Minting: %s %s", deploy.hash, claimId);
 
             await HOOK.updateMintOrUnlock(
               {
@@ -130,7 +134,8 @@ const HOOK = {
                 deployHash: deploy.hash,
                 height: block.block.header.height,
                 claimId,
-                tokenIds
+                tokenIds,
+                tokenMetadatas: metadatas
               }
             )
           } else if (storedContractByHash.entry_point == "request_bridge_back") {
@@ -141,9 +146,27 @@ const HOOK = {
             }
 
             let nftContract = await DTOWrappedNFT.createInstance(nftContractHash, CasperHelper.getRandomCasperRPCLink(), casperConfig.chainName)
-            await nftContract.init()
             let identifierMode = await nftContract.identifierMode()
             let tokenIds = HOOK.getTokenIdsFromArgs(identifierMode, args)
+            let tokenHashes = []
+            if (identifierMode == 1) {
+              tokenHashes = HOOK.getTokenHashesFromArgs(args)
+            }
+            let tokenMetadatas = []
+            for (var i = 0; i < tokenIds.length; i++) {
+              let tokenId = identifierMode == 0 ? tokenIds[i] : tokenHashes[i]
+              while (true) {
+                try {
+                  //read metadata
+                  let metadata = await nftContract.getTokenMetadata(tokenId)
+                  tokenMetadatas.push(metadata)
+                  break
+                } catch (e) {
+                  nftContract.nodeAddress = CasperHelper.getRandomCasperRPCLink()
+                  console.error(e.toString())
+                }
+              }
+            }
 
             let toChainId = findArgParsed(args, "to_chainid");
             let receiverAddress = findArgParsed(args, "receiver_address");
@@ -180,7 +203,8 @@ const HOOK = {
                 originName: tokenData.originName,
                 tokenIds,
                 timestamp,
-                identifierMode
+                identifierMode,
+                tokenMetadatas
               }
             )
           }
@@ -261,7 +285,7 @@ const HOOK = {
             }
             let requestId = findArgParsed(args, "request_id");
             console.log('requestId', requestId)
-            const nftBridge = new DotOracleCasperContractBridge(nftConfig.nftbridge, CasperHelper.getRandomCasperRPCLink(), casperConfig.chainName)
+            const nftBridge = new NFTBridge(nftConfig.nftbridge, CasperHelper.getRandomCasperRPCLink(), casperConfig.chainName)
             await nftBridge.init()
 
             let requestData = await nftBridge.getIndexFromRequestId(requestId)
@@ -273,7 +297,6 @@ const HOOK = {
             if (identifierMode != 0) {
               tokenIds = requestData.token_hashes
             }
-            tokenIds = tokenIds.join(",")
 
             let index = requestData.request_index
             if (parseInt(index) == 0) {
@@ -283,14 +306,29 @@ const HOOK = {
 
             let nftSymbol = _tokenData.originSymbol
             let nftName = _tokenData.originName
-
+            let nftContract = {}
             if (!nftSymbol || !nftName) {
-              let nftContract = await DTOWrappedNFT.createInstance(nftContractHash, CasperHelper.getRandomCasperRPCLink(), casperConfig.chainName)
+              nftContract = await DTOWrappedNFT.createInstance(nftContractHash, CasperHelper.getRandomCasperRPCLink(), casperConfig.chainName)
               await nftContract.init()
               nftSymbol = await nftContract.collectionSymbol()
               nftName = await nftContract.collectionName()
             }
 
+            let tokenMetadatas = []
+            for (var i = 0; i < tokenIds.length; i++) {
+              let tokenId = tokenIds[i]
+              while (true) {
+                try {
+                  //read metadata
+                  let metadata = await nftContract.getTokenMetadata(tokenId)
+                  tokenMetadatas.push(metadata)
+                  break
+                } catch (e) {
+                  nftContract.nodeAddress = CasperHelper.getRandomCasperRPCLink()
+                  console.error(e.toString())
+                }
+              }
+            }
 
             logger.info("Casper Network Request: %s", deploy.hash);
 
@@ -309,14 +347,15 @@ const HOOK = {
                 originName: nftName,
                 tokenIds,
                 timestamp,
-                identifierMode
+                identifierMode,
+                tokenMetadatas
               }
             )
           }
         }
         break
       } catch (e) {
-        console.error(e.toString())
+        console.error(e)
       }
     }
   },

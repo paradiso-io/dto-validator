@@ -54,17 +54,32 @@ async function crawl(from, to, lastBlockHeight) {
 const getPastEvent = async () => {
   let casperConfig = CasperHelper.getConfigInfo();
   let networkId = casperConfig.networkId;
-  const client = new CasperServiceByJsonRPC(
+  let client = new CasperServiceByJsonRPC(
     CasperHelper.getRandomCasperRPCLink()
   );
   let fromBlock = parseInt(casperConfig.fromBlock);
-  console.log('fromBlock', fromBlock)
+  console.log('fromBlock 11', fromBlock)
   let setting = await db.Setting.findOne({ networkId: networkId });
   if (setting && setting.lastBlockRequest) {
     fromBlock = setting.lastBlockRequest;
   }
-
-  let currentBlock = await client.getLatestBlockInfo();
+  1, 023, 564
+  let currentBlock = null
+  trial = 20
+  while (trial > 0) {
+    try {
+      currentBlock = await client.getLatestBlockInfo();
+      break
+    } catch (e) {
+      client = new CasperServiceByJsonRPC(
+        CasperHelper.getRandomCasperRPCLink()
+      );
+    }
+    trial--
+    if (trial == 0) {
+      return
+    }
+  }
   let currentBlockHeight = parseInt(
     currentBlock.block.header.height.toString()
   );
@@ -109,6 +124,7 @@ const getPastEvent = async () => {
 let watch = async () => {
   while (true) {
     await getPastEvent();
+    console.log('waiting')
     await generalHelper.sleep(10 * 1000);
   }
 };
