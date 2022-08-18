@@ -316,9 +316,14 @@ router.post('/request-withdraw', [
     }
 
     let tokenIds = transaction.tokenIds.split(',')
-    let name, symbol, tokenUris = []
+    let name, symbol, tokenUris = [], bytesOriginToken = transaction.originToken
     let web3Origin = await Web3Utils.getWeb3(transaction.originChainId)
     let originTokenContract = await new web3Origin.eth.Contract(ERC721, transaction.originToken)
+
+    if (transaction.originChainId != casperConfig.networkId) {
+        bytesOriginToken = bytesOriginToken.replace('0x', '0x000000000000000000000000')
+    }
+    let chainIdsIndex = [transaction.originChainId, transaction.fromChainId, transaction.toChainId, transaction.index]
 
     for (let i = 0; i < tokenIds.length; i++) {
         try {
@@ -440,15 +445,15 @@ router.post('/request-withdraw', [
         s = s.slice(0, minApprovers + 2)
         v = v.slice(0, minApprovers + 2)
 
-        return res.json({ r: r, s: s, v: v, msgHash: msgHash, name: name, symbol: symbol, tokenUris: tokenUris })
+        return res.json({r, s, v, msgHash, name, symbol, tokenUris, originToken: bytesOriginToken, chainIdsIndex, tokenIds})
     } else {
         let txHashToSign = transaction.requestHash.includes("0x") ? transaction.requestHash : ("0x" + transaction.requestHash)
         logger.info("txHashToSign %s", txHashToSign)
         let sig = Web3Utils.signClaimNft721(
-            transaction.originToken,
+            bytesOriginToken,
             transaction.account,
             transaction.tokenIds.split(','),
-            [transaction.originChainId, transaction.fromChainId, transaction.toChainId, transaction.index],
+            chainIdsIndex,
             txHashToSign,
             name,
             symbol,
@@ -460,7 +465,7 @@ router.post('/request-withdraw', [
         let v = [sig.v]
 
 
-        return res.json({ r: r, s: s, v: v, msgHash: sig.msgHash, name: name, symbol: symbol, tokenUris: tokenUris })
+        return res.json({r, s, v, msgHash: sig.msgHash, name, symbol, tokenUris, originToken: bytesOriginToken, chainIdsIndex, tokenIds})
     }
 })
 
