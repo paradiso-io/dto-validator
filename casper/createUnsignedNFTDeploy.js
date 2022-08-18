@@ -191,7 +191,7 @@ async function main() {
 
                 // token_owner
 
-                let token_owner1 = req.account
+                let token_owner1 = req.toWallet
 
                 let splits = token_owner1.split("-")
                 var re = /[0-9A-Fa-f]{6}/g;
@@ -259,7 +259,7 @@ async function main() {
                             index: req.index,
                             deployHash: deployHash,
                             deployHashToSign: hashToSign,
-                            toWallet: req.account,
+                            toWallet: req.toWallet,
                             fromChainId: req.fromChainId,
                             toChainId: req.toChainId,
                             originChainId: req.originChainId,
