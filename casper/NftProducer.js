@@ -86,7 +86,7 @@ const { sleep } = require('../helpers/general')
                 })
                 try {
                     await pubsubChat.send(JSON.stringify(tx))
-                    // console.log("send sucessed")
+                    console.log("send sucessed")
                 } catch (err) {
                     console.error('Could not publish chat', err)
                 }
