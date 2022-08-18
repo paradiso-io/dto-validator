@@ -34,7 +34,7 @@ async function crawl(from, to, lastBlockHeight) {
             //analyzing deploy details
             let session = deploy.session;
             if (session && session.StoredContractByHash) {
-              // await TokenHook.process(block, deploy, session.StoredContractByHash)
+              await TokenHook.process(block, deploy, session.StoredContractByHash)
               await NFTHook.process(block, deploy, session.StoredContractByHash)
             }
           }
