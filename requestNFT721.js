@@ -36,7 +36,18 @@ async function processEvent(event, networkId) {
   let block = await web3.eth.getBlock(event.blockNumber)
 
   // event RequestBridge(address indexed _token, bytes indexed _addr, uint256 _amount, uint256 _originChainId, uint256 _fromChainId, uint256 _toChainId, uint256 _index)
-  let decodedAddress = event.returnValues._toAddr;
+  let toAddrBytes = event.returnValues._toAddr;
+  let decoded;
+  try {
+    decoded = web3.eth.abi.decodeParameters(
+      [{ type: "string", name: "decodedAddress" }],
+      toAddrBytes
+    );
+  } catch (e) {
+    logger.error("cannot decode recipient address");
+    return;
+  }
+  let decodedAddress = decoded.decodedAddress;
   let casperChainId = CasperConfig.networkId;
 
   if (parseInt(event.returnValues._toChainId) == casperChainId) {

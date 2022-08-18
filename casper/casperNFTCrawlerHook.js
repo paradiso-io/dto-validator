@@ -79,7 +79,7 @@ const HOOK = {
     } else {
       tokenIds = findArgParsed(args, "token_hashes")
       console.log('token_hashes', tokenIds)
-      tokenIds = tokenIds.map(e => new BigNumber(e, 16).toString())
+      tokenIds = tokenIds.map(e => e.toString())
     }
     return tokenIds
   },

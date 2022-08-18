@@ -2,8 +2,6 @@
   "server": {
     "host": "0.0.0.0",
     "port": 4001
-//    "port": 4002
-//    "port": 4003
   },
   "nativeAddress": "0x1111111111111111111111111111111111111111",
   "logs": {
@@ -28,8 +26,7 @@
   "crawlChainIds": {
     "mainnet": [1, 56, 1284, 43114, 66],
     "testnet": [],
-//    "nft721testnet": [4, 42, 97, 1287, 4002, 43113, 80001],
-    "nft721testnet": [42, 97],
+    "nft721testnet": [42, 97, 43113],
     "nft721mainnet": []
   },
   "blockchain": {
@@ -224,7 +221,7 @@
       "bridge": "0x7e3226239dbfd6bea1ce22208001dc28194cbec2",
       "nft721": "0x39B38ce58998743D82ccB006A56B5FAA4dd3A588",
       "firstBlockCrawl": 8754306,
-      "firstBlockNft721": 12610250
+      "firstBlockNft721": 12650883 
     },
     "80001": {
       "bridge": "0xAbB7ae870c54b893d20f75143BB8Fc389799ff42",
@@ -240,13 +237,10 @@
     }
   },
   "caspernetwork": "testnet",
-//  "signer": "0x69b134d201b8087231a9f5deaa3ad4185ec83e2233430a1ea14e9fe955e671cb",
-  "signer": "0x2ac7bed81e53cb27dd36a0d8b3ddfecc27b53d735ab70b40268731a7fb0a521b",
+  "signer": "",
   "checkTxOnChain": false,
-//  "proxy": false,
   "proxy": true,
   "signatureServer": [
-    "http://localhost:4002/",
-    "http://localhost:4003/"
+
   ]
 }

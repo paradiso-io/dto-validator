@@ -17,18 +17,24 @@ import {
     CLAccountHash,
     CLValueBuilder,
 } from "casper-js-sdk";
+
+const {
+    utils,
+    helpers,
+    CasperContractClient,
+} = require("casper-js-client-helper");
+const { setClient, contractSimpleGetter, createRecipientAddress } = helpers;
 async function main() {
     const client = new CasperClient(constants.DEPLOY_NODE_ADDRESS);
 
-    const hash1 = "c21b4b9bb3842a1a4365c3b242bd99ef430d674ba5694813b78d2bcc517bd6a3"
-    const nft_contract = hash1
-    const contracthashbytearray = new CLByteArray(Uint8Array.from(Buffer.from(hash1, 'hex')));
-    const contracthash = new CLKey(contracthashbytearray);
+    //const hash1 = "c21b4b9bb3842a1a4365c3b242bd99ef430d674ba5694813b78d2bcc517bd6a3"
+    //const nft_contract = hash1
+    //const contracthashbytearray = new CLByteArray(Uint8Array.from(Buffer.from(hash1, 'hex')));
+    //const contracthash = new CLKey(contracthashbytearray);
 
     while (true) {
         let casperConfig = CasperHelper.getConfigInfo()
-        //let casperChainId = casperConfig.networkId
-        let casperChainId = 5678
+        let casperChainId = casperConfig.networkId
         let mpcPubkey = CasperHelper.getMPCPubkey()
 
         //scan for tx without casperDeployCreated
@@ -51,51 +57,48 @@ async function main() {
                 continue
             }
 
+            let token = CasperHelper.getCasperNFTTokenInfoFromOriginToken(tx.originToken, tx.originChainId)
+            if (!token) {
+                logger.warn("token %s on chain %s not supported", tx.originToken, tx.originChainId)
+                continue
+            }
+
             // To address account
             let ownerAccountHashByte = Uint8Array.from(
                 Buffer.from(toAddress.slice(13), 'hex'),
             )
-            const ownerAccounthash = new CLAccountHash(
-                ownerAccountHashByte
-            );
-            const ownerKey = new CLKey(ownerAccounthash);
+
+            const ownerKey = createRecipientAddress(new CLAccountHash(ownerAccountHashByte))
             console.log("token_owner_to_casper:  ", ownerKey)
 
-
-            let mintid = `${tx.requestHash}-${tx.fromChainId}-${tx.toChainId}-${tx.index}-${tx.originChainId}`
+            let mintid = `${tx.requestHash.toLowerCase()}-${tx.fromChainId}-${tx.toChainId}-${tx.index}-${tx.originToken.toLowerCase()}-${tx.originChainId}`
             let minidToCasper = new CLString(mintid)
 
             // token metadata
             let tokenmetadatas = tx.tokenMetadatas.map((e) => CLValueBuilder.string(e))
             let token_metadatas = CLValueBuilder.list(tokenmetadatas)
-            let tokenIds = tx.tokenIds.map((e) => CLValueBuilder.string(e))
+            let tokenIds = tx.tokenIds.map((e) => CLValueBuilder.string(e.toString()))
             let token_ids = CLValueBuilder.list(tokenIds)
-            let tokenHashes = tx.tokenHashes.map((e) => CLValueBuilder.string(e));
-            let token_hashes = CLValueBuilder.list(tokenHashes)
-
 
             let ttl = 300000
 
             console.log("before deploy")
 
-
             let deploy = DeployUtil.makeDeploy(
                 new DeployUtil.DeployParams(
-                    //pairKeyView.publicKey, // MPC public key
                     mpcPubkey,
-                    "casper-test",
+                    casperConfig.chainName,
                     constants.DEPLOY_GAS_PRICE,
                     constants.DEPLOY_TTL_MS,
                 ),
                 DeployUtil.ExecutableDeployItem.newStoredContractByHash(
-                    Uint8Array.from(Buffer.from(hash1, 'hex')),
+                    Uint8Array.from(Buffer.from(token.contractHash, "hex")),
                     "mint",
                     RuntimeArgs.fromMap({
-                        "nft_contract_hash": contracthash,
+                        // "nft_contract_hash": contracthash,
                         "token_owner": ownerKey,
                         "mint_id": minidToCasper,
-                        "token_ids": token_ids,
-                        "token_hashes": token_hashes,
+                        "token_hashes": token_ids,
                         "token_meta_datas": token_metadatas
                     })
                 ),
@@ -147,7 +150,6 @@ async function main() {
                         tokenMetadatas: tx.tokenMetadatas,
                         isNFT: tx.isNFT,
                         tokenIds: tx.tokenIds,
-                        tokenHashes: tx.tokenHashes,
                         identifierMode: tx.identifierMode,
                     },
                 },
@@ -173,7 +175,6 @@ async function main() {
             console.log(reqs)
             for (const req of reqs) {
                 //verify format of  account address must be account hash
-                let toAddress = req.token_owner
                 logger.info(
                     "RENEWAL: Origin MINTID %s",
                     req.mintid
@@ -188,12 +189,10 @@ async function main() {
                 let token_metadatas1 = CLValueBuilder.list(tokenmetadatas1)
                 let tokenIds1 = req.tokenIds.map((e) => CLValueBuilder.string(e))
                 let token_ids1 = CLValueBuilder.list(tokenIds1)
-                let tokenHashes1 = req.tokenHashes.map((e) => CLValueBuilder.string(e));
-                let token_hashes1 = CLValueBuilder.list(tokenHashes1)
 
-                let token_metadata1 = new CLString(JSON.stringify(req.tokenMetadatas))
-                let token_ids = new CLValueBuilder.list(tx.token_ids)
-                let token_hashs = new CLValueBuilder.list(tx.token_hashs)
+                // let token_metadata1 = new CLString(JSON.stringify(req.tokenMetadatas))
+                // let token_ids = new CLValueBuilder.list(tx.token_ids)
+                // let token_hashs = new CLValueBuilder.list(tx.token_hashs)
 
                 // token_owner
 
@@ -217,7 +216,11 @@ async function main() {
                 const token_owner_to_casper = new CLKey(accounthash2);
                 console.log("token_owner_to_casper:  ", token_owner_to_casper)
 
-
+                let token = CasperHelper.getCasperNFTTokenInfoFromOriginToken(req.originToken, req.originChainId)
+                if (!token) {
+                    logger.warn("token %s on chain %s not supported", req.originToken, req.originChainId)
+                    continue
+                }
 
                 //TODO: check whether mintid executed => this is to avoid failed transactions as mintid cant be executed more than one time
                 let ttl = 300000
@@ -231,14 +234,12 @@ async function main() {
                         constants.DEPLOY_TTL_MS,
                     ),
                     DeployUtil.ExecutableDeployItem.newStoredContractByHash(
-                        Uint8Array.from(Buffer.from(hash1, 'hex')),
+                        Uint8Array.from(Buffer.from(token.contractHash, 'hex')),
                         "mint",
                         RuntimeArgs.fromMap({
-                            "nft_contract_hash": contracthash,
                             "token_owner": token_owner_to_casper,
                             "dto_mint_id": dto_mint_id_tocasper, // change to Casper string type
-                            "token_ids": token_ids1,
-                            "token_hashes": token_hashes1,
+                            "token_hashes": token_ids1,
                             "token_meta_datas": token_metadatas1 // fit Casper type
                         })
                     ),
@@ -283,7 +284,6 @@ async function main() {
                             renewalCount: req.renewalCount + 1,
                             isNFT: req.isNFT,
                             tokenIds: req.tokenIds,
-                            tokenHashes: req.tokenHashes,
                             identifierMode: req.identifierMode,
                         },
                     },
