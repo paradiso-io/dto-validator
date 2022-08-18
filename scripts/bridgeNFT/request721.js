@@ -7,7 +7,7 @@ const PrivateKeyProvider = require("truffle-privatekey-provider");
 const privateKey = '0xe9a698185c72b3cebc14d68213e5ead83efdc784ee93f34a0e2e76ba68b07727'
 // const rpc = 'https://data-seed-prebsc-1-s1.binance.org:8545/';
 const rpc = 'https://kovan.infura.io/v3/99d4e19c704546fbbbdfe408d354b9c8';
-const bridgeAddress = '0xB4D46B3ffd8079bd2b5d69A826bb3014b4153bB4'
+const bridgeAddress = '0x39B38ce58998743D82ccB006A56B5FAA4dd3A588'
 const log = console.log;
 const nftToken = '0xf5de760f2e916647fd766B4AD9E85ff943cE3A2b';
 
@@ -24,7 +24,7 @@ async function requestBridge() {
     //approve
     console.log("request");
     await bridge.methods
-      .requestMultiNFT721Bridge(nftToken, mainAccount, [1777196], 97)
+      .requestMultiNFT721Bridge(nftToken, mainAccount, [1777197], 97)
       .send({
         // chainId: 97,
         chainId: 42,

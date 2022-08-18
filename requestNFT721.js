@@ -23,7 +23,7 @@ async function processEvent(event, networkId) {
   let tokenAddress = event.returnValues._token.toLowerCase()
   if (originChainId !== 96945816564243 && originChainId !== 131614895977472) {
     if (tokenAddress.length > 42) {
-      tokenAddress = tokenAddress.replace('0x00000000000000000000000', '0x')
+      tokenAddress = tokenAddress.replace('0x000000000000000000000000', '0x')
     }
   }
   let tokenSymbol = await tokenHelper.getTokenSymbol(tokenAddress, originChainId)
@@ -93,7 +93,7 @@ async function processClaimEvent(event, networkId) {
   let originChainId = parseInt(event.returnValues._originChainId)
   if (originChainId !== 96945816564243 && originChainId !== 131614895977472) {
     if (originToken.length > 42) {
-      originToken = originToken.replace('0x00000000000000000000000', '0x')
+      originToken = originToken.replace('0x000000000000000000000000', '0x')
     }
   }
   await db.Nft721Transaction.updateOne({
@@ -175,7 +175,6 @@ async function getPastEventForBatch(networkId, bridgeAddress, step, from, to) {
 
       for (let i = 0; i < allEvents.length; i++) {
         let event = allEvents[i]
-        console.log('eeee', event)
         if (event.event === 'ClaimMultiNFT721') {
           await processClaimEvent(
             event,

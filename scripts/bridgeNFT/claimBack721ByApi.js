@@ -9,18 +9,17 @@ const axios = require('axios')
 
 const privateKey = '0xe9a698185c72b3cebc14d68213e5ead83efdc784ee93f34a0e2e76ba68b07727'
 // const rpc = 'https://data-seed-prebsc-1-s1.binance.org:8545/';
-const rpc = 'https://kovan.infura.io/v3/99d4e19c704546fbbbdfe408d354b9c8';
-const bridgeAddress = '0x9de8C0Bc516c26e3Eb25c4C8995c5636084fB4C8'
-const nftToken = '0xf5de760f2e916647fd766B4AD9E85ff943cE3A2b';
+// const rpc = 'https://kovan.infura.io/v3/99d4e19c704546fbbbdfe408d354b9c8';
+const rpc = 'https://kovan.infura.io/v3/29849079c7cd4ea89d515c977476539b';
+const bridgeAddress = '0x39B38ce58998743D82ccB006A56B5FAA4dd3A588'
+const nftToken = '0xf5de760f2e916647fd766b4ad9e85ff943ce3a2b';
 
 
-let tokenIds = [1777196, 1777197]
-let fromChainId = 4
+let fromChainId = 97
 let toChainId = 42
 let index = 0
 
-let chainIdIndex = [42, fromChainId, toChainId, index]
-let txHash = '0xaa6c1a5c7d3b1a3d96c875f790cd53d94f0ab37ccc36edb6722ea2811d972e01'
+let txHash = '0x32cae07030da99c0adc18227ba9a5ed6b4af00a83ebe61090707f541b57f020f'
 
 async function claimBridge() {
   try {
@@ -40,7 +39,7 @@ async function claimBridge() {
 
 
     console.log('ddddd', data)
-    console.log('input', nftToken, mainAccount, tokenIds, chainIdIndex,
+    console.log('input', nftToken, mainAccount, data.tokenIds,
       txHash,
       data.r, data.s, data.v,
       data.name, data.symbol)
@@ -48,14 +47,14 @@ async function claimBridge() {
     //approve
     console.log("request");
     await bridge.methods
-      .claimMultiNFT721Token(nftToken, mainAccount, tokenIds, chainIdIndex,
+      .claimMultiNFT721Token(data.originToken, mainAccount, data.tokenIds, data.chainIdsIndex,
         txHash,
         data.r, data.s, data.v,
-        data.name, data.symbol)
+        data.name, data.symbol, data.tokenUris)
       .send({
         chainId: 42,
         from: mainAccount,
-        gas: 9000000
+        gasLimit: 9000000
       });
 
     console.log("done");
