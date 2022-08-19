@@ -84,7 +84,9 @@ async function main() {
             let deploy = DeployUtil.makeDeploy(
                 new DeployUtil.DeployParams(
                     mpcPubkey,
-                    casperConfig.chainName
+                    casperConfig.chainName,
+                    null, 
+                    ttl
                 ),
                 DeployUtil.ExecutableDeployItem.newStoredContractByHash(
                     Uint8Array.from(Buffer.from(token.contractHash, "hex")),
@@ -224,14 +226,16 @@ async function main() {
                     new DeployUtil.DeployParams(
                         //pairKeyView.publicKey, // MPC public key
                         mpcPubkey,
-                        casperConfig.chainName
+                        casperConfig.chainName,
+                        null, 
+                        ttl
                     ),
                     DeployUtil.ExecutableDeployItem.newStoredContractByHash(
                         Uint8Array.from(Buffer.from(token.contractHash, 'hex')),
                         "mint",
                         RuntimeArgs.fromMap({
                             "token_owner": token_owner_to_casper,
-                            "dto_mint_id": dto_mint_id_tocasper, // change to Casper string type
+                            "mint_id": dto_mint_id_tocasper, // change to Casper string type
                             "token_hashes": token_ids1,
                             "token_meta_datas": token_metadatas1 // fit Casper type
                         })
