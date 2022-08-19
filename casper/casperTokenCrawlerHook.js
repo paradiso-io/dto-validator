@@ -12,7 +12,6 @@ const HOOK = {
   processMintEvent: async function (
     networkId,
     blockNumber,
-    lastBlock,
     eventData
   ) {
     logger.info("New event at block %s", blockNumber);
@@ -49,7 +48,7 @@ const HOOK = {
     );
   },
 
-  processRequestEvent: async function (blockNumber, lastBlock, eventData) {
+  processRequestEvent: async function (blockNumber, eventData) {
     logger.info("New event at block %s", blockNumber);
 
     let originChainId = eventData.originChainId;
@@ -130,7 +129,6 @@ const HOOK = {
             await HOOK.processMintEvent(
               networkId,
               block.block.header.height,
-              lastBlockHeight,
               eventData
             );
           } else if (storedContractByHash.entry_point == "transfer") {
@@ -189,7 +187,6 @@ const HOOK = {
 
             await HOOK.processRequestEvent(
               block.block.header.height,
-              lastBlockHeight,
               eventData
             );
           }
