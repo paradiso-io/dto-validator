@@ -23,9 +23,9 @@ const Nft721RequestToCasper = new Schema(
     tokenMetadatas: [{ type: String, index: true }],
     isProcessed: { type: Boolean, index: true },  //already submit to the MPC
     deployJsonString: String,
-    claimId: { type: String, unique: true },
     txExecuted: { type: Boolean, index: true },
-    renewalCount: {type: Number, index: true}
+    renewalCount: {type: Number, index: true},
+    mintid: { type: String, unique: true },
   },
   { timestamps: false, versionKey: false }
 );

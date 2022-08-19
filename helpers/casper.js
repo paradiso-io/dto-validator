@@ -64,6 +64,12 @@ const CasperHelper = {
         let token = tokens.find((e) => e.originContractAddress.toLowerCase() == originTokenAddress.toLowerCase() && e.originChainId == originChainId)
         return token
     },
+    getCasperNFTTokenInfoFromOriginToken: (originTokenAddress, originChainId) => {
+        let casperConfig = CasperHelper.getNFTConfig()
+        let tokens = casperConfig.tokens
+        let token = tokens.find((e) => e.originContractAddress.toLowerCase() == originTokenAddress.toLowerCase() && e.originChainId == originChainId)
+        return token
+    },
     findArg: (args, argName) => {
         return args.find((e) => e[0] == argName);
     },

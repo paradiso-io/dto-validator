@@ -44,7 +44,7 @@ const { sleep } = require('../helpers/general')
                 },
                 peerDiscovery: {
                     bootstrap: {
-                        list: ['/ip4/127.0.0.1/tcp/63785/ipfs/QmVASRfp5mxD21XaAcSJFmbaAdukUwqK1AMs8tT4RT4b1n']
+                        list: [config.bootstrap[config.caspernetwork]]
                     }
                 },
             }
@@ -70,7 +70,7 @@ const { sleep } = require('../helpers/general')
         })
         while (true) {
             // let tx = await db.RequestToCasper.find({isProcessed: false}).sort({ timestamp: 1 }).limit(1)
-            let tx = await db.RequestNFT.findOne({ isProcessed: false })
+            let tx = await db.Nft721RequestToCasper.findOne({ isProcessed: false })
             
             if (tx) {
 
@@ -86,7 +86,7 @@ const { sleep } = require('../helpers/general')
                 })
                 try {
                     await pubsubChat.send(JSON.stringify(tx))
-                    // console.log("send sucessed")
+                    console.log("send sucessed")
                 } catch (err) {
                     console.error('Could not publish chat', err)
                 }

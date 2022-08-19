@@ -3,8 +3,8 @@ const config = require('config')
 
 const logger = require('./helpers/logger')
 const Web3Utils = require('./helpers/web3')
-const tokenHelper = require('./helpers/token')
 const NFT721Bridge = require('./contracts/NFT721Bridge.json')
+const ERC721 = require('./contracts/ERC721.json')
 const db = require('./models')
 const CasperHelper = require('./helpers/casper')
 const CasperConfig = CasperHelper.getConfigInfo()
@@ -15,7 +15,7 @@ process.setMaxListeners(1000)
 let sleep = (time) => new Promise((resolve) => setTimeout(resolve, time))
 
 async function processEvent(event, networkId) {
-  logger.info('New event at block %s', event.blockNumber)
+  logger.info('New event at block %s, %s', event.event, event.blockNumber)
 
   let web3 = await Web3Utils.getWeb3(networkId)
 
@@ -26,17 +26,48 @@ async function processEvent(event, networkId) {
       tokenAddress = tokenAddress.replace('0x000000000000000000000000', '0x')
     }
   }
-  let tokenSymbol = await tokenHelper.getTokenSymbol(tokenAddress, originChainId)
+  let web3ForOriginChainId, tokenContract, tokenSymbol, tokenName
   let tokenIds = web3.eth.abi.decodeParameter(
     'uint256[]',
     event.returnValues._tokenIds,
   )
-  let tokenIdsString = tokenIds.join(',')
+  let tokenIdsString = tokenIds
+  let tokenMetadatas = []
+
+  if (!config.blockchain[event.returnValues._originChainId].notEVM) {
+    web3ForOriginChainId = await Web3Utils.getWeb3(event.returnValues._originChainId)
+    tokenContract = await new web3ForOriginChainId.eth.Contract(ERC721, tokenAddress)
+    tokenSymbol = await tokenContract.methods.symbol().call()
+    tokenName = await tokenContract.methods.name().call()
+
+
+    for (var i = 0; i < tokenIds.length; i++) {
+      let uri = await tokenContract.methods.tokenURI(tokenIds[i]).call()
+      let metadata = {
+        name: tokenName,
+        token_uri: uri,
+        checksum: "940bffb3f2bba35f84313aa26da09ece3ad47045c6a1292c2bbd2df4ab1a55fb"
+      }
+      metadata = JSON.stringify(metadata)
+      tokenMetadatas.push(metadata)
+    }
+  }
 
   let block = await web3.eth.getBlock(event.blockNumber)
 
   // event RequestBridge(address indexed _token, bytes indexed _addr, uint256 _amount, uint256 _originChainId, uint256 _fromChainId, uint256 _toChainId, uint256 _index)
-  let decodedAddress = event.returnValues._toAddr;
+  let toAddrBytes = event.returnValues._toAddr;
+  let decoded;
+  try {
+    decoded = web3.eth.abi.decodeParameters(
+      [{ type: "string", name: "decodedAddress" }],
+      toAddrBytes
+    );
+  } catch (e) {
+    logger.error("cannot decode recipient address tx %s, from chain %s", event.transactionHash, event.returnValues._fromChainId);
+    return;
+  }
+  let decodedAddress = decoded.decodedAddress;
   let casperChainId = CasperConfig.networkId;
 
   if (parseInt(event.returnValues._toChainId) == casperChainId) {
@@ -71,6 +102,7 @@ async function processEvent(event, networkId) {
         tokenIds: tokenIdsString,
         index: event.returnValues._index,
         requestTime: block.timestamp,
+        tokenMetadatas: tokenMetadatas
       },
     },
     { upsert: true, new: true }
@@ -115,19 +147,24 @@ async function processClaimEvent(event, networkId) {
 }
 
 async function updateBlock(networkId, lastBlock) {
+  console.log('updating last block for ', networkId, lastBlock)
   if (lastBlock) {
     let setting = await db.Setting.findOne({ networkId: networkId })
     if (!setting) {
       await db.Setting.updateOne(
         { networkId: networkId },
-        { $set: { lastNft721BlockRequest: lastBlock } },
+        {
+          $set:
+            { lastNft721BlockRequest: lastBlock }
+        },
         {
           upsert: true,
           new: true,
         }
       )
     } else {
-      if (lastBlock > setting.lastNft721BlockRequest) {
+      let lastNft721BlockRequest = setting.lastNft721BlockRequest ? setting.lastNft721BlockRequest : 0
+      if (lastBlock > lastNft721BlockRequest) {
         setting.lastNft721BlockRequest = lastBlock;
         await setting.save()
       }
@@ -151,7 +188,7 @@ async function getPastEventForBatch(networkId, bridgeAddress, step, from, to) {
       let web3 = both.web3
       let currentBlockForRPC = await web3.eth.getBlockNumber()
       if (parseInt(currentBlockForRPC) < parseInt(toBlock)) {
-        logger.warning('invalid RPC %s, try again', both.rpc)
+        logger.warn('invalid RPC %s, try again', both.rpc)
         continue
       }
       const contract = new web3.eth.Contract(NFT721Bridge, bridgeAddress)
@@ -173,21 +210,30 @@ async function getPastEventForBatch(networkId, bridgeAddress, step, from, to) {
         )
       }
 
-      for (let i = 0; i < allEvents.length; i++) {
-        let event = allEvents[i]
-        if (event.event === 'ClaimMultiNFT721') {
-          await processClaimEvent(
-            event,
-            networkId
-          )
-        } else if (event.event === 'RequestMultiNFT721Bridge') {
+      {
+        let evts = allEvents.filter(e => e.event == "RequestMultiNFT721Bridge")
+
+        for (let i = 0; i < evts.length; i++) {
+          let event = evts[i];
           await processEvent(
             event,
             networkId
-          )
+          );
         }
       }
 
+      {
+        //claim events
+        let evts = allEvents.filter(e => e.event == "ClaimMultiNFT721")
+
+        for (let i = 0; i < evts.length; i++) {
+          let event = evts[i];
+          await processClaimEvent(
+            event,
+            networkId
+          );
+        }
+      }
 
       // console.log('sleep 2 seconds and wait to continue')
       await sleep(1000)
