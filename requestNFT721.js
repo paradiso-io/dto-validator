@@ -16,7 +16,7 @@ process.setMaxListeners(1000)
 let sleep = (time) => new Promise((resolve) => setTimeout(resolve, time))
 
 async function processEvent(event, networkId) {
-  logger.info('New event at block %s', event.blockNumber)
+  logger.info('New event at block %s, %s', event.event, event.blockNumber)
 
   let web3 = await Web3Utils.getWeb3(networkId)
 
@@ -27,7 +27,9 @@ async function processEvent(event, networkId) {
       tokenAddress = tokenAddress.replace('0x000000000000000000000000', '0x')
     }
   }
-  let tokenContract = await new web3.eth.Contract(ERC721, tokenAddress)
+
+  let web3ForOriginChainId = await Web3Utils.getWeb3(event.returnValues._originChainId)
+  let tokenContract = await new web3ForOriginChainId.eth.Contract(ERC721, tokenAddress)
   let tokenSymbol = await tokenContract.methods.symbol().call()
   let tokenName = await tokenContract.methods.name().call()
   let tokenIds = web3.eth.abi.decodeParameter(
@@ -36,6 +38,7 @@ async function processEvent(event, networkId) {
   )
   let tokenIdsString = tokenIds
   let tokenMetadatas = []
+  
   for(var i = 0; i < tokenIds.length; i++) {
     let uri = await tokenContract.methods.tokenURI(tokenIds[i]).call()
     let metadata = {
@@ -48,7 +51,7 @@ async function processEvent(event, networkId) {
   }
 
   let block = await web3.eth.getBlock(event.blockNumber)
-
+  
   // event RequestBridge(address indexed _token, bytes indexed _addr, uint256 _amount, uint256 _originChainId, uint256 _fromChainId, uint256 _toChainId, uint256 _index)
   let toAddrBytes = event.returnValues._toAddr;
   let decoded;

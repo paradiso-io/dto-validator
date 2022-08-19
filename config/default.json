@@ -26,7 +26,7 @@
   "crawlChainIds": {
     "mainnet": [1, 56, 1284, 43114, 66],
     "testnet": [],
-    "nft721testnet": [42, 97, 43113],
+    "nft721testnet": [97],
     "nft721mainnet": []
   },
   "blockchain": {
@@ -76,7 +76,7 @@
       "nativeSymbol": "OKT"
     },
     "42": {
-      "httpProvider": ["https://speedy-nodes-nyc.moralis.io/6f1c50d092cad31805b2371f/eth/kovan"],
+      "httpProvider": ["https://speedy-nodes-nyc.moralis.io/6f1c50d092cad31805b2371f/eth/kovan", "https://kovan.infura.io/v3/3a6c72cdf9e846968d21c0f3605013fd", "https://kovan.infura.io/v3/99d4e19c704546fbbbdfe408d354b9c8"],
       "wsProvider": "",
       "explorer": "https://kovan.etherscan.io",
       "confirmations": 6,
