@@ -147,19 +147,24 @@ async function processClaimEvent(event, networkId) {
 }
 
 async function updateBlock(networkId, lastBlock) {
+  console.log('updating last block for ', networkId, lastBlock)
   if (lastBlock) {
     let setting = await db.Setting.findOne({ networkId: networkId })
     if (!setting) {
       await db.Setting.updateOne(
         { networkId: networkId },
-        { $set: { lastNft721BlockRequest: lastBlock } },
+        {
+          $set:
+            { lastNft721BlockRequest: lastBlock }
+        },
         {
           upsert: true,
           new: true,
         }
       )
     } else {
-      if (lastBlock > setting.lastNft721BlockRequest) {
+      let lastNft721BlockRequest = setting.lastNft721BlockRequest ? setting.lastNft721BlockRequest : 0
+      if (lastBlock > lastNft721BlockRequest) {
         setting.lastNft721BlockRequest = lastBlock;
         await setting.save()
       }

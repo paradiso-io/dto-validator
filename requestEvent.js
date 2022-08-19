@@ -130,7 +130,8 @@ async function updateBlock(networkId, lastBlock) {
         }
       );
     } else {
-      if (lastBlock > setting.lastBlockRequest) {
+      let lastBlockRequest = setting.lastBlockRequest ? setting.lastBlockRequest : 0
+      if (lastBlock > lastBlockRequest) {
         setting.lastBlockRequest = lastBlock;
         await setting.save();
       }
