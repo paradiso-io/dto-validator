@@ -124,7 +124,7 @@
       "nativeSymbol": "fFTM"
     },
     "43113": {
-      "httpProvider": ["https://api.avax-test.network/ext/bc/C/rpc"],
+      "httpProvider": ["https://api.avax-test.network/ext/bc/C/rpc", "https://rpc.ankr.com/avalanche_fuji"],
       "wsProvider": "",
       "explorer": "https://testnet.snowtrace.io/",
       "confirmations": 2,
