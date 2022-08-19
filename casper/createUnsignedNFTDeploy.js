@@ -84,9 +84,7 @@ async function main() {
             let deploy = DeployUtil.makeDeploy(
                 new DeployUtil.DeployParams(
                     mpcPubkey,
-                    casperConfig.chainName,
-                    null, 
-                    ttl
+                    casperConfig.chainName
                 ),
                 DeployUtil.ExecutableDeployItem.newStoredContractByHash(
                     Uint8Array.from(Buffer.from(token.contractHash, "hex")),
@@ -226,9 +224,7 @@ async function main() {
                     new DeployUtil.DeployParams(
                         //pairKeyView.publicKey, // MPC public key
                         mpcPubkey,
-                        casperConfig.chainName,
-                        null, 
-                        ttl
+                        casperConfig.chainName
                     ),
                     DeployUtil.ExecutableDeployItem.newStoredContractByHash(
                         Uint8Array.from(Buffer.from(token.contractHash, 'hex')),
