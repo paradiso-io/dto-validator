@@ -315,7 +315,7 @@ router.post('/request-withdraw', [
         }
     }
 
-    let tokenIds = transaction.tokenIds.split(',')
+    let tokenIds = transaction.tokenIds
     let name, symbol, tokenUris = [], bytesOriginToken = transaction.originToken
     let web3Origin = await Web3Utils.getWeb3(transaction.originChainId)
     let originTokenContract = await new web3Origin.eth.Contract(ERC721, transaction.originToken)
@@ -452,7 +452,7 @@ router.post('/request-withdraw', [
         let sig = Web3Utils.signClaimNft721(
             bytesOriginToken,
             transaction.account,
-            transaction.tokenIds.split(','),
+            transaction.tokenIds,
             chainIdsIndex,
             txHashToSign,
             name,
