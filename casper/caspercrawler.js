@@ -11,12 +11,13 @@ const NFTHook = require('./casperNFTCrawlerHook')
 
 BigNumber.config({ EXPONENTIAL_AT: [-100, 100] });
 
-async function crawl(from, to, lastBlockHeight) {
+async function crawl(from, to, lastBlockHeight, rpc) {
   console.log('crawl', from, to)
   let fromBlock = from;
   let toBlock = to;
+  let selectedRPC = await CasperHelper.getRandomGoodCasperRPCLink(to, rpc)
   let client = new CasperServiceByJsonRPC(
-    CasperHelper.getRandomCasperRPCLink()
+    selectedRPC
   );
   while (fromBlock < toBlock) {
     try {
@@ -34,8 +35,8 @@ async function crawl(from, to, lastBlockHeight) {
             //analyzing deploy details
             let session = deploy.session;
             if (session && session.StoredContractByHash) {
-              await TokenHook.process(block, deploy, session.StoredContractByHash)
-              await NFTHook.process(block, deploy, session.StoredContractByHash)
+              await TokenHook.process(block, deploy, session.StoredContractByHash, selectedRPC)
+              await NFTHook.process(block, deploy, session.StoredContractByHash, selectedRPC)
             }
           }
         }
@@ -44,8 +45,9 @@ async function crawl(from, to, lastBlockHeight) {
     } catch (e) {
       logger.error("Error: %s [%s-%s] %s", e.toString(), from, to, fromBlock);
       await generalHelper.sleep(5 * 1000);
+      selectedRPC = await CasperHelper.getRandomGoodCasperRPCLink(to)
       client = new CasperServiceByJsonRPC(
-        CasperHelper.getRandomCasperRPCLink()
+        selectedRPC
       );
     }
   }
@@ -54,8 +56,9 @@ async function crawl(from, to, lastBlockHeight) {
 const getPastEvent = async () => {
   let casperConfig = CasperHelper.getConfigInfo();
   let networkId = casperConfig.networkId;
+  let selectedRPC = await CasperHelper.getRandomGoodCasperRPCLink(0)
   let client = new CasperServiceByJsonRPC(
-    CasperHelper.getRandomCasperRPCLink()
+    selectedRPC
   );
   let fromBlock = parseInt(casperConfig.fromBlock);
   console.log('fromBlock 11', fromBlock)
@@ -63,7 +66,7 @@ const getPastEvent = async () => {
   if (setting && setting.lastBlockRequest) {
     fromBlock = setting.lastBlockRequest > fromBlock ? setting.lastBlockRequest : fromBlock;
   }
-  
+
   let currentBlock = null
   trial = 20
   while (trial > 0) {
@@ -71,8 +74,9 @@ const getPastEvent = async () => {
       currentBlock = await client.getLatestBlockInfo();
       break
     } catch (e) {
+      selectedRPC = await CasperHelper.getRandomGoodCasperRPCLink(0)
       client = new CasperServiceByJsonRPC(
-        CasperHelper.getRandomCasperRPCLink()
+        selectedRPC
       );
     }
     trial--
@@ -98,7 +102,7 @@ const getPastEvent = async () => {
     if (to > currentBlockHeight) {
       to = currentBlockHeight;
     }
-    tasks.push(crawl(from, to, currentBlockHeight));
+    tasks.push(crawl(from, to, currentBlockHeight, selectedRPC));
   }
   await Promise.all(tasks);
 

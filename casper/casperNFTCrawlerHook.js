@@ -8,7 +8,7 @@ let db = require('../models')
 const HOOK = {
   updateMintOrUnlock: async (updateData) => {
     {
-      console.log('updateData', updateData)
+      console.log('updateData', updateData.deployHash)
       // event ClaimToken(address indexed _token, address indexed _addr, uint256 _amount, uint256 _originChainId, uint256 _fromChainId, uint256 _toChainId, uint256 _index, bytes32 _claimId);
       await db.Nft721Transaction.updateOne(
         {
@@ -87,8 +87,11 @@ const HOOK = {
     let tokenIds = findArgParsed(args, "token_hashes")
     return tokenIds
   },
-  process: async (block, deploy, storedContractByHash) => {
+  process: async (block, deploy, storedContractByHash, selectedRPC) => {
     let trial = 20
+    let randomGoodRPC = selectedRPC
+    let height = parseInt(block.block.header.height)
+
     while (trial > 0) {
       try {
         let nftConfig = CasperHelper.getNFTConfig();
@@ -102,7 +105,8 @@ const HOOK = {
           console.log('storedContractByHash', storedContractByHash)
           let nftContractHash = storedContractByHash.hash
           if (entryPoint == "mint") {
-            let nftContract = await DTOWrappedNFT.createInstance(nftContractHash, CasperHelper.getRandomCasperRPCLink(), casperConfig.chainName)
+            randomGoodRPC = await CasperHelper.getRandomGoodCasperRPCLink(height, randomGoodRPC)
+            let nftContract = await DTOWrappedNFT.createInstance(nftContractHash, randomGoodRPC, casperConfig.chainName)
             let identifierMode = await nftContract.identifierMode()
             let tokenIds = HOOK.getTokenIdsFromArgs(identifierMode, args)
             let metadatas = findArgParsed(args, "token_meta_datas")
@@ -122,7 +126,7 @@ const HOOK = {
             let originContractAddress = mintidSplits[4];
             let originChainId = parseInt(mintidSplits[5]);
 
-            logger.info("Casper Network Minting: %s %s", deploy.hash, claimId);
+            logger.info("Casper Network NFT Minting: %s %s", deploy.hash, claimId);
 
             await HOOK.updateMintOrUnlock(
               {
@@ -140,13 +144,14 @@ const HOOK = {
               }
             )
           } else if (storedContractByHash.entry_point == "request_bridge_back") {
+            randomGoodRPC = await CasperHelper.getRandomGoodCasperRPCLink(height, randomGoodRPC)
             let txCreator = "";
             if (deploy.approvals.length > 0) {
               txCreator = deploy.approvals[0].signer;
               txCreator = CasperHelper.fromCasperPubkeyToAccountHash(txCreator);
             }
 
-            let nftContract = await DTOWrappedNFT.createInstance(nftContractHash, CasperHelper.getRandomCasperRPCLink(), casperConfig.chainName)
+            let nftContract = await DTOWrappedNFT.createInstance(nftContractHash, randomGoodRPC, casperConfig.chainName)
             let identifierMode = await nftContract.identifierMode()
             let tokenIds = HOOK.getTokenIdsFromArgs(identifierMode, args)
             let tokenHashes = []
@@ -163,7 +168,8 @@ const HOOK = {
                   tokenMetadatas.push(metadata)
                   break
                 } catch (e) {
-                  nftContract.nodeAddress = CasperHelper.getRandomCasperRPCLink()
+                  randomGoodRPC = await CasperHelper.getRandomGoodCasperRPCLink(height)
+                  nftContract.nodeAddress = randomGoodRPC
                   console.error(e.toString())
                 }
               }
@@ -211,6 +217,7 @@ const HOOK = {
           }
         } else if (nftConfig.nftbridge == storedContractByHash.hash) {
           if (entryPoint == "unlock_nft") {
+            randomGoodRPC = await CasperHelper.getRandomGoodCasperRPCLink(height, randomGoodRPC)
             //unlock_id = <txHash>-<fromChainId>-<toChainId>-<index>-<originContractAddress>-<originChainId>
             let claimId = findArgParsed(args, "unlock_id");
             if (!claimId) {
@@ -265,6 +272,7 @@ const HOOK = {
               }
             )
           } else if (entryPoint == "request_bridge_nft") {
+            randomGoodRPC = await CasperHelper.getRandomGoodCasperRPCLink(height, randomGoodRPC)
             let txCreator = "";
             if (deploy.approvals.length > 0) {
               txCreator = deploy.approvals[0].signer;
@@ -286,7 +294,7 @@ const HOOK = {
             }
             let requestId = findArgParsed(args, "request_id");
             console.log('requestId', requestId)
-            const nftBridge = new NFTBridge(nftConfig.nftbridge, CasperHelper.getRandomCasperRPCLink(), casperConfig.chainName)
+            const nftBridge = new NFTBridge(nftConfig.nftbridge, randomGoodRPC, casperConfig.chainName)
             await nftBridge.init()
 
             let requestData = await nftBridge.getIndexFromRequestId(requestId)
@@ -309,7 +317,7 @@ const HOOK = {
             let nftName = _tokenData.originName
             let nftContract = {}
             if (!nftSymbol || !nftName) {
-              nftContract = await DTOWrappedNFT.createInstance(nftContractHash, CasperHelper.getRandomCasperRPCLink(), casperConfig.chainName)
+              nftContract = await DTOWrappedNFT.createInstance(nftContractHash, randomGoodRPC, casperConfig.chainName)
               await nftContract.init()
               nftSymbol = await nftContract.collectionSymbol()
               nftName = await nftContract.collectionName()
@@ -325,7 +333,7 @@ const HOOK = {
                   tokenMetadatas.push(metadata)
                   break
                 } catch (e) {
-                  nftContract.nodeAddress = CasperHelper.getRandomCasperRPCLink()
+                  nftContract.nodeAddress = randomGoodRPC
                   console.error(e.toString())
                 }
               }
@@ -360,6 +368,8 @@ const HOOK = {
         if (trial == 0) {
           throw e
         }
+        randomGoodRPC = await CasperHelper.getRandomGoodCasperRPCLink(height)
+        console.warn('randomGoodRPC', randomGoodRPC)
         console.error(e)
       }
     }

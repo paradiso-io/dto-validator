@@ -87,8 +87,10 @@ const HOOK = {
     );
 
   },
-  process: async (block, deploy, storedContractByHash) => {
+  process: async (block, deploy, storedContractByHash, selectedRPC) => {
     let trial = 20
+    let randomGoodRPC = selectedRPC
+    let height = parseInt(block.block.header.height)
     while (trial > 0) {
       try {
         console.log("checking deploy", deploy.hash)
@@ -152,7 +154,7 @@ const HOOK = {
 
             //reading index from id
             const erc20 = new ERC20Client(
-              CasperHelper.getRandomCasperRPCLink(),
+              randomGoodRPC,
               casperConfig.chainName,
               casperConfig.eventStream
             );
@@ -197,6 +199,7 @@ const HOOK = {
         if (trial == 0) {
           throw e
         }
+        randomGoodRPC = await CasperHelper.getRandomGoodCasperRPCLink(height)
         console.error(e)
       }
     }
