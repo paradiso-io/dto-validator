@@ -183,7 +183,7 @@ async function getPastEventForBatch(networkId, bridgeAddress, step, from, to) {
       let web3 = both.web3
       let currentBlockForRPC = await web3.eth.getBlockNumber()
       if (parseInt(currentBlockForRPC) < parseInt(toBlock)) {
-        logger.warning('invalid RPC %s, try again', both.rpc)
+        logger.warn('invalid RPC %s, try again', both.rpc)
         continue
       }
       const contract = new web3.eth.Contract(NFT721Bridge, bridgeAddress)
