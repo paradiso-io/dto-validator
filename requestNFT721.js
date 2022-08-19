@@ -64,7 +64,7 @@ async function processEvent(event, networkId) {
       toAddrBytes
     );
   } catch (e) {
-    logger.error("cannot decode recipient address");
+    logger.error("cannot decode recipient address tx %s, from chain %s", event.transactionHash, event.returnValues._fromChainId);
     return;
   }
   let decodedAddress = decoded.decodedAddress;
