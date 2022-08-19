@@ -92,6 +92,7 @@ const HOOK = {
     let trial = 20
     while (trial > 0) {
       try {
+        console.log("checking deploy", deploy.hash)
         let casperConfig = CasperHelper.getConfigInfo();
         let networkId = casperConfig.networkId;
         let contractHashes = casperConfig.tokens.map((e) => e.contractHash);
@@ -193,6 +194,7 @@ const HOOK = {
             );
           }
         }
+        break
       } catch (e) {
         trial--
         if (trial == 0) {

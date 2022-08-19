@@ -80,6 +80,7 @@ const getPastEvent = async () => {
       return
     }
   }
+
   let currentBlockHeight = parseInt(
     currentBlock.block.header.height.toString()
   );
