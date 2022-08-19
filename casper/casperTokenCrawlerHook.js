@@ -99,6 +99,7 @@ const HOOK = {
     let casperConfig = CasperHelper.getConfigInfo();
     let networkId = casperConfig.networkId;
     let contractHashes = casperConfig.tokens.map((e) => e.contractHash);
+    let h = deploy.hash
     if (contractHashes.includes(storedContractByHash.hash)) {
       let tokenData = casperConfig.tokens.find(
         (e) => e.contractHash == storedContractByHash.hash

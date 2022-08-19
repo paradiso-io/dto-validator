@@ -3,7 +3,6 @@ const config = require('config')
 
 const logger = require('./helpers/logger')
 const Web3Utils = require('./helpers/web3')
-const tokenHelper = require('./helpers/token')
 const NFT721Bridge = require('./contracts/NFT721Bridge.json')
 const ERC721 = require('./contracts/ERC721.json')
 const db = require('./models')
@@ -27,31 +26,35 @@ async function processEvent(event, networkId) {
       tokenAddress = tokenAddress.replace('0x000000000000000000000000', '0x')
     }
   }
-
-  let web3ForOriginChainId = await Web3Utils.getWeb3(event.returnValues._originChainId)
-  let tokenContract = await new web3ForOriginChainId.eth.Contract(ERC721, tokenAddress)
-  let tokenSymbol = await tokenContract.methods.symbol().call()
-  let tokenName = await tokenContract.methods.name().call()
+  let web3ForOriginChainId, tokenContract, tokenSymbol, tokenName
   let tokenIds = web3.eth.abi.decodeParameter(
     'uint256[]',
     event.returnValues._tokenIds,
   )
   let tokenIdsString = tokenIds
   let tokenMetadatas = []
-  
-  for(var i = 0; i < tokenIds.length; i++) {
-    let uri = await tokenContract.methods.tokenURI(tokenIds[i]).call()
-    let metadata = {
-      name: tokenName,
-      token_uri: uri,
-      checksum: "940bffb3f2bba35f84313aa26da09ece3ad47045c6a1292c2bbd2df4ab1a55fb"
+
+  if (!config.blockchain[event.returnValues._originChainId].notEVM) {
+    web3ForOriginChainId = await Web3Utils.getWeb3(event.returnValues._originChainId)
+    tokenContract = await new web3ForOriginChainId.eth.Contract(ERC721, tokenAddress)
+    tokenSymbol = await tokenContract.methods.symbol().call()
+    tokenName = await tokenContract.methods.name().call()
+
+
+    for (var i = 0; i < tokenIds.length; i++) {
+      let uri = await tokenContract.methods.tokenURI(tokenIds[i]).call()
+      let metadata = {
+        name: tokenName,
+        token_uri: uri,
+        checksum: "940bffb3f2bba35f84313aa26da09ece3ad47045c6a1292c2bbd2df4ab1a55fb"
+      }
+      metadata = JSON.stringify(metadata)
+      tokenMetadatas.push(metadata)
     }
-    metadata = JSON.stringify(metadata)
-    tokenMetadatas.push(metadata)
   }
 
   let block = await web3.eth.getBlock(event.blockNumber)
-  
+
   // event RequestBridge(address indexed _token, bytes indexed _addr, uint256 _amount, uint256 _originChainId, uint256 _fromChainId, uint256 _toChainId, uint256 _index)
   let toAddrBytes = event.returnValues._toAddr;
   let decoded;

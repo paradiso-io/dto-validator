@@ -61,9 +61,9 @@ const getPastEvent = async () => {
   console.log('fromBlock 11', fromBlock)
   let setting = await db.Setting.findOne({ networkId: networkId });
   if (setting && setting.lastBlockRequest) {
-    fromBlock = setting.lastBlockRequest;
+    fromBlock = setting.lastBlockRequest > fromBlock ? setting.lastBlockRequest : fromBlock;
   }
-  1, 023, 564
+  
   let currentBlock = null
   trial = 20
   while (trial > 0) {

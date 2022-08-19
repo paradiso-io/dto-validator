@@ -8,7 +8,7 @@ let db = require('../models')
 const HOOK = {
   updateMintOrUnlock: async (updateData) => {
     {
-      console.log('updateData',)
+      console.log('updateData', updateData)
       // event ClaimToken(address indexed _token, address indexed _addr, uint256 _amount, uint256 _originChainId, uint256 _fromChainId, uint256 _toChainId, uint256 _index, bytes32 _claimId);
       await db.Nft721Transaction.updateOne(
         {
@@ -34,7 +34,7 @@ const HOOK = {
       logger.info("claimId %s", updateData.claimId);
       await db.Nft721RequestToCasper.updateOne(
         {
-          claimId: updateData.claimId
+          mintid: updateData.claimId
         },
         {
           $set: {
