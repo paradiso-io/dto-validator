@@ -205,21 +205,30 @@ async function getPastEventForBatch(networkId, bridgeAddress, step, from, to) {
         )
       }
 
-      for (let i = 0; i < allEvents.length; i++) {
-        let event = allEvents[i]
-        if (event.event === 'ClaimMultiNFT721') {
-          await processClaimEvent(
-            event,
-            networkId
-          )
-        } else if (event.event === 'RequestMultiNFT721Bridge') {
+      {
+        let evts = allEvents.filter(e => e.event == "RequestMultiNFT721Bridge")
+
+        for (let i = 0; i < evts.length; i++) {
+          let event = evts[i];
           await processEvent(
             event,
             networkId
-          )
+          );
         }
       }
 
+      {
+        //claim events
+        let evts = allEvents.filter(e => e.event == "ClaimMultiNFT721")
+
+        for (let i = 0; i < evts.length; i++) {
+          let event = evts[i];
+          await processClaimEvent(
+            event,
+            networkId
+          );
+        }
+      }
 
       // console.log('sleep 2 seconds and wait to continue')
       await sleep(1000)
