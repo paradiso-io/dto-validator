@@ -88,7 +88,8 @@ const HOOK = {
     return tokenIds
   },
   process: async (block, deploy, storedContractByHash) => {
-    while (true) {
+    let trial = 20
+    while (trial > 0) {
       try {
         let nftConfig = CasperHelper.getNFTConfig();
         let casperConfig = CasperHelper.getConfigInfo()
@@ -355,6 +356,10 @@ const HOOK = {
         }
         break
       } catch (e) {
+        trial--
+        if (trial == 0) {
+          throw e
+        }
         console.error(e)
       }
     }
