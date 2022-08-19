@@ -25,7 +25,7 @@
   },
   "crawlChainIds": {
     "mainnet": [1, 56, 1284, 43114, 66],
-    "testnet": [],
+    "testnet": [42, 97, 89, 1287, 4002, 43113, 80001],
     "nft721testnet": [97, 43113, 42],
     "nft721mainnet": []
   },
