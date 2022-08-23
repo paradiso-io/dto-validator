@@ -120,9 +120,9 @@ const CasperHelper = {
         let arg = CasperHelper.findArg(args, argName)
         return arg[1].parsed
     },
-    getCasperRPC: () => {
-        let casperConfig = CasperHelper.getConfigInfo()
-        return new CasperServiceByJsonRPC(casperConfig.rpc)
+    getCasperRPC: async () => {
+        let rpc = await CasperHelper.getRandomGoodCasperRPCLink(1)
+        return new CasperServiceByJsonRPC(rpc)
     },
     fromCasperPubkeyToAccountHash: (clPubkeyHex) => {
         let clPubkey = CLPublicKey.fromHex(clPubkeyHex);

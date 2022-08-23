@@ -246,7 +246,7 @@ router.get('/verify-transaction/:requestHash/:fromChainId/:index', [
         }
     } else {
         //casper
-        let casperRPC = CasperHelper.getCasperRPC()
+        let casperRPC = await CasperHelper.getCasperRPC()
         try {
             transaction = await db.Transaction.findOne({ requestHash: requestHash, fromChainId: fromChainId })
             let deployResult = await casperRPC.getDeployInfo(CasperHelper.toCasperDeployHash(transaction.requestHash))
@@ -325,7 +325,7 @@ router.post('/request-withdraw', [
         }
     } else {
         //casper
-        let casperRPC = CasperHelper.getCasperRPC()
+        let casperRPC = await CasperHelper.getCasperRPC()
         try {
             let deployResult = await casperRPC.getDeployInfo(CasperHelper.toCasperDeployHash(transaction.requestHash))
             let eventData = await CasperHelper.parseRequestFromCasper(deployResult)

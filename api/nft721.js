@@ -110,7 +110,7 @@ router.get('/transaction-status/:requestHash/:fromChainId', [
     const readStatus = async (i) => {
         try {
             console.log('reading from', config.signatureServer[i])
-            let ret = await axios.get(config.signatureServer[i] + `/nft721/${requestData}`, { timeout: 10 * 1000 })
+            let ret = await axios.get(config.signatureServer[i] + `/nft721/${requestData}`, { timeout: 20 * 1000 })
             ret = ret.data
             console.log('reading from ret ', ret)
             ret = ret.success ? ret.success : false
@@ -217,7 +217,7 @@ router.get('/verify-transaction/:requestHash/:fromChainId/:index', [
         }
     } else {
         //casper
-        let casperRPC = CasperHelper.getCasperRPC()
+        let casperRPC = await CasperHelper.getCasperRPC()
         try {
             transaction = await db.Nft721Transaction.findOne({ requestHash: requestHash, fromChainId: fromChainId })
             let deployResult = await casperRPC.getDeployInfo(CasperHelper.toCasperDeployHash(transaction.requestHash))
@@ -299,7 +299,7 @@ router.post('/request-withdraw', [
         }
     } else {
         //casper
-        let casperRPC = CasperHelper.getCasperRPC()
+        let casperRPC = await CasperHelper.getCasperRPC()
         try {
             let deployResult = await casperRPC.getDeployInfo(CasperHelper.toCasperDeployHash(transaction.requestHash))
             if (!CasperHelper.isDeploySuccess(deployResult)) {
