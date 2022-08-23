@@ -183,7 +183,7 @@
     },
     "42": {
       "bridge": "0xF1f62E51766037BDc5202CfDED157fF688A09C5f",
-      "nft721": "0x39B38ce58998743D82ccB006A56B5FAA4dd3A588",
+      "nft721": "0x3705B763171a61777b761712222d6189ec527431",
       "firstBlockCrawl": 31131932,
       "firstBlockNft721": 33343566,
       "wrapToken": "",
@@ -192,12 +192,12 @@
       "busd": ""
     },
     "89": {
-      "bridge": "0xeB7B94C34412f0415F468dC1854A8Cc0Ff7771d6",
+      "bridge": "0x2c1Fe6259CCD17BC4C652299252B4d8b745263C4",
       "firstBlockCrawl": 21822349
     },
     "97": {
       "bridge": "0x9927e816cCF2964a18AB0444A22B91cCe8a1f29D",
-      "nft721": "0x39B38ce58998743D82ccB006A56B5FAA4dd3A588",
+      "nft721": "0xB1F9d85043Db65a445Fd3CE85cE3BBd121bB5610",
       "firstBlockCrawl": 18613003,
       "firstBlockNft721": 22050030,
       "wrapToken": "",
@@ -207,19 +207,19 @@
     },
     "1287": {
       "bridge": "0xEdB7b5c85B3ad1f309f02a5cc9D035FEb0F9A213",
-      "nft721": "0x39B38ce58998743D82ccB006A56B5FAA4dd3A588",
+      "nft721": "0x58029c7f774A5EF7bE77D178ffB9962215f9430A",
       "firstBlockCrawl": 2026697,
       "firstBlockNft721": 2528035
     },
     "4002": {
       "bridge": "0x106F6E9Ba8A93297b0a94A75BB7863e37a663A80",
-      "nft721": "0x39B38ce58998743D82ccB006A56B5FAA4dd3A588",
+      "nft721": "0xeB7B94C34412f0415F468dC1854A8Cc0Ff7771d6",
       "firstBlockCrawl": 5934008,
       "firstBlockNft721": 10109943
     },
     "43113": {
       "bridge": "0x7e3226239dbfd6bea1ce22208001dc28194cbec2",
-      "nft721": "0x39B38ce58998743D82ccB006A56B5FAA4dd3A588",
+      "nft721": "0x874AEa72F26BDca83fCE5D0fC3F5CB29947803b5",
       "firstBlockCrawl": 8754306,
       "firstBlockNft721": 12650883 
     },

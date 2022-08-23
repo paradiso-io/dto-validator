@@ -47,8 +47,9 @@ async function requestBridge() {
       process.exit(1)
     }
 
-    /*
+
     // approve all token
+    let nft = await new web3.eth.Contract(ERC721ABI, erc721)
     await nft.methods
       .setApprovalForAll(bridgeAddress, true)
       .send({
@@ -59,7 +60,7 @@ async function requestBridge() {
           console.log('approve hash', hash)
         }
       })
-    */
+
 
     console.log('requesting...')
     await bridge.methods
