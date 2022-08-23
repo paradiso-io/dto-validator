@@ -10,7 +10,7 @@ const privateKey = '0xe9a698185c72b3cebc14d68213e5ead83efdc784ee93f34a0e2e76ba68
 
 async function requestBridge() {
   if (process.argv.length <= 5) {
-    console.error('Missing params: 1. fromNetworkId, 2. toNetworkId, 3. erc721 token, 4. tokenId')
+    console.error('Missing params: 1. fromNetworkId, 2. toNetworkId, 3. erc721 token, 4. tokenId, 5.recipient')
     process.exit(1)
   }
   let networkId = process.argv[2]
@@ -32,6 +32,8 @@ async function requestBridge() {
   try {
     const web3 = new Web3(new PrivateKeyProvider(privateKey, rpc))
     const mainAccount = await web3.eth.getCoinbase()
+    let recipient = process.argv[6] ? process.argv[6] : mainAccount
+    recipient = web3.eth.abi.encodeParameters(["string"], [recipient])
     console.log(mainAccount, 'request transfer token', tokenId, 'nft', erc721, 'from network', networkId, 'to network', toNetworkId)
 
     let bridge = await new web3.eth.Contract(BridgeABI, bridgeAddress)
@@ -61,7 +63,7 @@ async function requestBridge() {
 
     console.log('requesting...')
     await bridge.methods
-      .requestMultiNFT721Bridge(erc721, mainAccount, [1777197], toNetworkId)
+      .requestMultiNFT721Bridge(erc721, recipient, [tokenId], toNetworkId)
       .send({
         chainId: parseInt(networkId),
         from: mainAccount,

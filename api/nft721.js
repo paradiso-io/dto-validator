@@ -110,7 +110,7 @@ router.get('/transaction-status/:requestHash/:fromChainId', [
     const readStatus = async (i) => {
         try {
             console.log('reading from', config.signatureServer[i])
-            let ret = await axios.get(config.signatureServer[i] + `/${requestData}`, { timeout: 10 * 1000 })
+            let ret = await axios.get(config.signatureServer[i] + `/nft721/${requestData}`, { timeout: 10 * 1000 })
             ret = ret.data
             console.log('reading from ret ', ret)
             ret = ret.success ? ret.success : false
@@ -243,7 +243,6 @@ router.get('/verify-transaction/:requestHash/:fromChainId/:index', [
 })
 
 router.post('/request-withdraw', [
-    //check('signature').exists().withMessage('signature is require'),
     check('requestHash').exists().withMessage('message is require'),
     check('fromChainId').exists().isNumeric({ no_symbols: true }).withMessage('fromChainId is incorrect'),
     check('toChainId').exists().isNumeric({ no_symbols: true }).withMessage('fromChainId is incorrect'),
@@ -303,7 +302,10 @@ router.post('/request-withdraw', [
         let casperRPC = CasperHelper.getCasperRPC()
         try {
             let deployResult = await casperRPC.getDeployInfo(CasperHelper.toCasperDeployHash(transaction.requestHash))
-            let eventData = await CasperHelper.parseRequestFromCasper(deployResult)
+            if (!CasperHelper.isDeploySuccess(deployResult)) {
+                return res.json({ success: false })
+            }
+            let eventData = await CasperHelper.parseRequestFromCasper(deployResult, transaction.requestBlock)
             if (eventData.toAddr.toLowerCase() != transaction.account.toLowerCase()
                 || eventData.originToken.toLowerCase() != transaction.originToken.toLowerCase()
                 || eventData.amount != transaction.amount
