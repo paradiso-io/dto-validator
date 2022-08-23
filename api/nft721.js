@@ -184,6 +184,10 @@ router.get('/verify-transaction/:requestHash/:fromChainId/:index', [
         return res.json({ success: false })
     }
     if (fromChainId != casperConfig.networkId) {
+        let inDBTx = await db.Nft721Transaction.findOne({ requestHash: requestHash, fromChainId: fromChainId })
+        if (!inDBTx) {
+            return res.json({ success: false })
+        }
         console.log("reading transaction")
         let web3 = await Web3Utils.getWeb3(fromChainId)
 
