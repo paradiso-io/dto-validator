@@ -11,7 +11,6 @@ const axios = require('axios')
 const CasperHelper = require('../helpers/casper')
 const logger = require('../helpers/logger')
 const casperConfig = CasperHelper.getConfigInfo()
-const tokenHelper = require("../helpers/token");
 const GeneralHelper = require('../helpers/general')
 
 router.get('/transactions/:account/:networkId', [
@@ -80,7 +79,6 @@ router.get('/transaction-status/:requestHash/:fromChainId', [
     if (!errors.isEmpty()) {
         return res.status(400).json({ errors: errors.array() })
     }
-    console.log('req', req.params)
     let requestHash = req.params.requestHash
     let fromChainId = req.params.fromChainId
     let index = req.query.index ? req.query.index : ''
@@ -177,13 +175,16 @@ router.get('/verify-transaction/:requestHash/:fromChainId/:index', [
     let fromChainId = req.params.fromChainId
     let index = req.params.index
     let transaction = {}
+    console.log('fromChainId', fromChainId, casperConfig.networkId)
     if (fromChainId != casperConfig.networkId) {
-        transaction = await eventHelper.getRequestEvent(fromChainId, requestHash, index)
+        transaction = await eventHelper.getRequestNft721Event(fromChainId, requestHash, index)
     }
+    console.log("transaction", transaction)
     if (!transaction || (fromChainId != casperConfig.networkId && !transaction.requestHash)) {
         return res.json({ success: false })
     }
     if (fromChainId != casperConfig.networkId) {
+        console.log("reading transaction")
         let web3 = await Web3Utils.getWeb3(fromChainId)
 
         if (!transaction) {
@@ -220,8 +221,11 @@ router.get('/verify-transaction/:requestHash/:fromChainId/:index', [
         try {
             transaction = await db.Nft721Transaction.findOne({ requestHash: requestHash, fromChainId: fromChainId })
             let deployResult = await casperRPC.getDeployInfo(CasperHelper.toCasperDeployHash(transaction.requestHash))
-            let eventData = await CasperHelper.parseRequestFromCasper(deployResult)
-            if (eventData.toAddr.toLowerCase() != transaction.account.toLowerCase()
+            if (!CasperHelper.isDeploySuccess(deployResult)) {
+                return res.json({ success: false })
+            }
+            let eventData = await CasperHelper.parseRequestNFTFromCasper(deployResult.deploy, transaction.requestBlock)
+            if (eventData.receiverAddress.toLowerCase() != transaction.account.toLowerCase()
                 || eventData.originToken.toLowerCase() != transaction.originToken.toLowerCase()
                 || eventData.amount != transaction.amount
                 || eventData.fromChainId != transaction.fromChainId
@@ -468,41 +472,5 @@ router.post('/request-withdraw', [
         return res.json({r, s, v, msgHash: sig.msgHash, name, symbol, tokenUris, originToken: bytesOriginToken, chainIdsIndex, tokenIds})
     }
 })
-
-router.get('/bridge-fee/:originToken/:networkId/:toChainId', [
-    check('networkId').exists().isNumeric({ no_symbols: true }).withMessage('networkId is incorrect'),
-    check('toChainId').exists().isNumeric({ no_symbols: true }).withMessage('toChainId is incorrect'),
-    check('originToken').exists().isLength({ min: 42, max: 68 }).withMessage('token address is incorrect.')
-], async function (req, res, next) {
-    const errors = validationResult(req)
-    if (!errors.isEmpty()) {
-        return res.status(400).json({ errors: errors.array() })
-    }
-    let originToken = req.params.originToken.toLowerCase()
-    if (originToken.length != 42) {
-        return res.status(400).json({ errors: "invalid token address" })
-    }
-
-    let networkId = req.params.networkId
-    let toChainId = req.params.toChainId
-    if (`${toChainId}` == `${casperConfig.networkId}`) {
-        return CasperHelper.getBridgeFee(originToken)
-    }
-
-    let feeToken = await db.Fee.findOne({ token: originToken, networkId: networkId, toChainId: toChainId })
-    let feeAmount = '0'
-    let feePercent = 0
-    let feeDivisor = 10000
-    if (feeToken) {
-        feeAmount = feeToken.feeAmount
-        feePercent = feeToken.feePercent
-    }
-    return res.json({
-        feeAmount: feeAmount,
-        feePercent: feePercent,
-        feeDivisor: feeDivisor
-    })
-})
-
 
 module.exports = router
