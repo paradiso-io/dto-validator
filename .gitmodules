@@ -1,6 +1,8 @@
 [submodule "packages"]
 	path = packages
 	url = https://github.com/dotoracle/packages.git
+	branch = master
 [submodule "casper-contract-hash"]
 	path = casper-contract-hash
 	url = https://github.com/dotoracle/casper-contract-hash.git
+	branch = master
