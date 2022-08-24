@@ -419,7 +419,7 @@ router.post('/request-withdraw', [
                     console.log(e)
                 }
             }
-
+            let originTokenIds = null
             if (otherSignature.length > 0) {
                 for (let i = 0; i < otherSignature.length; i++) {
                     if (otherSignature[i].r) {
@@ -427,6 +427,7 @@ router.post('/request-withdraw', [
                         r.push(otherSignature[i].r[0])
                         s.push(otherSignature[i].s[0])
                         v.push(otherSignature[i].v[0])
+                        originTokenIds = otherSignature[i].originTokenIds
                     }
                 }
             }
@@ -477,7 +478,7 @@ router.post('/request-withdraw', [
             s = s.slice(0, minApprovers + 2)
             v = v.slice(0, minApprovers + 2)
 
-            return res.json({ r, s, v, msgHash, name, symbol, tokenUris, originToken: bytesOriginToken, chainIdsIndex, tokenIds })
+            return res.json({ r, s, v, msgHash, name, symbol, tokenUris, originToken: bytesOriginToken, chainIdsIndex, tokenIds, originTokenIds })
         } else {
             let txHashToSign = transaction.requestHash.includes("0x") ? transaction.requestHash : ("0x" + transaction.requestHash)
             let originTokenIds = []
