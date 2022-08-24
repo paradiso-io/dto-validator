@@ -191,6 +191,9 @@ const HOOK = {
             )
           } else if (entryPoint == "request_bridge_nft") {
             let request = await CasperHelper.parseRequestNFTFromCasper(deploy, height)
+            if (!request || request.fromChainId) {
+              return
+            }
             request.timestamp = Date.parse(block.block.header.timestamp);
 
             await HOOK.updateRequestBridge(

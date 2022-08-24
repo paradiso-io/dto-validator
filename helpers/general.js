@@ -22,6 +22,19 @@ let GeneralHelper = {
     capitalize: (str) => {
       return str.charAt(0).toUpperCase() + str.slice(1)
     },
+    tryCallWithTrial: async (func, trial = 10, waitTime = 2000) => {
+      while(trial > 0) {
+        try {
+          let ret = await func()
+          return ret
+        } catch (e) {
+          console.warn(e)
+          await GeneralHelper.sleep(waitTime)
+        }
+        trial--
+      }
+      return undefined
+    }
   }
   
   module.exports = GeneralHelper

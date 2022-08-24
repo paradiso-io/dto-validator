@@ -9,6 +9,26 @@ const db = require('./models')
 const CasperHelper = require('./helpers/casper')
 const CasperConfig = CasperHelper.getConfigInfo()
 
+function decodeOriginToken(tokenHex, originChainId) {
+  let web3 = Web3Utils.getSimpleWeb3()
+  if (originChainId !== CasperConfig.networkId) {
+    if (tokenHex.length > 42) {
+      return tokenHex.replace('0x000000000000000000000000', '0x')
+    }
+  } else {
+    try {
+      let decoded = web3.eth.abi.decodeParameters(
+        [{ type: "string", name: "contractHash" }],
+        tokenHex
+      );
+      return decoded.contractHash
+    } catch (e) {
+      
+    }
+  }
+  return null
+}
+
 // fix warning max listener
 events.EventEmitter.defaultMaxListeners = 1000;
 process.setMaxListeners(1000)
@@ -21,11 +41,11 @@ async function processEvent(event, networkId) {
 
   let originChainId = event.returnValues._originChainId;
   let tokenAddress = event.returnValues._token.toLowerCase()
-  if (originChainId !== 96945816564243 && originChainId !== 131614895977472) {
-    if (tokenAddress.length > 42) {
-      tokenAddress = tokenAddress.replace('0x000000000000000000000000', '0x')
-    }
+  tokenAddress = decodeOriginToken(tokenAddress, originChainId)
+  if (!tokenAddress) {
+    logger.error("cannot decode contract hash tx %s, from chain %s", event.transactionHash, event.returnValues._fromChainId);
   }
+
   let web3ForOriginChainId, tokenContract, tokenSymbol, tokenName
   let tokenIds = web3.eth.abi.decodeParameter(
     'uint256[]',
@@ -39,7 +59,6 @@ async function processEvent(event, networkId) {
     tokenContract = await new web3ForOriginChainId.eth.Contract(ERC721, tokenAddress)
     tokenSymbol = await tokenContract.methods.symbol().call()
     tokenName = await tokenContract.methods.name().call()
-
 
     for (var i = 0; i < tokenIds.length; i++) {
       let uri = await tokenContract.methods.tokenURI(tokenIds[i]).call()
@@ -123,11 +142,12 @@ async function processClaimEvent(event, networkId) {
 
   let originToken = event.returnValues._token.toLowerCase()
   let originChainId = parseInt(event.returnValues._originChainId)
-  if (originChainId !== 96945816564243 && originChainId !== 131614895977472) {
-    if (originToken.length > 42) {
-      originToken = originToken.replace('0x000000000000000000000000', '0x')
-    }
+  
+  originToken = decodeOriginToken(originToken, originChainId)
+  if (!originToken) {
+    logger.error("cannot decode contract hash tx %s, from chain %s", event.transactionHash, event.returnValues._fromChainId);
   }
+
   await db.Nft721Transaction.updateOne({
     index: event.returnValues._index,
     fromChainId: event.returnValues._fromChainId,

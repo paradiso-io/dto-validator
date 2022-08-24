@@ -326,6 +326,11 @@ const CasperHelper = {
                         //unsupported token
                         return;
                     }
+
+                    if (_tokenData.originChainId != casperConfig.networkId || _tokenData.originContractAddress != nftContractHash) {
+                        logger.warn("invalid or unsupported token hash %s to bridge.", nftContractHash)
+                        return;
+                    }
                     let requestId = CasperHelper.findArgParsed(args, "request_id");
                     console.log('requestId', requestId)
                     const nftBridge = new NFTBridge(nftConfig.nftbridge, randomGoodRPC, casperConfig.chainName)
