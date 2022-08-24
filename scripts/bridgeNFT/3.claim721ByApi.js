@@ -51,10 +51,11 @@ async function claimBridge() {
         data.originToken, 
         mainAccount, 
         data.tokenIds, 
+        data.originTokenIds,
         data.chainIdsIndex,
         txHash,
         data.r, data.s, data.v,
-        data.name, data.symbol, 
+        [data.name, data.symbol], 
         data.tokenUris)
       .send({
         chainId: parseInt(toChainId),
