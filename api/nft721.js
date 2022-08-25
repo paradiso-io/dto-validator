@@ -308,14 +308,10 @@ router.post('/request-withdraw', [
         } else {
             //casper
             try {
-                transaction = await db.Transaction.findOne({ requestHash: requestHash, fromChainId: fromChainId })
-                if (!transaction) {
-                    return res.json({ success: false })
-                }
                 let casperRPC = await CasperHelper.getCasperRPC(transaction.requestBlock)
                 let deployResult = await casperRPC.getDeployInfo(CasperHelper.toCasperDeployHash(transaction.requestHash))
                 if (!CasperHelper.isDeploySuccess(deployResult)) {
-                    return res.json({ success: false })
+                    return res.status(400).json({ errors: 'request transaction failed' })
                 }
                 let eventData = await CasperHelper.parseRequestFromCasper(deployResult, transaction.requestBlock)
                 if (eventData.toAddr.toLowerCase() != transaction.account.toLowerCase()

@@ -287,7 +287,7 @@ router.post('/request-withdraw', [
     let toChainId = req.body.toChainId
     let index = req.body.index
     let transaction = {}
-    if (!config.checkTxOnChain) {
+    if (!config.checkTxOnChain || fromChainId == casperConfig.networkId) {
         transaction = await db.Transaction.findOne({ requestHash: requestHash, fromChainId: fromChainId, toChainId: toChainId, index: index })
     } else {
         transaction = await eventHelper.getRequestEvent(fromChainId, requestHash, index)
@@ -329,9 +329,6 @@ router.post('/request-withdraw', [
     } else {
         //casper
         try {
-            if (!transaction) {
-                return res.json({ success: false })
-            }
             let casperRPC = await CasperHelper.getCasperRPC(transaction.requestBlock)
             let deployResult = await casperRPC.getDeployInfo(CasperHelper.toCasperDeployHash(transaction.requestHash))
             let eventData = await CasperHelper.parseRequestFromCasper(deployResult)
