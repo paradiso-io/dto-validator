@@ -314,7 +314,6 @@ router.post('/request-withdraw', [
                     return res.status(400).json({ errors: 'request transaction failed' })
                 }
                 let eventData = await CasperHelper.parseRequestNFTFromCasper(deployResult.deploy, transaction.requestBlock)
-                console.log('eventData', eventData, transaction)
                 if (eventData.receiverAddress.toLowerCase() != transaction.account.toLowerCase()
                     || eventData.originToken.toLowerCase() != transaction.originToken.toLowerCase()
                     || eventData.fromChainId != transaction.fromChainId
@@ -480,8 +479,10 @@ router.post('/request-withdraw', [
             r = r.slice(0, minApprovers + 2)
             s = s.slice(0, minApprovers + 2)
             v = v.slice(0, minApprovers + 2)
-
-            return res.json({ r, s, v, msgHash, name, symbol, tokenUris, originToken: bytesOriginToken, chainIdsIndex, tokenIds, originTokenIds })
+            
+            let retObject = { r, s, v, msgHash, name, symbol, tokenUris, originToken: bytesOriginToken, chainIdsIndex, tokenIds, originTokenIds}
+            console.log('retObject', retObject)
+            return res.json(retObject)
         } else {
             let txHashToSign = transaction.requestHash.includes("0x") ? transaction.requestHash : ("0x" + transaction.requestHash)
             let originTokenIds = []
