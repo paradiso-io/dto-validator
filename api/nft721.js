@@ -313,7 +313,7 @@ router.post('/request-withdraw', [
                 if (!CasperHelper.isDeploySuccess(deployResult)) {
                     return res.status(400).json({ errors: 'request transaction failed' })
                 }
-                let eventData = await CasperHelper.parseRequestNFTFromCasper(deployResult, transaction.requestBlock)
+                let eventData = await CasperHelper.parseRequestNFTFromCasper(deployResult.deploy, transaction.requestBlock)
                 if (eventData.toAddr.toLowerCase() != transaction.account.toLowerCase()
                     || eventData.originToken.toLowerCase() != transaction.originToken.toLowerCase()
                     || eventData.amount != transaction.amount
