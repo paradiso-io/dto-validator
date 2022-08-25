@@ -222,9 +222,12 @@ router.get('/verify-transaction/:requestHash/:fromChainId/:index', [
         }
     } else {
         //casper
-        let casperRPC = await CasperHelper.getCasperRPC()
         try {
             transaction = await db.Nft721Transaction.findOne({ requestHash: requestHash, fromChainId: fromChainId })
+            if (!transaction) {
+                return res.json({ success: false })
+            }
+            let casperRPC = await CasperHelper.getCasperRPC(transaction.requestBlock)
             let deployResult = await casperRPC.getDeployInfo(CasperHelper.toCasperDeployHash(transaction.requestHash))
             if (!CasperHelper.isDeploySuccess(deployResult)) {
                 return res.json({ success: false })
@@ -304,8 +307,12 @@ router.post('/request-withdraw', [
             }
         } else {
             //casper
-            let casperRPC = await CasperHelper.getCasperRPC()
             try {
+                transaction = await db.Transaction.findOne({ requestHash: requestHash, fromChainId: fromChainId })
+                if (!transaction) {
+                    return res.json({ success: false })
+                }
+                let casperRPC = await CasperHelper.getCasperRPC(transaction.requestBlock)
                 let deployResult = await casperRPC.getDeployInfo(CasperHelper.toCasperDeployHash(transaction.requestHash))
                 if (!CasperHelper.isDeploySuccess(deployResult)) {
                     return res.json({ success: false })
@@ -348,7 +355,7 @@ router.post('/request-withdraw', [
                     return tokenUri
                 })
                 if (tokenUri == undefined) {
-                    return res.status(400).json({ errors: 'Failed to read token metadata, please try again later'})
+                    return res.status(400).json({ errors: 'Failed to read token metadata, please try again later' })
                 }
                 tokenUris.push(tokenUri)
             }
