@@ -191,14 +191,15 @@ const HOOK = {
             )
           } else if (entryPoint == "request_bridge_nft") {
             let request = await CasperHelper.parseRequestNFTFromCasper(deploy, height)
-            if (!request || request.fromChainId) {
+            if (!request) {
               return
             }
-            request.timestamp = Date.parse(block.block.header.timestamp);
 
+            request.timestamp = Date.parse(block.block.header.timestamp);
             await HOOK.updateRequestBridge(
               request
             )
+            console.log("Sucessful saved request to DB")
           }
         }
         break
