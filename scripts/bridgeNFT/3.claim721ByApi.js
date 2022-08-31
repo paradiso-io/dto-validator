@@ -41,7 +41,7 @@ async function claimBridge() {
       toChainId: toChainId,
       index: index
     }
-    let {data} = await axios.post('https://api.dotoracle.network/nft721/request-withdraw', body, { timeout: 20 * 1000 })
+    let {data} = await axios.post('https://api.dotoracle.network/nft721/request-withdraw', body, { timeout: 60 * 1000 })
 
 
     console.log('ddddd', data)
@@ -60,6 +60,7 @@ async function claimBridge() {
       .send({
         chainId: parseInt(toChainId),
         from: mainAccount,
+        gas: 1000000,
       }, (error, hash) => {
         if (!error) {
           console.log('claim txHash', hash)
