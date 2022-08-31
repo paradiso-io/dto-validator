@@ -306,60 +306,71 @@ const CasperHelper = {
                 }
             } else if (storedContractByHash.hash == nftConfig.nftbridge) {
                 if (entryPoint == "request_bridge_nft") {
-                    let randomGoodRPC = await CasperHelper.getRandomGoodCasperRPCLink(height, randomGoodRPC)
+                    console.log("height: ", height)
+                    let randomGoodRPC = await CasperHelper.getRandomGoodCasperRPCLink(height)
                     let txCreator = "";
                     if (deploy.approvals.length > 0) {
                         txCreator = deploy.approvals[0].signer;
                         txCreator = CasperHelper.fromCasperPubkeyToAccountHash(txCreator);
+                        console.log("there are deploys")
                     }
                     let toChainId = CasperHelper.findArgParsed(args, "to_chainid");
+                    console.log("toChainId", toChainId)
                     let receiverAddress = CasperHelper.findArgParsed(args, "receiver_address");
+                    console.log("receiverAddress: ", receiverAddress)
                     let nftContractHash = CasperHelper.findArgParsed(args, "nft_contract_hash")
                     if (nftContractHash.Hash) {
                         nftContractHash = nftContractHash.Hash.slice(5)
                     }
                     nftContractHash = nftContractHash.toLowerCase()
+                    console.log("nftContractHash: ", nftContractHash)
                     let _tokenData = nftConfig.tokens.find(
-                        (e) => e.contractHash.toLowerCase() == nftContractHash
+                        (e) => e.originContractAddress.toLowerCase() == nftContractHash
                     );
-                    if (!_tokenData) {
-                        //unsupported token
-                        return;
-                    }
+                    console.log("_tokenData: ", _tokenData)
+                    // if (!_tokenData) {
+                    //     //unsupported token
+                    //     return;
+                    // }
 
                     if (_tokenData.originChainId != casperConfig.networkId || _tokenData.originContractAddress != nftContractHash) {
                         logger.warn("invalid or unsupported token hash %s to bridge.", nftContractHash)
                         return;
                     }
                     let requestId = CasperHelper.findArgParsed(args, "request_id");
-                    console.log('requestId', requestId)
                     const nftBridge = new NFTBridge(nftConfig.nftbridge, randomGoodRPC, casperConfig.chainName)
                     await nftBridge.init()
-
                     let requestData = await nftBridge.getIndexFromRequestId(requestId)
                     console.log('requestData', requestData)
                     requestData = JSON.parse(requestData)
 
-                    let tokenIds = requestData.token_ids
+                    let tokenIds = requestData.token_ids // For identifier_mode == 0
                     let identifierMode = requestData.identifier_mode
                     if (identifierMode != 0) {
-                        tokenIds = requestData.token_hashes
+                        tokenIds = requestData.token_hashes // For identifier_mode != 0
                     }
+
+                    console.log("Requesting tokenIds", tokenIds)
 
                     let index = requestData.request_index
                     if (parseInt(index) == 0) {
                         throw "RPC error";
                     }
 
-                    let nftSymbol = _tokenData.originSymbol
-                    let nftName = _tokenData.originName
+                    let nftSymbolFromConfigFile = _tokenData.originSymbol
+                    let nftNameFromConfigFile = _tokenData.originName
                     let nftContract = {}
-                    if (!nftSymbol || !nftName) {
-                        nftContract = await DTOWrappedNFT.createInstance(nftContractHash, randomGoodRPC, casperConfig.chainName)
-                        await nftContract.init()
-                        nftSymbol = await nftContract.collectionSymbol()
-                        nftName = await nftContract.collectionName()
+                    //if (!nftSymbol || !nftName) { // Do not confi
+                    nftContract = await DTOWrappedNFT.createInstance(nftContractHash, randomGoodRPC, casperConfig.chainName)
+                    await nftContract.init()
+                    let nftSymbol = await nftContract.collectionSymbol()
+                    console.log("nftSymbol: ", nftSymbol)
+                    let nftName = await nftContract.collectionName()
+                    console.log("nftName: ", nftName)
+                    if (nftSymbolFromConfigFile != nftSymbol || nftNameFromConfigFile != nftName) {
+                        throw "WRONG CONFIG nftSymbol OR nftName !!!!!";
                     }
+                    //}
 
                     let tokenMetadatas = []
                     for (var i = 0; i < tokenIds.length; i++) {
@@ -368,6 +379,7 @@ const CasperHelper = {
                             try {
                                 //read metadata
                                 let metadata = await nftContract.getTokenMetadata(tokenId)
+                                console.log("metadata: ", metadata)
                                 tokenMetadatas.push(metadata)
                                 break
                             } catch (e) {
@@ -382,7 +394,7 @@ const CasperHelper = {
                     let ret =
                     {
                         index,
-                        fromChainId,
+                        fromChainId: casperConfig.networkId,
                         toChainId,
                         originChainId: casperConfig.networkId,
                         originToken: nftContractHash,
@@ -396,6 +408,9 @@ const CasperHelper = {
                         identifierMode,
                         tokenMetadatas
                     }
+
+
+                    console.log("RET: ", ret)
 
                     return ret
                 }

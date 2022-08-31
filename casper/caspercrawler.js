@@ -12,7 +12,6 @@ const NFTHook = require('./casperNFTCrawlerHook')
 BigNumber.config({ EXPONENTIAL_AT: [-100, 100] });
 
 async function crawl(from, to, lastBlockHeight, rpc) {
-  console.log('crawl', from, to)
   let fromBlock = from;
   let toBlock = to;
   let selectedRPC = await CasperHelper.getRandomGoodCasperRPCLink(to, rpc)
@@ -103,6 +102,7 @@ const getPastEvent = async () => {
       to = currentBlockHeight;
     }
     tasks.push(crawl(from, to, currentBlockHeight, selectedRPC));
+    console.log("Craw : ", from, to, currentBlockHeight, selectedRPC)
   }
   await Promise.all(tasks);
 
