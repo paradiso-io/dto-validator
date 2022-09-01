@@ -17,8 +17,8 @@ async function publishSignatures(signatures, requestHash, fromChainId, toChainId
             index: index,
             signatures: signatures
         }
-        axios.post(endPoint, body, { timeout: 60 * 1000 })
-            .then(response => {
+        await axios.post(endPoint, body, { timeout: 60 * 1000 })
+            .then( async() => {
                 await db.Nft721Transaction.updateOne(
                     {
                         requestHash: txHash,

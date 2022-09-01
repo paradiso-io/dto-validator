@@ -8,6 +8,7 @@ const ERC721 = require('./contracts/ERC721.json')
 const db = require('./models')
 const CasperHelper = require('./helpers/casper')
 const CasperConfig = CasperHelper.getConfigInfo()
+const PreSignNFT = require("./helpers/preSignNFT")
 
 function decodeOriginToken(tokenHex, originChainId) {
   let web3 = Web3Utils.getSimpleWeb3()
@@ -330,6 +331,10 @@ function main() {
       }
     }
   })
+
+  setInterval(async () => {
+    await PreSignNFT.doIt()
+  }, 120 * 1000);
 }
 
 main()
