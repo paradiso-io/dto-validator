@@ -298,6 +298,8 @@ router.post('/request-withdraw', [
                         }
                     }
 
+                    console.log('uniqueSubmitters', uniqueSubmitters)
+
                     uniqueSubmitters = Object.keys(uniqueSubmitters)
                     const uniqueSignatures = Object.values(uniqueSubmitters)
                     let validSigCount = uniqueSubmitters.filter(e => approverList.includes(e)).length
