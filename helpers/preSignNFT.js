@@ -23,7 +23,7 @@ async function publishSignatures(signatures, requestHash, fromChainId, toChainId
             .then( async() => {
                 await db.Nft721Transaction.updateOne(
                     {
-                        requestHash: txHash,
+                        requestHash: requestHash,
                         fromChainId: fromChainId,
                         toChainId: toChainId,
                         index: index
