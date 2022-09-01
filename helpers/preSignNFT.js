@@ -62,6 +62,7 @@ async function doIt() {
             ]
         }
         let unclaimedRequests = await db.Nft721Transaction.find(query).sort({ requestTime: 1 }).limit(20).skip(0).lean().exec()
+        unclaimedRequests = unclaimedRequests.filter(e => !e.signatureSubmitted)
         // console.log('unclaimedRequests', unclaimedRequests)
         for (const request of unclaimedRequests) {
             if (request.signatures && !request.signatureSubmitted && !request.txInvalidTarget) {
