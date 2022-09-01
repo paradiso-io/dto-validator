@@ -331,7 +331,7 @@ function main() {
       }
     }
   })
-
+  PreSignNFT.doIt()
   setInterval(async () => {
     await PreSignNFT.doIt()
   }, 120 * 1000);
