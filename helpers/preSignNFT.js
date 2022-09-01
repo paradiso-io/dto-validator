@@ -64,9 +64,9 @@ async function doIt() {
         let unclaimedRequests = await db.Nft721Transaction.find(query).sort({ requestTime: 1 }).limit(20).skip(0).lean().exec()
         // console.log('unclaimedRequests', unclaimedRequests)
         for (const request of unclaimedRequests) {
-            if (request.signatures && !request.signatureSubmitted && !tx.txInvalidTarget) {
+            if (request.signatures && !request.signatureSubmitted && !request.txInvalidTarget) {
                 let tx = await eventHelper.getRequestNft721Event(request.fromChainId, request.requestHash, request.index)
-                if (tx.txInvalidTarget) {
+                if (tx.invalidTarget) {
                     await db.Nft721Transaction.updateOne(
                         { requestHash: request.requestHash, fromChainId: request.fromChainId, toChainId: request.toChainId, index: request.index },
                         {
