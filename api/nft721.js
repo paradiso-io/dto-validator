@@ -611,7 +611,7 @@ router.post('/receive-signatures', [
                 //reading required number of signature
                 let approverList = await GeneralHelper.tryCallWithTrial(async () => {
                     let bridgeContract = await Web3Utils.getNft721BridgeContract(toChainId)
-                    approverList = await bridgeContract.methods.getBridgeApprovers().call()
+                    let approverList = await bridgeContract.methods.getBridgeApprovers().call()
                     return approverList
                 }, 10, 1000)
 
