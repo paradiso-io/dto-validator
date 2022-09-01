@@ -62,11 +62,13 @@ async function doIt() {
         let unclaimedRequests = await db.Nft721Transaction.find(query).sort({ requestTime: 1 }).limit(limit).skip(skip).lean().exec()
         for (const request of unclaimedRequests) {
             if (request.signatures && !request.signatureSubmitted) {
+                console.log("Find new req !!!")
                 publishSignatures(request.signatures, request.requestHash, request.fromChainId, request.toChainId, request.index)
             } else {
                 try {
                     let endPoint = GeneralHelper.getEndPoint()
                     endPoint = `${endPoint}/nft721/request-withdraw`
+                    console.log("Endpoint: ", endPoint)
                     let body = {
                         requestHash: request.requestHash,
                         fromChainId: request.fromChainId,
@@ -75,6 +77,7 @@ async function doIt() {
                     }
 
                     let { data } = await axios.post(`http://localhost:${config.server.port}/nft721/request-withdraw`, body, { timeout: 60 * 1000 })
+                    console.log("Data: ", data)
                     await db.Nft721Transaction.updateOne(
                         { requestHash: request.requestHash, fromChainId: request.fromChainId, toChainId: request.toChainId, index: request.index },
                         {
