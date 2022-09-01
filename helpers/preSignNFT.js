@@ -65,6 +65,7 @@ async function doIt() {
         // console.log('unclaimedRequests', unclaimedRequests)
         for (const request of unclaimedRequests) {
             if (request.signatures && !request.signatureSubmitted) {
+                console.log("Find new req !!!")
                 publishSignatures(request.signatures, request.requestHash, request.fromChainId, request.toChainId, request.index)
             } else {
                 const casperConfig = CasperHelper.getConfigInfo()
@@ -74,6 +75,7 @@ async function doIt() {
                 try {
                     let endPoint = GeneralHelper.getEndPoint()
                     endPoint = `${endPoint}/nft721/request-withdraw`
+                    console.log("Endpoint: ", endPoint)
                     let body = {
                         requestHash: request.requestHash,
                         fromChainId: request.fromChainId,
