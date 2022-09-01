@@ -180,7 +180,6 @@ router.get('/verify-transaction/:requestHash/:fromChainId/:index', [
     if (fromChainId != casperConfig.networkId) {
         transaction = await eventHelper.getRequestNft721Event(fromChainId, requestHash, index)
     }
-    console.log("transaction", transaction)
     if (!transaction || (fromChainId != casperConfig.networkId && !transaction.requestHash)) {
         return res.json({ success: false })
     }
