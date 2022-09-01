@@ -292,6 +292,7 @@ router.post('/request-withdraw', [
                     alreadySubmitters = alreadySubmitters.map(e => e.toLowerCase())
                     let uniqueSubmitters = {}
                     for (var i = 0; i < alreadySubmitters.length; i++) {
+                        let e = alreadySubmitters[i]
                         if (!uniqueSubmitters[e]) {
                             uniqueSubmitters[e] = transaction.signatures[i]
                         }
