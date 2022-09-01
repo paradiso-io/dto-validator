@@ -119,6 +119,7 @@ async function doIt() {
         console.error(e)
     }
     submitDone = true
+    return
 }
 
 module.exports = { doIt }

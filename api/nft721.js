@@ -283,6 +283,9 @@ router.post('/request-withdraw', [
         let approverList = []
         {
             if (transaction.signatures) {
+                if (!config.proxy) {
+                    return res.json(transaction.signatures[0])
+                }
                 //reading required number of signature
                 const validators = await Web3Utils.readValidators(transaction.toChainId)
                 minApprovers = validators.minApprovers
@@ -307,7 +310,7 @@ router.post('/request-withdraw', [
                         let v = uniqueSignatures.map(e => e.v[0])
                         let sig0 = uniqueSignatures[0]
                         let retObject = { r, s, v, msgHash: sig0.msgHash, name: sig0.name, symbol: sig0.symbol, tokenUris: sig0.tokenUris, originToken: sig0.originToken, chainIdsIndex: sig0.chainIdsIndex, tokenIds: sig0.tokenIds, originTokenIds: sig0.originTokenIds }
-                        res.json(retObject)
+                        return res.json(retObject)
                     }
                 }
             }
