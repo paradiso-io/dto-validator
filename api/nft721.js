@@ -614,9 +614,10 @@ router.post('/receive-signatures', [
                     let approverList = await bridgeContract.methods.getBridgeApprovers().call()
                     return approverList
                 }, 10, 1000)
-                console.log('recoveredAddress', recoveredAddress, approverList, submitSignature)
                 approverList = approverList.map(e => e.toLowerCase())
-                if (approverList.includes(recoveredAddress)) {
+                let included = approverList.includes(recoveredAddress)
+                // console.log('recoveredAddress', recoveredAddress, approverList, submitSignature)
+                if (included) {
                     await db.Nft721Transaction.updateOne(
                         { requestHash: requestHash, fromChainId: fromChainId, toChainId: toChainId, index: index },
                         {

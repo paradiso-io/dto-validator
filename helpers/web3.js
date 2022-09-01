@@ -68,7 +68,7 @@ let Web3Util = {
   },
   recoverSignerFromSignature: (msgHash, r, s, v) => {
     let web3 = new Web3()
-    return web3.eth.accounts.recover(msgHash, v, r, s);
+    return web3.eth.accounts.recover(msgHash, v, r, s).toLowerCase();
   },
   readValidators: async (networkId) => {
     let minApprovers = 0
