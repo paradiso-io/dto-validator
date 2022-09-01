@@ -1,6 +1,8 @@
 const db = require('../models')
 const GeneralHelper = require('./general')
 const config = require('config')
+const axios = require('axios')
+const CasperHelper = require('./casper')
 let submitDone = true
 
 async function publishSignatures(signatures, requestHash, fromChainId, toChainId, index) {
@@ -39,7 +41,7 @@ async function publishSignatures(signatures, requestHash, fromChainId, toChainId
                 console.error('There was an error!', error);
             });
     } catch (e) {
-
+        console.error(e)
     }
 }
 
@@ -59,11 +61,16 @@ async function doIt() {
                 { claimed: null },
             ]
         }
-        let unclaimedRequests = await db.Nft721Transaction.find(query).sort({ requestTime: 1 }).limit(limit).skip(skip).lean().exec()
+        let unclaimedRequests = await db.Nft721Transaction.find(query).sort({ requestTime: 1 }).limit(20).skip(0).lean().exec()
+        // console.log('unclaimedRequests', unclaimedRequests)
         for (const request of unclaimedRequests) {
             if (request.signatures && !request.signatureSubmitted) {
                 publishSignatures(request.signatures, request.requestHash, request.fromChainId, request.toChainId, request.index)
             } else {
+                const casperConfig = CasperHelper.getConfigInfo()
+                if (request.toChainId == casperConfig.networkId) {
+                    continue
+                }
                 try {
                     let endPoint = GeneralHelper.getEndPoint()
                     endPoint = `${endPoint}/nft721/request-withdraw`
@@ -86,12 +93,12 @@ async function doIt() {
                         { upsert: true, new: true }
                     )
                 } catch (e) {
-
+                    console.error(e)
                 }
             }
         }
     } catch (e) {
-
+        console.error(e)
     }
     submitDone = true
 }

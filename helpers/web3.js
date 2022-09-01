@@ -77,7 +77,7 @@ let Web3Util = {
     console.log("reading minApprovers", minApprovers)
     while (retry > 0) {
       try {
-        let bridgeContract = await Web3Utils.getNft721BridgeContract(networkId)
+        let bridgeContract = await Web3Util.getNft721BridgeContract(networkId)
         minApprovers = await bridgeContract.methods.minApprovers().call()
         approverList = await bridgeContract.methods.getBridgeApprovers().call()
         minApprovers = parseInt(minApprovers)

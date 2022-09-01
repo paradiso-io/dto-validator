@@ -285,7 +285,8 @@ router.post('/request-withdraw', [
             if (transaction.signatures) {
                 //reading required number of signature
                 const validators = await Web3Utils.readValidators(transaction.toChainId)
-                ({ minApprovers, approverList } = validators)
+                minApprovers = validators.minApprovers
+                approverList = validators.approverList
                 if (approverList.length > 0) {
                     let alreadySubmitters = transaction.signatures.map(s => Web3Utils.recoverSignerFromSignature(s.msgHash, s.r[0], s.s[0], s.v[0]))
                     alreadySubmitters = alreadySubmitters.map(e => e.toLowerCase())
