@@ -631,7 +631,7 @@ router.post('/receive-signatures', [
                     return res.status(400).json({ errors: 'invalid validators' })
                 }
             }
-            res.json({ ok: true })
+            return res.json({ ok: true })
         }
         return res.status(400).json({ errors: 'transaction not found' })
     }
