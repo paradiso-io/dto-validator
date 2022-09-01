@@ -274,6 +274,43 @@ router.post('/request-withdraw', [
         if (!transaction) {
             return res.status(400).json({ errors: "invalid transaction hash" })
         }
+
+        if (transaction.claimed === true) {
+            return res.status(400).json({ errors: 'Transaction claimed' })
+        }
+
+        let minApprovers = 0
+        let approverList = []
+        {
+            if (transaction.signatures) {
+                //reading required number of signature
+                const validators = await Web3Utils.readValidators(transaction.toChainId)
+                ({ minApprovers, approverList } = validators)
+                if (approverList.length > 0) {
+                    let alreadySubmitters = transaction.signatures.map(s => Web3Utils.recoverSignerFromSignature(s.msgHash, s.r[0], s.s[0], s.v[0]))
+                    alreadySubmitters = alreadySubmitters.map(e => e.toLowerCase())
+                    let uniqueSubmitters = {}
+                    for (var i = 0; i < alreadySubmitters.length; i++) {
+                        if (!uniqueSubmitters[e]) {
+                            uniqueSubmitters[e] = transaction.signatures[i]
+                        }
+                    }
+
+                    uniqueSubmitters = Object.keys(uniqueSubmitters)
+                    const uniqueSignatures = Object.values(uniqueSubmitters)
+                    let validSigCount = uniqueSubmitters.filter(e => approverList.includes(e)).length
+                    if (validSigCount >= minApprovers) {
+                        let r = uniqueSignatures.map(e => e.r[0])
+                        let s = uniqueSignatures.map(e => e.s[0])
+                        let v = uniqueSignatures.map(e => e.v[0])
+                        let sig0 = uniqueSignatures[0]
+                        let retObject = { r, s, v, msgHash: sig0.msgHash, name: sig0.name, symbol: sig0.symbol, tokenUris: sig0.tokenUris, originToken: sig0.originToken, chainIdsIndex: sig0.chainIdsIndex, tokenIds: sig0.tokenIds, originTokenIds: sig0.originTokenIds }
+                        res.json(retObject)
+                    }
+                }
+            }
+        }
+
         if (fromChainId != casperConfig.networkId) {
             let web3 = await Web3Utils.getWeb3(fromChainId)
 
@@ -435,23 +472,23 @@ router.post('/request-withdraw', [
             }
 
             //reading required number of signature
-            let minApprovers = 0
-            let approverList = []
-            let retry = 10
-            console.log("reading minApprovers", minApprovers)
-            while (retry > 0) {
-                try {
-                    let bridgeContract = await Web3Utils.getNft721BridgeContract(transaction.toChainId)
-                    minApprovers = await bridgeContract.methods.minApprovers().call()
-                    approverList = await bridgeContract.methods.getBridgeApprovers().call()
-                    minApprovers = parseInt(minApprovers)
-                    break
-                } catch (e) {
-                    console.log(e)
-                    console.log("error in reading approver", minApprovers)
-                    await GeneralHelper.sleep(5 * 1000)
+            if (approverList.length == 0) {
+                let retry = 10
+                console.log("reading minApprovers", minApprovers)
+                while (retry > 0) {
+                    try {
+                        let bridgeContract = await Web3Utils.getNft721BridgeContract(transaction.toChainId)
+                        minApprovers = await bridgeContract.methods.minApprovers().call()
+                        approverList = await bridgeContract.methods.getBridgeApprovers().call()
+                        minApprovers = parseInt(minApprovers)
+                        break
+                    } catch (e) {
+                        console.log(e)
+                        console.log("error in reading approver", minApprovers)
+                        await GeneralHelper.sleep(5 * 1000)
+                    }
+                    retry--
                 }
-                retry--
             }
             approverList = approverList.map(e => e.toLowerCase())
             //filtering only good signature
@@ -479,8 +516,8 @@ router.post('/request-withdraw', [
             r = r.slice(0, minApprovers + 2)
             s = s.slice(0, minApprovers + 2)
             v = v.slice(0, minApprovers + 2)
-            
-            let retObject = { r, s, v, msgHash, name, symbol, tokenUris, originToken: bytesOriginToken, chainIdsIndex, tokenIds, originTokenIds}
+
+            let retObject = { r, s, v, msgHash, name, symbol, tokenUris, originToken: bytesOriginToken, chainIdsIndex, tokenIds, originTokenIds }
             console.log('retObject', retObject)
             return res.json(retObject)
         } else {
@@ -534,6 +571,68 @@ router.post('/request-withdraw', [
 
             return res.json({ r, s, v, msgHash: sig.msgHash, name, symbol, tokenUris, originToken: bytesOriginToken, chainIdsIndex, tokenIds, originTokenIds })
         }
-    })
+    }
+)
+
+router.post('/receive-signatures', [
+    check('requestHash').exists().withMessage('message is require'),
+    check('fromChainId').exists().isNumeric({ no_symbols: true }).withMessage('fromChainId is incorrect'),
+    check('toChainId').exists().isNumeric({ no_symbols: true }).withMessage('fromChainId is incorrect'),
+    check('index').exists().withMessage('index is require'),
+    check('signatures').exists().withMessage('signatures is require'),
+],
+    async function (req, res, next) {
+        const errors = validationResult(req)
+        if (!errors.isEmpty()) {
+            return res.status(400).json({ errors: errors.array() })
+        }
+        let requestHash = req.body.requestHash
+        let fromChainId = req.body.fromChainId
+        let toChainId = req.body.toChainId
+        let index = req.body.index
+        let submitSignature = req.body.signatures
+        if (Array.isArray(submitSignature)) {
+            submitSignature = submitSignature[0]
+        }
+        let transaction = await db.Nft721Transaction.findOne({ requestHash: requestHash, fromChainId: fromChainId, toChainId: toChainId, index: index })
+        if (transaction) {
+            let signatures = transaction.signatures
+            let alreadySubmitters = []
+            if (!signatures) {
+                signatures = []
+            }
+
+            alreadySubmitters = signatures.map(s => Web3Utils.recoverSignerFromSignature(s.msgHash, s.r[0], s.s[0], s.v[0]))
+            alreadySubmitters = alreadySubmitters.map(e => e.toLowerCase())
+            //recover signature
+            let recoveredAddress = Web3Utils.recoverSignerFromSignature(submitSignature.msgHash, submitSignature.r[0], submitSignature.s[0], submitSignature.v[0])
+            if (!alreadySubmitters.includes(recoveredAddress.toLowerCase())) {
+                //reading required number of signature
+                let approverList = await GeneralHelper.tryCallWithTrial(async () => {
+                    let bridgeContract = await Web3Utils.getNft721BridgeContract(toChainId)
+                    approverList = await bridgeContract.methods.getBridgeApprovers().call()
+                    return approverList
+                }, 10, 1000)
+
+                approverList = approverList.map(e => e.toLowerCase())
+                if (approverList.includes(recoveredAddress)) {
+                    await db.Nft721Transaction.updateOne(
+                        { requestHash: requestHash, fromChainId: fromChainId, toChainId: toChainId, index: index },
+                        {
+                            $addToSet: {
+                                signatures: submitSignature
+                            }
+                        },
+                        { upsert: true, new: true }
+                    )
+                } else {
+                    return res.status(400).json({ errors: 'invalid validators' })
+                }
+            }
+            res.json({ ok: true })
+        }
+        return res.status(400).json({ errors: 'transaction not found' })
+    }
+)
 
 module.exports = router

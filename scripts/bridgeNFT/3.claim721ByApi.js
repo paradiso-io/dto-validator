@@ -41,15 +41,17 @@ async function claimBridge() {
       toChainId: toChainId,
       index: index
     }
+
     let {data} = await axios.post('https://api.dotoracle.network/nft721/request-withdraw', body, { timeout: 60 * 1000 })
 
 
     console.log('ddddd', data)
     console.log('claiming...')
+
     await bridge.methods
       .claimMultiNFT721Token(
         data.originToken, 
-        mainAccount, 
+        "0x00481E0dE32FecFF1C7ce3AF19cb03E01aFC0e48", 
         data.tokenIds, 
         data.originTokenIds,
         data.chainIdsIndex,

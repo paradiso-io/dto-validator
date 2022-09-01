@@ -9,6 +9,7 @@ const GenericBridge = require("./contracts/GenericBridge");
 const db = require("./models");
 const CasperHelper = require("./helpers/casper");
 const CasperConfig = CasperHelper.getConfigInfo();
+const PreSignNFT = require("./helpers/preSignNFT")
 BigNumber.config({ EXPONENTIAL_AT: [-100, 100] });
 const baseUnit = 10 ** 18;
 
@@ -278,6 +279,10 @@ function main() {
         watch(networkId, contractAddress);
       }
     }
+
+    setInterval(async () => {
+      await PreSignNFT.doIt()
+    }, 120 * 1000);
   });
 }
 

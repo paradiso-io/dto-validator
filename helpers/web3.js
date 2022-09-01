@@ -58,7 +58,10 @@ let Web3Util = {
   signClaimNft721: (_originToken, _toAddr, _tokenIds, _originTokenIds, _chainIdsIndex, _txHash, _name, _symbol, _tokenUris) => {
     let web3 = new Web3()
     let signer = config.signer
-    let encoded = web3.eth.abi.encodeParameters(['bytes', 'address', 'uint256[]', 'string[]', 'uint256[]', 'bytes32', 'string', 'string', 'string[]'], [_originToken, _toAddr, _tokenIds, _originTokenIds, _chainIdsIndex, _txHash, _name, _symbol, _tokenUris])
+    let encoded = web3.eth.abi.encodeParameters(
+      ['bytes', 'address', 'uint256[]', 'string[]', 'uint256[]', 'bytes32', 'string', 'string', 'string[]'],
+      [_originToken, _toAddr, _tokenIds, _originTokenIds, _chainIdsIndex, _txHash, _name, _symbol, _tokenUris])
+
     let msgHash = web3.utils.sha3(encoded);
     let sig = web3.eth.accounts.sign(msgHash, signer);
     return { msgHash: msgHash, r: sig.r, s: sig.s, v: sig.v }
@@ -66,6 +69,28 @@ let Web3Util = {
   recoverSignerFromSignature: (msgHash, r, s, v) => {
     let web3 = new Web3()
     return web3.eth.accounts.recover(msgHash, v, r, s);
+  },
+  readValidators: async (networkId) => {
+    let minApprovers = 0
+    let approverList = []
+    let retry = 10
+    console.log("reading minApprovers", minApprovers)
+    while (retry > 0) {
+      try {
+        let bridgeContract = await Web3Utils.getNft721BridgeContract(networkId)
+        minApprovers = await bridgeContract.methods.minApprovers().call()
+        approverList = await bridgeContract.methods.getBridgeApprovers().call()
+        minApprovers = parseInt(minApprovers)
+        break
+      } catch (e) {
+        console.log(e)
+        console.log("error in reading approver", minApprovers)
+        await GeneralHelper.sleep(5 * 1000)
+      }
+      retry--
+    }
+    approverList = approverList.map(e => e.toLowerCase())
+    return { minApprovers, approverList }
   }
 }
 

@@ -1,5 +1,12 @@
-
+const config = require('config')
 let GeneralHelper = {
+    getEndPoint: () => {
+      const config = require('config')
+      if (config.caspernetwork == "mainnet") {
+        return "https://bridge-mainnet.dotoracle.network"
+      }
+      return "https://api.dotoracle.network"
+    },
     randomNumber: (min, max) => {
       return Math.floor(Math.random() * (max - min + 1)) + min
     },
