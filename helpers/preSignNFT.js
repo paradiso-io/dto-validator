@@ -76,8 +76,8 @@ async function doIt() {
                         },
                         { upsert: true, new: true }
                     )
+                    continue
                 }
-                continue
                 console.log("Find new req !!!")
                 publishSignatures(request.signatures, request.requestHash, request.fromChainId, request.toChainId, request.index)
             } else {
