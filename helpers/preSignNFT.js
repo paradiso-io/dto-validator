@@ -4,7 +4,7 @@ const config = require('config')
 const axios = require('axios')
 const CasperHelper = require('./casper')
 let submitDone = true
-
+let eventHelper = require('./event')
 async function publishSignatures(signatures, requestHash, fromChainId, toChainId, index) {
     try {
         if (Array.isArray(signatures)) {
@@ -20,7 +20,7 @@ async function publishSignatures(signatures, requestHash, fromChainId, toChainId
             signatures: signatures
         }
         await axios.post(endPoint, body, { timeout: 60 * 1000 })
-            .then( async() => {
+            .then(async () => {
                 await db.Nft721Transaction.updateOne(
                     {
                         requestHash: requestHash,
@@ -68,6 +68,10 @@ async function doIt() {
                 console.log("Find new req !!!")
                 publishSignatures(request.signatures, request.requestHash, request.fromChainId, request.toChainId, request.index)
             } else {
+                if (request.txInvalidTarget) {
+                    console.warn("invalid", request.requestHash)
+                    continue
+                }
                 const casperConfig = CasperHelper.getConfigInfo()
                 if (request.toChainId == casperConfig.networkId) {
                     await db.Nft721Transaction.updateOne(
@@ -111,6 +115,20 @@ async function doIt() {
                         { upsert: true, new: true }
                     )
                 } catch (e) {
+                    if (request.fromChainId != casperConfig.networkId) {
+                        let tx = await eventHelper.getRequestNft721Event(request.fromChainId)
+                        if (tx.invalidTarget) {
+                            await db.Nft721Transaction.updateOne(
+                                { requestHash: request.requestHash, fromChainId: request.fromChainId, toChainId: request.toChainId, index: request.index },
+                                {
+                                    $set: {
+                                        txInvalidTarget: true
+                                    }
+                                },
+                                { upsert: true, new: true }
+                            )
+                        }
+                    }
                     console.error(e)
                 }
             }

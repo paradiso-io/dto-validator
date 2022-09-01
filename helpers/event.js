@@ -70,6 +70,7 @@ const EventHelper = {
         if (log.topics[0] === '0x00d12e72789dde3fcb0c020e7ca91e1b9caec588f827e2cb37b00fdb73b07177') {
           let data = log.data.replace('0x', '')
           if (log.address.toLowerCase() != config.contracts[`${networkId}`].bridge.toLowerCase()) {
+            result.invalidTarget = true
             continue
           }
           /*

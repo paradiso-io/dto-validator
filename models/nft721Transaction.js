@@ -29,7 +29,8 @@ const Nft721Transaction = new Schema({
     tokenMetadatas: [{type: String}],
     identifierMode: Number,
     signatures: [Object],
-    signatureSubmitted: Boolean
+    signatureSubmitted: Boolean,
+    txInvalidTarget: Boolean
 }, { timestamps: false, versionKey: false })
 
 module.exports = mongoose.model('Nft721Transaction', Nft721Transaction)
