@@ -64,7 +64,20 @@ async function doIt() {
         let unclaimedRequests = await db.Nft721Transaction.find(query).sort({ requestTime: 1 }).limit(20).skip(0).lean().exec()
         // console.log('unclaimedRequests', unclaimedRequests)
         for (const request of unclaimedRequests) {
-            if (request.signatures && !request.signatureSubmitted) {
+            if (request.signatures && !request.signatureSubmitted && !tx.txInvalidTarget) {
+                let tx = await eventHelper.getRequestNft721Event(request.fromChainId, request.requestHash, request.index)
+                if (tx.txInvalidTarget) {
+                    await db.Nft721Transaction.updateOne(
+                        { requestHash: request.requestHash, fromChainId: request.fromChainId, toChainId: request.toChainId, index: request.index },
+                        {
+                            $set: {
+                                txInvalidTarget: true
+                            }
+                        },
+                        { upsert: true, new: true }
+                    )
+                }
+                continue
                 console.log("Find new req !!!")
                 publishSignatures(request.signatures, request.requestHash, request.fromChainId, request.toChainId, request.index)
             } else {
@@ -116,7 +129,7 @@ async function doIt() {
                     )
                 } catch (e) {
                     if (request.fromChainId != casperConfig.networkId) {
-                        let tx = await eventHelper.getRequestNft721Event(request.fromChainId)
+                        let tx = await eventHelper.getRequestNft721Event(request.fromChainId, request.requestHash, request.index)
                         if (tx.invalidTarget) {
                             await db.Nft721Transaction.updateOne(
                                 { requestHash: request.requestHash, fromChainId: request.fromChainId, toChainId: request.toChainId, index: request.index },
