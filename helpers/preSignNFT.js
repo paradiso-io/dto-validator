@@ -70,6 +70,22 @@ async function doIt() {
             } else {
                 const casperConfig = CasperHelper.getConfigInfo()
                 if (request.toChainId == casperConfig.networkId) {
+                    await db.Nft721Transaction.updateOne(
+                        {
+                            requestHash: request.requestHash,
+                            fromChainId: request.fromChainId,
+                            toChainId: request.toChainId,
+                            index: request.index
+                        },
+                        {
+                            $set:
+                            {
+                                signatures: [],
+                                signatureSubmitted: true
+                            }
+                        },
+                        { upsert: true, new: true }
+                    )
                     continue
                 }
                 try {
