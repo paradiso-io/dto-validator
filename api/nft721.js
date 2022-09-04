@@ -595,6 +595,7 @@ router.post('/receive-signatures', [
         let toChainId = req.body.toChainId
         let index = req.body.index
         let submitSignature = req.body.signatures
+        console.log("submit signature body", req.body)
         if (Array.isArray(submitSignature)) {
             submitSignature = submitSignature[0]
         }
