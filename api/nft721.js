@@ -283,8 +283,8 @@ router.post('/request-withdraw', [
         {
             let validSignature = preSignNFT.getValidSignature(transaction.signatures)
             if (transaction.signatures) {
-                if (getValidSignature && !config.proxy) {
-                    return getValidSignature
+                if (validSignature && !config.proxy) {
+                    return validSignature
                 }
                 //reading required number of signature
                 const validators = await Web3Utils.readValidators(transaction.toChainId)
