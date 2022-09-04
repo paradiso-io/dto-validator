@@ -45,6 +45,20 @@ async function publishSignatures(signatures, requestHash, fromChainId, toChainId
     }
 }
 
+function getValidSignature(signatures) {
+    if (!signatures) return null
+    if (Array.isArray(signatures)) {
+        for(const sig of signatures) {
+            if (sig.msgHash) {
+                return sig
+            }
+        }
+    } else {
+        return signatures.msgHash ? signatures : null
+    }
+    return null
+}
+
 async function doIt() {
     if (config.proxy) {
         return
@@ -65,7 +79,8 @@ async function doIt() {
         unclaimedRequests = unclaimedRequests.filter(e => !e.signatureSubmitted)
         // console.log('unclaimedRequests', unclaimedRequests)
         for (const request of unclaimedRequests) {
-            if (request.signatures && !request.signatureSubmitted && !request.txInvalidTarget) {
+            const validSignature = getValidSignature(request.signatures)
+            if (request.signatures && validSignature && !request.signatureSubmitted && !request.txInvalidTarget) {
                 let tx = await eventHelper.getRequestNft721Event(request.fromChainId, request.requestHash, request.index)
                 if (tx.invalidTarget) {
                     await db.Nft721Transaction.updateOne(
@@ -80,7 +95,7 @@ async function doIt() {
                     continue
                 }
                 console.log("Find new req !!!")
-                publishSignatures(request.signatures, request.requestHash, request.fromChainId, request.toChainId, request.index)
+                publishSignatures(validSignature, request.requestHash, request.fromChainId, request.toChainId, request.index)
             } else {
                 if (request.txInvalidTarget) {
                     console.warn("invalid", request.requestHash)
@@ -118,7 +133,7 @@ async function doIt() {
                     }
                     const url = `http://localhost:${config.server.port}/nft721/request-withdraw`
                     console.log('url', url, body)
-                    let { data } = await axios.post(url, body, { timeout: 60 * 1000 })
+                    let { data } = await axios.post(url, body, { timeout: 30 * 1000 })
                     await db.Nft721Transaction.updateOne(
                         { requestHash: request.requestHash, fromChainId: request.fromChainId, toChainId: request.toChainId, index: request.index },
                         {
