@@ -306,8 +306,11 @@ router.post('/request-withdraw', [
                     let validSigCount = uniqueSubmitters.filter(e => approverList.includes(e)).length
                     if (validSigCount >= minApprovers) {
                         let r = uniqueSignatures.map(e => e.r[0])
+                        r = r.slice(0, minApprovers)
                         let s = uniqueSignatures.map(e => e.s[0])
+                        s = s.slice(0, minApprovers)
                         let v = uniqueSignatures.map(e => e.v[0])
+                        v = v.slice(0, minApprovers)
                         let sig0 = uniqueSignatures[0]
                         let retObject = { r, s, v, msgHash: sig0.msgHash, name: sig0.name, symbol: sig0.symbol, tokenUris: sig0.tokenUris, originToken: sig0.originToken, chainIdsIndex: sig0.chainIdsIndex, tokenIds: sig0.tokenIds, originTokenIds: sig0.originTokenIds }
                         return res.json(retObject)
