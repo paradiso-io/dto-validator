@@ -134,11 +134,13 @@ async function doIt() {
                     const url = `http://localhost:${config.server.port}/nft721/request-withdraw`
                     console.log('url', url, body)
                     let { data } = await axios.post(url, body, { timeout: 30 * 1000 })
+                    console.log('data returned url', url, data)
                     await db.Nft721Transaction.updateOne(
                         { requestHash: request.requestHash, fromChainId: request.fromChainId, toChainId: request.toChainId, index: request.index },
                         {
-                            $addToSet: {
-                                signatures: data
+                            $set: 
+                            {
+                                signatures: [data]
                             }
                         },
                         { upsert: true, new: true }
