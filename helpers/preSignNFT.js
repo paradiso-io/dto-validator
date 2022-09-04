@@ -171,4 +171,4 @@ async function doIt() {
     return
 }
 
-module.exports = { doIt }
+module.exports = { doIt, getValidSignature }

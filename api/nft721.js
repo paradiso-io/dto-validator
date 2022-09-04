@@ -13,7 +13,7 @@ const logger = require('../helpers/logger')
 const casperConfig = CasperHelper.getConfigInfo()
 const GeneralHelper = require('../helpers/general')
 const { default: BigNumber } = require('bignumber.js')
-
+const preSignNFT = require('../helpers/preSignNFT')
 router.get('/transactions/:account/:networkId', [
     check('account').exists().isLength({ min: 42, max: 68 }).withMessage('address is incorrect.'),
     check('networkId').exists().isNumeric({ no_symbols: true }).withMessage('networkId is incorrect'),
@@ -281,16 +281,17 @@ router.post('/request-withdraw', [
         let minApprovers = 0
         let approverList = []
         {
+            let validSignature = preSignNFT.getValidSignature(transaction.signatures)
             if (transaction.signatures) {
-                if (!config.proxy) {
-                    return res.json(transaction.signatures[0])
+                if (getValidSignature && !config.proxy) {
+                    return getValidSignature
                 }
                 //reading required number of signature
                 const validators = await Web3Utils.readValidators(transaction.toChainId)
                 minApprovers = validators.minApprovers
                 approverList = validators.approverList
                 if (approverList.length > 0) {
-                    let alreadySubmitters = transaction.signatures.map(s => Web3Utils.recoverSignerFromSignature(s.msgHash, s.r[0], s.s[0], s.v[0]))
+                    let alreadySubmitters = transaction.signatures.map(s => s.msgHash ? Web3Utils.recoverSignerFromSignature(s.msgHash, s.r[0], s.s[0], s.v[0]) : "invalid signer")
                     alreadySubmitters = alreadySubmitters.map(e => e.toLowerCase())
                     let uniqueSubmitters = {}
                     for (var i = 0; i < alreadySubmitters.length; i++) {
