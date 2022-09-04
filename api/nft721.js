@@ -609,6 +609,7 @@ router.post('/receive-signatures', [
             alreadySubmitters = signatures.map(s => Web3Utils.recoverSignerFromSignature(s.msgHash, s.r[0], s.s[0], s.v[0]))
             alreadySubmitters = alreadySubmitters.map(e => e.toLowerCase())
             //recover signature
+            console.log("submit signature", submitSignature)
             let recoveredAddress = Web3Utils.recoverSignerFromSignature(submitSignature.msgHash, submitSignature.r[0], submitSignature.s[0], submitSignature.v[0])
             if (!alreadySubmitters.includes(recoveredAddress.toLowerCase())) {
                 //reading required number of signature
