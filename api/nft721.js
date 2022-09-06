@@ -376,16 +376,17 @@ router.post('/request-withdraw', [
         const tokenIds = transaction.tokenIds
         let name, symbol, tokenUris = [];
         let originToken = transaction.originToken
-        let web3Origin = await Web3Utils.getWeb3(transaction.originChainId)
         let bytesOriginToken = originToken
         if (transaction.originChainId != casperConfig.networkId) {
             bytesOriginToken = bytesOriginToken.replace('0x', '0x000000000000000000000000')
         } else {
-            bytesOriginToken = web3Origin.eth.abi.encodeParamters(["string"], [bytesOriginToken])
+            let web3 = Web3Utils.getSimpleWeb3()
+            bytesOriginToken = web3.eth.abi.encodeParamters(["string"], [bytesOriginToken])
         }
         let chainIdsIndex = [transaction.originChainId, transaction.fromChainId, transaction.toChainId, transaction.index]
         let originChainId = transaction.originChainId
         if (originChainId != casperConfig.networkId) {
+            let web3Origin = await Web3Utils.getWeb3(transaction.originChainId)
             for (let i = 0; i < tokenIds.length; i++) {
                 let tokenUri = await GeneralHelper.tryCallWithTrial(async () => {
                     let originTokenContract = await new web3Origin.eth.Contract(ERC721, originToken)
