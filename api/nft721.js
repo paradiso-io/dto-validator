@@ -406,6 +406,8 @@ router.post('/request-withdraw', [
                 tokenUri = tokenUri.token_uri
                 tokenUris.push(tokenUri)
             }
+            name = transaction.originName
+            symbol = transaction.originSymbol
         }
 
         if (transaction.toChainId !== transaction.originChainId) {
