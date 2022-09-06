@@ -406,8 +406,18 @@ router.post('/request-withdraw', [
                 tokenUri = tokenUri.token_uri
                 tokenUris.push(tokenUri)
             }
-            name = transaction.originName
-            symbol = transaction.originSymbol
+
+            let nftConfig = CasperHelper.getNFTConfig()
+            let _tokenData = nftConfig.tokens.find(
+                (e) => e.originContractAddress.toLowerCase() == transaction.originToken.toLowerCase()
+            );
+
+            if (!_tokenData || !_tokenData.originSymbol || !_tokenData.originName) {
+                return res.status(400).json({ errors: 'Failed to read token metadata, please try again later' })
+            }
+
+            name = _tokenData.originName
+            symbol = _tokenData.originSymbol
         }
 
         if (transaction.toChainId !== transaction.originChainId) {
