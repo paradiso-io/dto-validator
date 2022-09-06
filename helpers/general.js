@@ -35,7 +35,7 @@ let GeneralHelper = {
           let ret = await func()
           return ret
         } catch (e) {
-          console.warn(e)
+          console.warn(e.toString())
           await GeneralHelper.sleep(waitTime)
         }
         trial--

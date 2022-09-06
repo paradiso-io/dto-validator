@@ -413,6 +413,7 @@ router.post('/request-withdraw', [
                     let tokenUri = await GeneralHelper.tryCallWithTrial(async () => {
                         let contract = await Web3Utils.getNft721BridgeContract(fromChainId)
                         let tokenAddress = await contract.methods.tokenMap(casperConfig.networkId, transaction.originToken).call()
+                        console.warn('tokenAddress', tokenAddress)
                         let tokenContract = await new web3Origin.eth.Contract(ERC721, tokenAddress)
                         let tokenUri = await tokenContract.methods.tokenURI(tokenIds[i]).call()
                         return tokenUri
