@@ -566,7 +566,7 @@ router.post('/request-withdraw', [
                         if (originTokenId == undefined) {
                             return res.status(400).json({ errors: 'Transaction information might be invalid or temporarily invalid' })
                         }
-                        originTokenIds.push(originToken)
+                        originTokenIds.push(originTokenId)
                     }
                 }
             } else {
