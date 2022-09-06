@@ -381,7 +381,7 @@ router.post('/request-withdraw', [
             bytesOriginToken = bytesOriginToken.replace('0x', '0x000000000000000000000000')
         } else {
             let web3 = Web3Utils.getSimpleWeb3()
-            bytesOriginToken = web3.eth.abi.encodeParamters(["string"], [bytesOriginToken])
+            bytesOriginToken = web3.eth.abi.encodeParameters(["string"], [bytesOriginToken])
         }
         let chainIdsIndex = [transaction.originChainId, transaction.fromChainId, transaction.toChainId, transaction.index]
         let originChainId = transaction.originChainId
