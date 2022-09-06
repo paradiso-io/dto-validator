@@ -4,6 +4,7 @@ const GenericBridgeABI = require('../contracts/GenericBridge.json')
 const Nft721BridgeABI = require('../contracts/NFT721Bridge.json')
 const PrivateKeyProvider = require("truffle-privatekey-provider");
 const DTOBridgeNFT721ABI = require('../contracts/DTOBridgeNFT721.json')
+const GeneralHelper = require('./general')
 
 let Web3Util = {
   getWeb3: async (networkId) => {
