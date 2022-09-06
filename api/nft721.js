@@ -402,7 +402,7 @@ router.post('/request-withdraw', [
             }
         } else {
             for (let i = 0; i < tokenIds.length; i++) {
-                let tokenUri = JSON.parse(token.tokenMetadatas[i])
+                let tokenUri = JSON.parse(transaction.tokenMetadatas[i])
                 tokenUri = tokenUri.token_uri
                 tokenUris.push(tokenUri)
             }
