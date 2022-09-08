@@ -619,6 +619,9 @@ router.post('/receive-signatures', [
         if (Array.isArray(submitSignature)) {
             submitSignature = submitSignature[0]
         }
+        if (!preSignNFT.isValidSignature(submitSignature)) {
+            return res.status(400).json({ errors: "signature illformatted" })
+        }
         let transaction = await db.Nft721Transaction.findOne({ requestHash: requestHash, fromChainId: fromChainId, toChainId: toChainId, index: index })
         if (transaction) {
             let signatures = transaction.signatures
