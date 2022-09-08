@@ -105,7 +105,7 @@ const CasperHelper = {
         return args.find((e) => e[0] == argName);
     },
     getCasperRPC: async (height = 1) => {
-        let rpc = CasperHelper.getRandomGoodCasperRPCLink(height)
+        let rpc = await CasperHelper.getRandomGoodCasperRPCLink(height)
         return new CasperServiceByJsonRPC(rpc)
     },
     fromCasperPubkeyToAccountHash: (clPubkeyHex) => {
