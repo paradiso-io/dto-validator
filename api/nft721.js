@@ -409,7 +409,7 @@ router.post('/request-withdraw', [
                 tokenUri = tokenUri.token_uri
                 tokenUris.push(tokenUri)
             }
-
+            const nftConfig = CasperHelper.getNFTConfig()
             let tokenDataConfig = nftConfig.tokens.find(
                 (e) => e.originContractAddress.toLowerCase() == transaction.originToken
             );
