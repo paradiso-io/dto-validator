@@ -31,6 +31,47 @@ const CasperHelper = {
         let random = Math.floor(Math.random() * rpcList.length)
         return rpcList[random]
     },
+    getRandomGoodCasperRPCLink: async (minLastBlockHeight, currentRPC) => {
+        if (currentRPC) {
+            return currentRPC
+        }
+        let casperConfigInfo = CasperHelper.getConfigInfo();
+        let rpcList = []
+        if (casperConfigInfo.rpc) {
+            if (Array.isArray(casperConfigInfo.rpc)) {
+                rpcList.push(...casperConfigInfo.rpc)
+            } else {
+                rpcList.push(casperConfigInfo.rpc)
+            }
+        }
+
+        if (casperConfigInfo.rpcs) {
+            if (Array.isArray(casperConfigInfo.rpcs)) {
+                rpcList.push(...casperConfigInfo.rpcs)
+            } else {
+                rpcList.push(casperConfigInfo.rpcs)
+            }
+        }
+        while (rpcList.length > 0) {
+            let random = Math.floor(Math.random() * rpcList.length)
+            let rpc = rpcList[random]
+            let client = new CasperServiceByJsonRPC(rpc)
+            try {
+                let currentBlock = await client.getLatestBlockInfo();
+                let currentBlockHeight = parseInt(
+                    currentBlock.block.header.height.toString()
+                );
+                if (currentBlockHeight >= minLastBlockHeight) {
+                    console.warn("selecting RPC", rpc)
+                    return rpc
+                }
+            } catch (e) {
+
+            }
+            rpcList.splice(random, 1)
+        }
+        return ""
+    },
     getBridgeFee: (originTokenAddress) => {
         let casperConfig = CasperHelper.getConfigInfo()
         let tokens = casperConfig.tokens
@@ -63,9 +104,9 @@ const CasperHelper = {
     findArg: (args, argName) => {
         return args.find((e) => e[0] == argName);
     },
-    getCasperRPC: () => {
-        let casperConfig = CasperHelper.getConfigInfo()
-        return new CasperServiceByJsonRPC(casperConfig.rpc)
+    getCasperRPC: async (height = 1) => {
+        let rpc = CasperHelper.getRandomGoodCasperRPCLink(height)
+        return new CasperServiceByJsonRPC(rpc)
     },
     fromCasperPubkeyToAccountHash: (clPubkeyHex) => {
         let clPubkey = CLPublicKey.fromHex(clPubkeyHex);
