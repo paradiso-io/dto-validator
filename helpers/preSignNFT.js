@@ -45,16 +45,22 @@ async function publishSignatures(signatures, requestHash, fromChainId, toChainId
     }
 }
 
+function isValidSignature(signature) {
+    let ret = signature.tokenIds && signature.originTokenIds && Array.isArray(signature.tokenIds) && Array.isArray(signature.originTokenIds)
+    ret = ret && signature.originTokenIds.filter(e => e != '').length == signature.originTokenIds.length
+    return ret && signature.r && signature.s && signature.v && signature.msgHash
+}
+
 function getValidSignature(signatures) {
     if (!signatures) return null
     if (Array.isArray(signatures)) {
         for(const sig of signatures) {
-            if (sig.msgHash) {
+            if (sig.msgHash && isValidSignature(sig)) {
                 return sig
             }
         }
     } else {
-        return signatures.msgHash ? signatures : null
+        return isValidSignature(signatures) ? signatures : null
     }
     return null
 }
@@ -76,7 +82,7 @@ async function doIt() {
             ]
         }
         let unclaimedRequests = await db.Nft721Transaction.find(query).sort({ requestTime: 1 }).limit(20).skip(0).lean().exec()
-        unclaimedRequests = unclaimedRequests.filter(e => !e.signatureSubmitted || !e.signatures)
+        unclaimedRequests = unclaimedRequests.filter(e => !e.signatureSubmitted || !e.signatures || !getValidSignature(e.signatures))
         // console.log('unclaimedRequests', unclaimedRequests)
         for (const request of unclaimedRequests) {
             const validSignature = getValidSignature(request.signatures)
@@ -171,4 +177,4 @@ async function doIt() {
     return
 }
 
-module.exports = { doIt, getValidSignature }
+module.exports = { doIt, getValidSignature, isValidSignature }

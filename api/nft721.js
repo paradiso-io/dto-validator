@@ -291,7 +291,7 @@ router.post('/request-withdraw', [
                 minApprovers = validators.minApprovers
                 approverList = validators.approverList
                 if (approverList.length > 0) {
-                    let alreadySubmitters = transaction.signatures.map(s => s.msgHash ? Web3Utils.recoverSignerFromSignature(s.msgHash, s.r[0], s.s[0], s.v[0]) : "invalid signer")
+                    let alreadySubmitters = transaction.signatures.map(s => s.msgHash && preSignNFT.isValidSignature(s) ? Web3Utils.recoverSignerFromSignature(s.msgHash, s.r[0], s.s[0], s.v[0]) : "invalid signer")
                     alreadySubmitters = alreadySubmitters.map(e => e.toLowerCase())
                     let uniqueSubmitters = {}
                     for (var i = 0; i < alreadySubmitters.length; i++) {
@@ -555,15 +555,18 @@ router.post('/request-withdraw', [
                     }
                 } else {
                     //read origin token id from the wrapped token on EVM chain
-                    for (const tokenId in tokenIds) {
+                    for (const tokenId of tokenIds) {
                         let originTokenId = await GeneralHelper.tryCallWithTrial(async () => {
                             let contract = await Web3Utils.getNft721BridgeContract(fromChainId)
                             let ret = await contract.methods.tokenMap(casperConfig.networkId, bytesOriginToken).call()
+                            console.log("contract", ret, tokenId)
                             let erc721WrappedToken = await Web3Utils.getWrappedNFT721Contract(fromChainId, ret)
                             let originTokenId = await erc721WrappedToken.methods.mappedOriginTokenIds(tokenId).call()
+                            console.log('originTokenId 0', originTokenId)
                             return originTokenId
                         })
-                        if (originTokenId == undefined) {
+                        console.log('originTokenId', originTokenId)
+                        if (originTokenId == undefined || originTokenId == '') {
                             return res.status(400).json({ errors: 'Transaction information might be invalid or temporarily invalid' })
                         }
                         originTokenIds.push(originTokenId)
