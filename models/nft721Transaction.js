@@ -13,6 +13,7 @@ const Nft721Transaction = new Schema({
     toToken: { type: String, index: true },
     claimed: { type: Boolean, index: true },
     originSymbol: String,
+    originName: String,
     fromSymbol: String,
     toSymbol: String,
     fromChainId: { type: Number, index: true},

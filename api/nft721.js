@@ -401,41 +401,23 @@ router.post('/request-withdraw', [
                 tokenUris.push(tokenUri)
             }
         } else {
-            if (fromChainId == casperConfig.networkId) {
-                for (let i = 0; i < tokenIds.length; i++) {
-                    let tokenUri = JSON.parse(transaction.tokenMetadatas[i])
-                    tokenUri = tokenUri.token_uri
-                    tokenUris.push(tokenUri)
+            for (let i = 0; i < tokenIds.length; i++) {
+                if (!transaction.tokenMetadatas || !transaction.tokenMetadatas[i]) {
+                    return res.status(400).json({ errors: 'Failed to read token metadata, there is an internal error, please try again later' })
                 }
-            } else {
-                let web3Origin = await Web3Utils.getWeb3(transaction.fromChainId)
-                for (let i = 0; i < tokenIds.length; i++) {
-                    let tokenUri = await GeneralHelper.tryCallWithTrial(async () => {
-                        let contract = await Web3Utils.getNft721BridgeContract(fromChainId)
-                        let tokenAddress = await contract.methods.tokenMap(casperConfig.networkId, transaction.originToken).call()
-                        console.warn('tokenAddress', tokenAddress, casperConfig.networkId, transaction.originToken)
-                        let tokenContract = await new web3Origin.eth.Contract(ERC721, tokenAddress)
-                        let tokenUri = await tokenContract.methods.tokenURI(tokenIds[i]).call()
-                        return tokenUri
-                    })
-                    if (tokenUri == undefined) {
-                        return res.status(400).json({ errors: 'Failed to read token metadata, please try again later' })
-                    }
-                    tokenUris.push(tokenUri)
-                }
+                let tokenUri = JSON.parse(transaction.tokenMetadatas[i])
+                tokenUri = tokenUri.token_uri
+                tokenUris.push(tokenUri)
             }
 
-            let nftConfig = CasperHelper.getNFTConfig()
-            let _tokenData = nftConfig.tokens.find(
-                (e) => e.originContractAddress.toLowerCase() == transaction.originToken.toLowerCase()
+            let tokenDataConfig = nftConfig.tokens.find(
+                (e) => e.originContractAddress.toLowerCase() == transaction.originToken
             );
-
-            if (!_tokenData || !_tokenData.originSymbol || !_tokenData.originName) {
+            if (!tokenDataConfig || !tokenDataConfig.originSymbol || !tokenDataConfig.originName) {
                 return res.status(400).json({ errors: 'Failed to read token metadata, please try again later' })
             }
-
-            name = _tokenData.originName
-            symbol = _tokenData.originSymbol
+            name = tokenDataConfig.originName
+            symbol = tokenDataConfig.originSymbol
         }
 
         if (transaction.toChainId !== transaction.originChainId) {

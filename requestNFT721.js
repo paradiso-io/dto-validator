@@ -8,11 +8,13 @@ const ERC721 = require('./contracts/ERC721.json')
 const db = require('./models')
 const CasperHelper = require('./helpers/casper')
 const CasperConfig = CasperHelper.getConfigInfo()
+const nftConfig = CasperHelper.getNFTConfig()
 const PreSignNFT = require("./helpers/preSignNFT")
+let { DTOWrappedNFT, NFTBridge } = require("casper-nft-utils")
 
 function decodeOriginToken(tokenHex, originChainId) {
   let web3 = Web3Utils.getSimpleWeb3()
-  if (originChainId !== CasperConfig.networkId) {
+  if (originChainId != CasperConfig.networkId) {
     if (tokenHex.length > 42) {
       return tokenHex.replace('0x000000000000000000000000', '0x')
     }
@@ -24,7 +26,7 @@ function decodeOriginToken(tokenHex, originChainId) {
       );
       return decoded.contractHash
     } catch (e) {
-      
+      console.error(e.toString())
     }
   }
   return null
@@ -45,6 +47,9 @@ async function processEvent(event, networkId) {
   tokenAddress = decodeOriginToken(tokenAddress, originChainId)
   if (!tokenAddress) {
     logger.error("cannot decode contract hash tx %s, from chain %s", event.transactionHash, event.returnValues._fromChainId);
+    return
+  } else {
+    logger.info("tokenAddress %s, %s", tokenAddress, originChainId)
   }
 
   let web3ForOriginChainId, tokenContract, tokenSymbol, tokenName
@@ -71,7 +76,43 @@ async function processEvent(event, networkId) {
       metadata = JSON.stringify(metadata)
       tokenMetadatas.push(metadata)
     }
+  } else {
+    let tokenDataConfig = nftConfig.tokens.find(
+      (e) => e.originContractAddress.toLowerCase() == tokenAddress
+    );
+
+    if (!tokenDataConfig || !tokenDataConfig.originSymbol || !tokenDataConfig.originName) {
+      logger.error('Failed to read token metadata, please try again later')
+      return
+    }
+
+    let randomGoodRPC = await CasperHelper.getRandomGoodCasperRPCLink(1)
+
+    let nftContract = null
+    tokenSymbol = tokenDataConfig.originSymbol
+    tokenName = tokenDataConfig.originName
+
+
+    for (var i = 0; i < tokenIds.length; i++) {
+      let tokenId = tokenIds[i]
+      let trial = 10
+      while (trial > 0) {
+        try {
+          //read metadata
+          nftContract = await DTOWrappedNFT.createInstance(tokenAddress, randomGoodRPC, CasperConfig.chainName)
+          let metadata = await nftContract.getTokenMetadata(tokenId)
+          console.log("metadata 11: ", metadata)
+          tokenMetadatas.push(metadata)
+          break
+        } catch (e) {
+          trial--
+          console.error(e.toString())
+          randomGoodRPC = await CasperHelper.getRandomGoodCasperRPCLink(1)
+        }
+      }
+    }
   }
+  console.log('metadata', tokenMetadatas, tokenName)
 
   let block = await web3.eth.getBlock(event.blockNumber)
 
@@ -116,6 +157,7 @@ async function processEvent(event, networkId) {
         txCreator: txCreator,
         originToken: tokenAddress,
         originSymbol: tokenSymbol,
+        originName: tokenName,
         fromChainId: event.returnValues._fromChainId,
         originChainId: event.returnValues._originChainId,
         toChainId: event.returnValues._toChainId,
@@ -143,7 +185,7 @@ async function processClaimEvent(event, networkId) {
 
   let originToken = event.returnValues._token.toLowerCase()
   let originChainId = parseInt(event.returnValues._originChainId)
-  
+
   originToken = decodeOriginToken(originToken, originChainId)
   if (!originToken) {
     logger.error("cannot decode contract hash tx %s, from chain %s", event.transactionHash, event.returnValues._fromChainId);
