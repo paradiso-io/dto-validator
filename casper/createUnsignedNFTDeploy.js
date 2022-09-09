@@ -63,7 +63,7 @@ async function main() {
                         continue
                     }
 
-                    // To address account
+                    // To address account => target_key
                     let ownerAccountHashByte = Uint8Array.from(
                         Buffer.from(toAddress.slice(13), 'hex'),
                     )
@@ -71,18 +71,34 @@ async function main() {
                     const ownerKey = createRecipientAddress(new CLAccountHash(ownerAccountHashByte))
                     console.log("token_owner_to_casper:  ", ownerKey)
 
-                    let mintid = `${tx.requestHash.toLowerCase()}-${tx.fromChainId}-${tx.toChainId}-${tx.index}-${tx.originToken.toLowerCase()}-${tx.originChainId}`
-                    let minidToCasper = new CLString(mintid)
+                    // umlock_id 
+                    //unlock_id = <txHash>-<fromChainId>-<toChainId>-<index>-<originContractAddress>-<originChainId>
+                    let unlockId = `${tx.requestHash.toLowerCase()}-${tx.fromChainId}-${tx.toChainId}-${tx.index}-${tx.originToken.toLowerCase()}-${tx.originChainId}`
+                    let unlockIdToCasper = new CLString(unlockId)
+
+                    // identifierMode
+                    let identifierMode = new CLValueBuilder.u8(tx.identifierMode)
+                    // toChainId
+                    let toChainId = tx.toChainId
+                    // fromChainId
+                    let fromChainId = tx.fromChainId
+
 
                     // token metadata
                     let tokenmetadatas = tx.tokenMetadatas.map((e) => CLValueBuilder.string(e))
                     let token_metadatas = CLValueBuilder.list(tokenmetadatas)
+                    // token_ids
                     let tokenIds = tx.tokenIds.map((e) => CLValueBuilder.string(e.toString()))
                     let token_ids = CLValueBuilder.list(tokenIds)
+                    // 
+                    console.log("NFT contract hash - token.contractHash: ", token.contractHash )
+                    nftContractHash = createRecipientAddress(token.contractHash)
 
                     let ttl = 300000
 
-                    console.log("before deploy")
+                    console.log("Start create deploy for UNLOCK_NFT")
+
+                    // ARG: token_ids - token_hashes - from_chainid - identifier_mode - nft_contract_hash - target_key - unlock_id
 
                     let deploy = DeployUtil.makeDeploy(
                         new DeployUtil.DeployParams(
@@ -91,13 +107,16 @@ async function main() {
                         ),
                         DeployUtil.ExecutableDeployItem.newStoredContractByHash(
                             Uint8Array.from(Buffer.from(token.contractHash, "hex")),
-                            "mint",
+                            "unlock_nft",
                             RuntimeArgs.fromMap({
                                 // "nft_contract_hash": contracthash,
-                                "token_owner": ownerKey,
-                                "mint_id": minidToCasper,
-                                "token_hashes": token_ids,
-                                "token_meta_datas": token_metadatas
+                                "target_key": ownerKey,
+                                "unlock_id": unlockIdToCasper,
+                                "token_ids": token_ids,
+                                "from_chainid": fromChainId,
+                                "identifier_mode": identifierMode,
+                                "nft_contract_hash": nftContractHash,
+
                             })
                         ),
                         DeployUtil.standardPayment(2000000000)
