@@ -46,7 +46,7 @@ async function main() {
                 }
             )
             for (const tx of pendingTxes) {
-                if (tx.originChainId != casperChainId) {
+                if (tx.originChainId == casperChainId) { // nft bridge from Casper to EVM => now bridge back => unlock 
                     //verify format of  account address must be account hash
                     let toAddress = tx.account // NFT account owner 
                     let splits = toAddress.split("-")
@@ -73,7 +73,10 @@ async function main() {
 
                     // umlock_id 
                     //unlock_id = <txHash>-<fromChainId>-<toChainId>-<index>-<originContractAddress>-<originChainId>
-                    let unlockId = `${tx.requestHash.toLowerCase()}-${tx.fromChainId}-${tx.toChainId}-${tx.index}-${tx.originToken.toLowerCase()}-${tx.originChainId}`
+                    console.log("tx.index: ", tx.index)
+                    let mintId = `${tx.requestHash.toLowerCase()}-${tx.fromChainId}-${tx.toChainId}-${tx.index}-${tx.originToken.toLowerCase()}-${tx.originChainId}`
+
+                    let unlockId = mintId
                     let unlockIdToCasper = new CLString(unlockId)
 
                     // identifierMode
@@ -168,6 +171,8 @@ async function main() {
                                 isNFT: true,
                                 tokenIds: tx.tokenIds,
                                 identifierMode: tx.identifierMode,
+                                isUnlock : true,
+                                unlockId: unlockId
                             },
                         },
                         { upsert: true, new: true }
@@ -175,6 +180,7 @@ async function main() {
 
                     tx.casperDeployCreated = true
                     await tx.save()
+                    console.log("Unlock success. Save to DB success")
                 } else {
                     //verify format of  account address must be account hash
                     let toAddress = tx.account // NFT account owner 
