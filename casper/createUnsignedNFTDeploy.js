@@ -5,6 +5,7 @@ const CasperHelper = require('../helpers/casper')
 const { sha256 } = require("ethereum-cryptography/sha256");
 const logger = require("../helpers/logger");
 const Web3Utils = require('../helpers/web3')
+const BigNumber = require('bignumber.js')
 //const { CLAccountHash, DeployUtil } = require("casper-js-sdk");
 const {
     DeployUtil,
@@ -48,7 +49,9 @@ async function main() {
             for (const tx of pendingTxes) {
                 if (tx.originChainId == casperChainId) { // nft bridge from Casper to EVM => now bridge back => unlock 
                     //verify format of  account address must be account hash
+                    console.log("NEW REQUEST UNSIGNED TO UNLOCK ")
                     let toAddress = tx.account // NFT account owner 
+                    console.log("toAddress: ", toAddress)
                     let splits = toAddress.split("-")
                     var re = /[0-9A-Fa-f]{6}/g;
                     if (splits.length != 3 || splits[0] != "account" || splits[1] != "hash" || !re.test(splits[2])) {
@@ -69,22 +72,26 @@ async function main() {
                     )
 
                     const ownerKey = createRecipientAddress(new CLAccountHash(ownerAccountHashByte))
-                    console.log("token_owner_to_casper:  ", ownerKey)
+                    //console.log("token_owner_to_casper:  ", ownerKey)
 
                     // umlock_id 
                     //unlock_id = <txHash>-<fromChainId>-<toChainId>-<index>-<originContractAddress>-<originChainId>
                     console.log("tx.index: ", tx.index)
-                    let mintId = `${tx.requestHash.toLowerCase()}-${tx.fromChainId}-${tx.toChainId}-${tx.index}-${tx.originToken.toLowerCase()}-${tx.originChainId}`
+                    let mintid = `${tx.requestHash.toLowerCase()}-${tx.fromChainId}-${tx.toChainId}-${tx.index}-${tx.originToken.toLowerCase()}-${tx.originChainId}`
 
-                    let unlockId = mintId
+                    console.log("mintId: ", mintid)
+                    let unlockId = mintid
                     let unlockIdToCasper = new CLString(unlockId)
 
+
                     // identifierMode
-                    let identifierMode = new CLValueBuilder.u8(tx.identifierMode)
+                    console.log("tx.identifierMode: ", tx.identifierMode)
+                    let identifierMode = new CLValueBuilder.u8((tx.identifierMode))
+                    console.log("identifierMode: ", identifierMode)
                     // toChainId
                     let toChainId = tx.toChainId
                     // fromChainId
-                    let fromChainId = tx.fromChainId
+                    let fromChainId = new CLValueBuilder.u256(tx.fromChainId)
 
 
                     // token metadata
@@ -95,7 +102,9 @@ async function main() {
                     let token_ids = CLValueBuilder.list(tokenIds)
                     // 
                     console.log("NFT contract hash - token.contractHash: ", token.contractHash )
-                    nftContractHash = createRecipientAddress(token.contractHash)
+                    const contracthashbytearray = new CLByteArray(Uint8Array.from(Buffer.from(token.contractHash, 'hex')));
+                    const nftContractHash = new CLKey(contracthashbytearray);
+                
 
                     let ttl = 300000
 
