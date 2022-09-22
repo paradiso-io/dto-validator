@@ -115,7 +115,8 @@ async function processEvent(event, networkId) {
   console.log('metadata', tokenMetadatas, tokenName)
 
   // get identifierMode
-  let identifierMode = nftContract.identifierMode()
+  nftContract = await DTOWrappedNFT.createInstance(tokenAddress, randomGoodRPC, CasperConfig.chainName)
+  let identifierMode = await nftContract.identifierMode()
   console.log("identifierMode: ", identifierMode)
 
   let block = await web3.eth.getBlock(event.blockNumber)
