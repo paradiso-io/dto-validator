@@ -47,11 +47,13 @@ async function claimBridge() {
 
     console.log('ddddd', data)
     console.log('claiming...')
+    
 
     await bridge.methods
       .claimMultiNFT721Token(
         data.originToken, 
-        "0x00481E0dE32FecFF1C7ce3AF19cb03E01aFC0e48", 
+        //"0x00481E0dE32FecFF1C7ce3AF19cb03E01aFC0e48",
+        "0xbf26a30547a7dda6e86fc3c33396f28fff6902c3", 
         data.tokenIds, 
         data.originTokenIds,
         data.chainIdsIndex,

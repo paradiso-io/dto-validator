@@ -6,8 +6,8 @@ const config = require("config")
 
 // NFT = '0xf5de760f2e916647fd766B4AD9E85ff943cE3A2b'
 
-const privateKey = '0xe9a698185c72b3cebc14d68213e5ead83efdc784ee93f34a0e2e76ba68b07727'
-
+//const privateKey = '0xe9a698185c72b3cebc14d68213e5ead83efdc784ee93f34a0e2e76ba68b07727'
+const privateKey = '0xc88144f3ee154314a19064f0f70b4ea7fbec63322405fd2825619dd5148c0f97'
 async function requestBridge() {
   if (process.argv.length <= 5) {
     console.error('Missing params: 1. fromNetworkId, 2. toNetworkId, 3. erc721 token, 4. tokenId, 5.recipient')
