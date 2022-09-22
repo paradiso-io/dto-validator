@@ -34,6 +34,8 @@ async function main() {
     while (true) {
         try {
             let casperConfig = CasperHelper.getConfigInfo()
+            let casperNFTConfig = CasperHelper.getNFTConfig()
+            console.log("NFT bidge contract: ", casperNFTConfig.nftbridge)
             let casperChainId = casperConfig.networkId
             let mpcPubkey = CasperHelper.getMPCPubkey()
 
@@ -118,7 +120,7 @@ async function main() {
                             casperConfig.chainName
                         ),
                         DeployUtil.ExecutableDeployItem.newStoredContractByHash(
-                            Uint8Array.from(Buffer.from(token.contractHash, "hex")),
+                            Uint8Array.from(Buffer.from(casperNFTConfig.nftbridge, "hex")),
                             "unlock_nft",
                             RuntimeArgs.fromMap({
                                 // "nft_contract_hash": contracthash,
