@@ -100,13 +100,22 @@ async function main() {
                     let tokenmetadatas = tx.tokenMetadatas.map((e) => CLValueBuilder.string(e))
                     let token_metadatas = CLValueBuilder.list(tokenmetadatas)
                     // token_ids
-                    let tokenIds = tx.tokenIds.map((e) => CLValueBuilder.string(e.toString()))
-                    let token_ids = CLValueBuilder.list(tokenIds)
+                    let tokenIds = null
+                    let token_ids = null
+                    if (identifierMode == 1) {
+                        tokenIds = tx.tokenIds.map((e) => CLValueBuilder.string(e.toString()))
+                        token_ids = CLValueBuilder.list(tokenIds)
+                    }
+                    else {
+                        tokenIds = tx.tokenIds.map((e) => CLValueBuilder.u64(e))
+                        token_ids = CLValueBuilder.list(tokenIds)
+                    }
+
                     // 
-                    console.log("NFT contract hash - token.contractHash: ", token.contractHash )
+                    console.log("NFT contract hash - token.contractHash: ", token.contractHash)
                     const contracthashbytearray = new CLByteArray(Uint8Array.from(Buffer.from(token.contractHash, 'hex')));
                     const nftContractHash = new CLKey(contracthashbytearray);
-                
+
 
                     let ttl = 300000
 
@@ -182,7 +191,7 @@ async function main() {
                                 isNFT: true,
                                 tokenIds: tx.tokenIds,
                                 identifierMode: tx.identifierMode,
-                                isUnlock : true,
+                                isUnlock: true,
                                 unlockId: unlockId
                             },
                         },
