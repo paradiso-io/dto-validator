@@ -114,6 +114,10 @@ async function processEvent(event, networkId) {
   }
   console.log('metadata', tokenMetadatas, tokenName)
 
+  // get identifierMode
+  let identifierMode = nftContract.identifierMode()
+  console.log("identifierMode: ", identifierMode)
+
   let block = await web3.eth.getBlock(event.blockNumber)
 
   // event RequestBridge(address indexed _token, bytes indexed _addr, uint256 _amount, uint256 _originChainId, uint256 _fromChainId, uint256 _toChainId, uint256 _index)
@@ -164,7 +168,8 @@ async function processEvent(event, networkId) {
         tokenIds: tokenIdsString,
         index: event.returnValues._index,
         requestTime: block.timestamp,
-        tokenMetadatas: tokenMetadatas
+        tokenMetadatas: tokenMetadatas,
+        identifierMode: identifierMode,
       },
     },
     { upsert: true, new: true }
