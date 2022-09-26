@@ -341,7 +341,7 @@ async function main() {
                         ]
                     }
                 )
-                console.log(reqs)
+                //console.log(reqs)
                 for (const req of reqs) {
                     if (req.originChainId == casperChainId) { // nft bridge from Casper to EVM => now bridge back => unlock
                         //verify format of  account address must be account hash
@@ -362,7 +362,7 @@ async function main() {
                         // umlock_id 
                         //unlock_id = <txHash>-<fromChainId>-<toChainId>-<index>-<originContractAddress>-<originChainId>
 
-                        token = CasperHelper.getCasperNFTTokenInfoFromOriginToken(req.originToken, req.originChainId)
+                        let token = CasperHelper.getCasperNFTTokenInfoFromOriginToken(req.originToken, req.originChainId)
                         if (!token) {
                             logger.warn("token %s on chain %s not supported", req.originToken, req.originChainId)
                             continue
@@ -431,12 +431,6 @@ async function main() {
                         );
                         const token_owner_to_casper = new CLKey(accounthash2);
                         console.log("token_owner_to_casper:  ", token_owner_to_casper)
-
-                        let token = CasperHelper.getCasperNFTTokenInfoFromOriginToken(req.originToken, req.originChainId)
-                        if (!token) {
-                            logger.warn("token %s on chain %s not supported", req.originToken, req.originChainId)
-                            continue
-                        }
 
                         //TODO: check whether mintid executed => this is to avoid failed transactions as mintid cant be executed more than one time
                         ttl = 300000
