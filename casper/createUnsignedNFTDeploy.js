@@ -480,7 +480,7 @@ async function main() {
 
                         await db.Nft721RequestToCasper.updateOne(
                             {
-                                mintid: dto_mint_id
+                                mintid: mintid
                             },
                             {
                                 $set: {
@@ -500,13 +500,15 @@ async function main() {
                                     isProcessed: false,
                                     deployJsonString: deployJson,
                                     amount: req.amount,
-                                    mintid: dto_mint_id,
+                                    mintid: mintid,
                                     token_metadata: req.token_metadata,
                                     claimed: false,
                                     renewalCount: req.renewalCount + 1,
                                     isNFT: true,
                                     tokenIds: req.tokenIds,
                                     identifierMode: req.identifierMode,
+                                    isUnlock: true,
+                                    unlockId: unlockId
                                 },
                             },
                             { upsert: true, new: true }
@@ -628,7 +630,7 @@ async function main() {
 
                     }
                     console.log('sleep 60 seconds before create an other tx')
-                    await generalHelper.sleep(60000)        
+                    await generalHelper.sleep(60000)
                 }
             }
 
