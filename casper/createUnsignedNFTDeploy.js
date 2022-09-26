@@ -347,7 +347,7 @@ async function main() {
                             "RENEWAL for UNLOCK_NFT: Origin MINTID %s",
                             req.mintid
                         );
-                        let toAddress = req.account // NFT account owner
+                        let toAddress = req.toWallet // NFT account owner
                         console.log("toAddress: ", toAddress)
                         // To address account => target_key
                         let ownerAccountHashByte = Uint8Array.from(
@@ -359,6 +359,13 @@ async function main() {
 
                         // umlock_id 
                         //unlock_id = <txHash>-<fromChainId>-<toChainId>-<index>-<originContractAddress>-<originChainId>
+
+                        let token = CasperHelper.getCasperNFTTokenInfoFromOriginToken(req.originToken, req.originChainId)
+                        if (!token) {
+                            logger.warn("token %s on chain %s not supported", req.originToken, req.originChainId)
+                            continue
+                        }
+    
                         console.log("tx.index: ", req.index)
                         let mintid = `${req.requestHash.toLowerCase()}-${req.fromChainId}-${req.toChainId}-${req.index}-${req.originToken.toLowerCase()}-${req.originChainId}`
 
@@ -430,7 +437,7 @@ async function main() {
                         }
 
                         //TODO: check whether mintid executed => this is to avoid failed transactions as mintid cant be executed more than one time
-                        let ttl = 300000
+                        ttl = 300000
 
                         console.log("Start RENEWAL deploy for UNLOCK_NFT")
 
