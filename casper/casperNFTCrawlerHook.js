@@ -145,7 +145,7 @@ const HOOK = {
             if (splits.length != 6) {
               return
             }
-            let(txHash, fromChainId, toChainId, index, originContractAddress, originChainId) = splits
+            let (txHash, fromChainId, toChainId, index, originContractAddress, originChainId) = splits
             if (originContractAddress.length != 64 || toChainId != originChainId || parseInt(originChainId) != nftConfig.networkId) {
               return
             }
