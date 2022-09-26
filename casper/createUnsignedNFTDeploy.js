@@ -325,6 +325,8 @@ async function main() {
                     tx.casperDeployCreated = true
                     await tx.save()
                 }
+                console.log('sleep 60 seconds before create an other tx')
+                await generalHelper.sleep(60000)
             }
 
             //scan for RequestToCasper not confirmed yet: refresh
@@ -365,7 +367,7 @@ async function main() {
                             logger.warn("token %s on chain %s not supported", req.originToken, req.originChainId)
                             continue
                         }
-    
+
                         console.log("tx.index: ", req.index)
                         let mintid = `${req.requestHash.toLowerCase()}-${req.fromChainId}-${req.toChainId}-${req.index}-${req.originToken.toLowerCase()}-${req.originChainId}`
 
@@ -631,6 +633,8 @@ async function main() {
                         );
 
                     }
+                    console.log('sleep 60 seconds before create an other tx')
+                    await generalHelper.sleep(60000)        
                 }
             }
 
