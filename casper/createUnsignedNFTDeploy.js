@@ -341,119 +341,289 @@ async function main() {
                 )
                 console.log(reqs)
                 for (const req of reqs) {
-                    //verify format of  account address must be account hash
-                    logger.info(
-                        "RENEWAL: Origin MINTID %s",
-                        req.mintid
-                    );
-                    let dto_mint_id = req.mintid
-                    let dto_mint_id_tocasper = new CLString(dto_mint_id)
+                    if (req.originChainId == casperChainId) { // nft bridge from Casper to EVM => now bridge back => unlock
+                        //verify format of  account address must be account hash
+                        logger.info(
+                            "RENEWAL for UNLOCK_NFT: Origin MINTID %s",
+                            req.mintid
+                        );
+                        let toAddress = req.account // NFT account owner
+                        console.log("toAddress: ", toAddress)
+                        // To address account => target_key
+                        let ownerAccountHashByte = Uint8Array.from(
+                            Buffer.from(toAddress.slice(13), 'hex'),
+                        )
 
-                    // token metadata => Change to Casper type to fit deploy parameters
+                        const ownerKey = createRecipientAddress(new CLAccountHash(ownerAccountHashByte)) // Unlock To_address 
+                        //console.log("token_owner_to_casper:  ", ownerKey)
 
-                    // token metadata
-                    let tokenmetadatas1 = req.tokenMetadatas.map((e) => CLValueBuilder.string(e))
-                    let token_metadatas1 = CLValueBuilder.list(tokenmetadatas1)
-                    let tokenIds1 = req.tokenIds.map((e) => CLValueBuilder.string(e))
-                    let token_ids1 = CLValueBuilder.list(tokenIds1)
+                        // umlock_id 
+                        //unlock_id = <txHash>-<fromChainId>-<toChainId>-<index>-<originContractAddress>-<originChainId>
+                        console.log("tx.index: ", req.index)
+                        let mintid = `${req.requestHash.toLowerCase()}-${req.fromChainId}-${req.toChainId}-${req.index}-${req.originToken.toLowerCase()}-${req.originChainId}`
 
-                    // let token_metadata1 = new CLString(JSON.stringify(req.tokenMetadatas))
-                    // let token_ids = new CLValueBuilder.list(tx.token_ids)
-                    // let token_hashs = new CLValueBuilder.list(tx.token_hashs)
+                        console.log("mintId: ", mintid)
+                        let unlockId = mintid
+                        let unlockIdToCasper = new CLString(unlockId)
 
-                    // token_owner
 
-                    let token_owner1 = req.toWallet
+                        // identifierMode
+                        console.log("req.identifierMode: ", req.identifierMode)
+                        let identifierMode = new CLValueBuilder.u8((req.identifierMode))
+                        console.log("identifierMode: ", identifierMode)
+                        // toChainId
+                        let toChainId = req.toChainId
+                        // fromChainId
+                        let fromChainId = new CLValueBuilder.u256(req.fromChainId)
 
-                    let splits = token_owner1.split("-")
-                    var re = /[0-9A-Fa-f]{6}/g;
-                    if (splits.length != 3 || splits[0] != "account" || splits[1] != "hash" || !re.test(splits[2])) {
-                        tx.casperDeployCreated = true
-                        tx.casperCreatedFailedReason = "Invalid Account Hash"
-                        continue
-                    }
 
-                    console.log("token_owner:  ", splits[2])
-                    let recipientAccountHashByte = Uint8Array.from(
-                        Buffer.from(token_owner1.slice(13), 'hex'),
-                    )
-                    const accounthash2 = new CLAccountHash(
-                        recipientAccountHashByte
-                    );
-                    const token_owner_to_casper = new CLKey(accounthash2);
-                    console.log("token_owner_to_casper:  ", token_owner_to_casper)
+                        // token metadata
+                        let tokenmetadatas = req.tokenMetadatas.map((e) => CLValueBuilder.string(e))
+                        let token_metadatas = CLValueBuilder.list(tokenmetadatas)
+                        // token_ids
+                        let tokenIds = null
+                        let token_ids = null
+                        if (identifierMode == 1) {
+                            tokenIds = req.tokenIds.map((e) => CLValueBuilder.string(e.toString()))
+                            token_ids = CLValueBuilder.list(tokenIds)
+                        }
+                        else {
+                            tokenIds = req.tokenIds.map((e) => CLValueBuilder.u64(e))
+                            token_ids = CLValueBuilder.list(tokenIds)
+                        }
 
-                    let token = CasperHelper.getCasperNFTTokenInfoFromOriginToken(req.originToken, req.originChainId)
-                    if (!token) {
-                        logger.warn("token %s on chain %s not supported", req.originToken, req.originChainId)
-                        continue
-                    }
+                        // 
+                        console.log("NFT contract hash - token.contractHash: ", token.contractHash)
+                        const contracthashbytearray = new CLByteArray(Uint8Array.from(Buffer.from(token.contractHash, 'hex')));
+                        const nftContractHash = new CLKey(contracthashbytearray);
 
-                    //TODO: check whether mintid executed => this is to avoid failed transactions as mintid cant be executed more than one time
-                    let ttl = 300000
 
-                    let deploy = DeployUtil.makeDeploy(
-                        new DeployUtil.DeployParams(
-                            //pairKeyView.publicKey, // MPC public key
-                            mpcPubkey,
-                            casperConfig.chainName
-                        ),
-                        DeployUtil.ExecutableDeployItem.newStoredContractByHash(
-                            Uint8Array.from(Buffer.from(token.contractHash, 'hex')),
-                            "mint",
-                            RuntimeArgs.fromMap({
-                                "token_owner": token_owner_to_casper,
-                                "mint_id": dto_mint_id_tocasper, // change to Casper string type
-                                "token_hashes": token_ids1,
-                                "token_meta_datas": token_metadatas1 // fit Casper type
-                            })
-                        ),
-                        DeployUtil.standardPayment(2000000000)
-                    );
+                        let ttl = 300000
 
-                    //deploy = client.signDeploy(deploy, pairKeyView);
-                    console.log(deploy.approvals)
-                    let deployJson = JSON.stringify(DeployUtil.deployToJson(deploy));
-                    let hashToSign = sha256(Buffer.from(deploy.hash)).toString("hex")
-                    let deployHash = Buffer.from(deploy.hash).toString('hex')
-                    logger.info(
-                        "new transactions to casper %s",
-                        sha256(Buffer.from(deploy.hash)).toString("hex")
-                    );
+                        console.log("Start create deploy for UNLOCK_NFT")
+                        // token_owner
 
-                    await db.Nft721RequestToCasper.updateOne(
-                        {
-                            mintid: dto_mint_id
-                        },
-                        {
-                            $set: {
-                                requestHash: req.requestHash,
-                                index: req.index,
-                                deployHash: deployHash,
-                                deployHashToSign: hashToSign,
-                                toWallet: req.toWallet,
-                                fromChainId: req.fromChainId,
-                                toChainId: req.toChainId,
-                                originChainId: req.originChainId,
-                                originToken: req.originToken.toLowerCase(),
-                                //destinationContractHash: token.contractHash,
-                                timestamp: Math.floor(deploy.header.timestamp / 1000),
-                                ttl: Math.floor(deploy.header.ttl / 1000),
-                                deadline: Math.floor((deploy.header.timestamp + deploy.header.ttl) / 1000),
-                                isProcessed: false,
-                                deployJsonString: deployJson,
-                                amount: req.amount,
-                                mintid: dto_mint_id,
-                                token_metadata: req.token_metadata,
-                                claimed: false,
-                                renewalCount: req.renewalCount + 1,
-                                isNFT: true,
-                                tokenIds: req.tokenIds,
-                                identifierMode: req.identifierMode,
+                        let token_owner1 = req.toWallet
+
+                        let splits = token_owner1.split("-")
+                        var re = /[0-9A-Fa-f]{6}/g;
+                        if (splits.length != 3 || splits[0] != "account" || splits[1] != "hash" || !re.test(splits[2])) {
+                            tx.casperDeployCreated = true
+                            tx.casperCreatedFailedReason = "Invalid Account Hash"
+                            continue
+                        }
+
+                        console.log("token_owner:  ", splits[2])
+                        let recipientAccountHashByte = Uint8Array.from(
+                            Buffer.from(token_owner1.slice(13), 'hex'),
+                        )
+                        const accounthash2 = new CLAccountHash(
+                            recipientAccountHashByte
+                        );
+                        const token_owner_to_casper = new CLKey(accounthash2);
+                        console.log("token_owner_to_casper:  ", token_owner_to_casper)
+
+                        let token = CasperHelper.getCasperNFTTokenInfoFromOriginToken(req.originToken, req.originChainId)
+                        if (!token) {
+                            logger.warn("token %s on chain %s not supported", req.originToken, req.originChainId)
+                            continue
+                        }
+
+                        //TODO: check whether mintid executed => this is to avoid failed transactions as mintid cant be executed more than one time
+                        let ttl = 300000
+
+                        console.log("Start RENEWAL deploy for UNLOCK_NFT")
+
+                        // ARG: token_ids - token_hashes - from_chainid - identifier_mode - nft_contract_hash - target_key - unlock_id
+
+                        let deploy = DeployUtil.makeDeploy(
+                            new DeployUtil.DeployParams(
+                                mpcPubkey,
+                                casperConfig.chainName
+                            ),
+                            DeployUtil.ExecutableDeployItem.newStoredContractByHash(
+                                Uint8Array.from(Buffer.from(casperNFTConfig.nftbridge, "hex")),
+                                "unlock_nft",
+                                RuntimeArgs.fromMap({
+                                    // "nft_contract_hash": contracthash,
+                                    "target_key": ownerKey,
+                                    "unlock_id": unlockIdToCasper,
+                                    "token_ids": token_ids,
+                                    "from_chainid": fromChainId,
+                                    "identifier_mode": identifierMode,
+                                    "nft_contract_hash": nftContractHash,
+
+                                })
+                            ),
+                            DeployUtil.standardPayment(2000000000)
+                        );
+
+
+                        //deploy = client.signDeploy(deploy, pairKeyView);
+                        console.log("DEPLOY: ", deploy)
+
+                        console.log("after deploy")
+
+
+                        //deploy = client.signDeploy(deploy, pairKeyView);
+                        console.log(deploy.approvals)
+                        let deployJson = JSON.stringify(DeployUtil.deployToJson(deploy));
+                        let hashToSign = sha256(Buffer.from(deploy.hash)).toString("hex")
+                        let deployHash = Buffer.from(deploy.hash).toString('hex')
+                        logger.info(
+                            "new transactions to casper %s",
+                            sha256(Buffer.from(deploy.hash)).toString("hex")
+                        );
+
+                        await db.Nft721RequestToCasper.updateOne(
+                            {
+                                mintid: dto_mint_id
                             },
-                        },
-                        { upsert: true, new: true }
-                    );
+                            {
+                                $set: {
+                                    requestHash: req.requestHash,
+                                    index: req.index,
+                                    deployHash: deployHash,
+                                    deployHashToSign: hashToSign,
+                                    toWallet: req.toWallet,
+                                    fromChainId: req.fromChainId,
+                                    toChainId: req.toChainId,
+                                    originChainId: req.originChainId,
+                                    originToken: req.originToken.toLowerCase(),
+                                    //destinationContractHash: token.contractHash,
+                                    timestamp: Math.floor(deploy.header.timestamp / 1000),
+                                    ttl: Math.floor(deploy.header.ttl / 1000),
+                                    deadline: Math.floor((deploy.header.timestamp + deploy.header.ttl) / 1000),
+                                    isProcessed: false,
+                                    deployJsonString: deployJson,
+                                    amount: req.amount,
+                                    mintid: dto_mint_id,
+                                    token_metadata: req.token_metadata,
+                                    claimed: false,
+                                    renewalCount: req.renewalCount + 1,
+                                    isNFT: true,
+                                    tokenIds: req.tokenIds,
+                                    identifierMode: req.identifierMode,
+                                },
+                            },
+                            { upsert: true, new: true }
+                        );
+                    } else {
+                        //verify format of  account address must be account hash
+                        logger.info(
+                            "RENEWAL: Origin MINTID %s",
+                            req.mintid
+                        );
+                        let dto_mint_id = req.mintid
+                        let dto_mint_id_tocasper = new CLString(dto_mint_id)
+
+                        // token metadata => Change to Casper type to fit deploy parameters
+
+                        // token metadata
+                        let tokenmetadatas1 = req.tokenMetadatas.map((e) => CLValueBuilder.string(e))
+                        let token_metadatas1 = CLValueBuilder.list(tokenmetadatas1)
+                        let tokenIds1 = req.tokenIds.map((e) => CLValueBuilder.string(e))
+                        let token_ids1 = CLValueBuilder.list(tokenIds1)
+
+                        // let token_metadata1 = new CLString(JSON.stringify(req.tokenMetadatas))
+                        // let token_ids = new CLValueBuilder.list(tx.token_ids)
+                        // let token_hashs = new CLValueBuilder.list(tx.token_hashs)
+
+                        // token_owner
+
+                        let token_owner1 = req.toWallet
+
+                        let splits = token_owner1.split("-")
+                        var re = /[0-9A-Fa-f]{6}/g;
+                        if (splits.length != 3 || splits[0] != "account" || splits[1] != "hash" || !re.test(splits[2])) {
+                            tx.casperDeployCreated = true
+                            tx.casperCreatedFailedReason = "Invalid Account Hash"
+                            continue
+                        }
+
+                        console.log("token_owner:  ", splits[2])
+                        let recipientAccountHashByte = Uint8Array.from(
+                            Buffer.from(token_owner1.slice(13), 'hex'),
+                        )
+                        const accounthash2 = new CLAccountHash(
+                            recipientAccountHashByte
+                        );
+                        const token_owner_to_casper = new CLKey(accounthash2);
+                        console.log("token_owner_to_casper:  ", token_owner_to_casper)
+
+                        let token = CasperHelper.getCasperNFTTokenInfoFromOriginToken(req.originToken, req.originChainId)
+                        if (!token) {
+                            logger.warn("token %s on chain %s not supported", req.originToken, req.originChainId)
+                            continue
+                        }
+
+                        //TODO: check whether mintid executed => this is to avoid failed transactions as mintid cant be executed more than one time
+                        let ttl = 300000
+
+                        let deploy = DeployUtil.makeDeploy(
+                            new DeployUtil.DeployParams(
+                                //pairKeyView.publicKey, // MPC public key
+                                mpcPubkey,
+                                casperConfig.chainName
+                            ),
+                            DeployUtil.ExecutableDeployItem.newStoredContractByHash(
+                                Uint8Array.from(Buffer.from(token.contractHash, 'hex')),
+                                "mint",
+                                RuntimeArgs.fromMap({
+                                    "token_owner": token_owner_to_casper,
+                                    "mint_id": dto_mint_id_tocasper, // change to Casper string type
+                                    "token_hashes": token_ids1,
+                                    "token_meta_datas": token_metadatas1 // fit Casper type
+                                })
+                            ),
+                            DeployUtil.standardPayment(2000000000)
+                        );
+
+                        //deploy = client.signDeploy(deploy, pairKeyView);
+                        console.log(deploy.approvals)
+                        let deployJson = JSON.stringify(DeployUtil.deployToJson(deploy));
+                        let hashToSign = sha256(Buffer.from(deploy.hash)).toString("hex")
+                        let deployHash = Buffer.from(deploy.hash).toString('hex')
+                        logger.info(
+                            "new transactions to casper %s",
+                            sha256(Buffer.from(deploy.hash)).toString("hex")
+                        );
+
+                        await db.Nft721RequestToCasper.updateOne(
+                            {
+                                mintid: dto_mint_id
+                            },
+                            {
+                                $set: {
+                                    requestHash: req.requestHash,
+                                    index: req.index,
+                                    deployHash: deployHash,
+                                    deployHashToSign: hashToSign,
+                                    toWallet: req.toWallet,
+                                    fromChainId: req.fromChainId,
+                                    toChainId: req.toChainId,
+                                    originChainId: req.originChainId,
+                                    originToken: req.originToken.toLowerCase(),
+                                    //destinationContractHash: token.contractHash,
+                                    timestamp: Math.floor(deploy.header.timestamp / 1000),
+                                    ttl: Math.floor(deploy.header.ttl / 1000),
+                                    deadline: Math.floor((deploy.header.timestamp + deploy.header.ttl) / 1000),
+                                    isProcessed: false,
+                                    deployJsonString: deployJson,
+                                    amount: req.amount,
+                                    mintid: dto_mint_id,
+                                    token_metadata: req.token_metadata,
+                                    claimed: false,
+                                    renewalCount: req.renewalCount + 1,
+                                    isNFT: true,
+                                    tokenIds: req.tokenIds,
+                                    identifierMode: req.identifierMode,
+                                },
+                            },
+                            { upsert: true, new: true }
+                        );
+
+                    }
                 }
             }
 
