@@ -360,7 +360,7 @@ async function main() {
                         // umlock_id 
                         //unlock_id = <txHash>-<fromChainId>-<toChainId>-<index>-<originContractAddress>-<originChainId>
 
-                        let token = CasperHelper.getCasperNFTTokenInfoFromOriginToken(req.originToken, req.originChainId)
+                        token = CasperHelper.getCasperNFTTokenInfoFromOriginToken(req.originToken, req.originChainId)
                         if (!token) {
                             logger.warn("token %s on chain %s not supported", req.originToken, req.originChainId)
                             continue
