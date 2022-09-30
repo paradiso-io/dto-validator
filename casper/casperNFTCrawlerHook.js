@@ -31,6 +31,7 @@ const HOOK = {
         { upsert: true, new: true }
       );
       logger.info("claimId %s", updateData.claimId);
+      console.log("START UPDATE REQUESTOCASPER claimId: ", updateData.claimId)
       await db.Nft721RequestToCasper.updateOne(
         {
           mintid: updateData.claimId
@@ -42,6 +43,7 @@ const HOOK = {
         },
         { upsert: true, new: true }
       );
+      console.log("FINISH UPDATE REQUESTTOCASPER claimId: ", updateData.claimId)
     }
   },
   updateRequestBridge: async (updateData) => {
@@ -141,6 +143,7 @@ const HOOK = {
             if (!claimId) {
               return
             }
+            console.log("FIND NEW CLAIMID TO UPDATE !!!!: ", claimId)
             let splits = claimId.split("-")
             if (splits.length != 6) {
               return
