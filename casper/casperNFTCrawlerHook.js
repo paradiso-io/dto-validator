@@ -177,7 +177,7 @@ const HOOK = {
             }
 
             logger.info("New event at block %s", block.block.header.height);
-
+            console.log("HOOK START TO UPDATE DATE !!!!", claimId)
             await HOOK.updateMintOrUnlock(
               {
                 index,
