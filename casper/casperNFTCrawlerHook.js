@@ -148,12 +148,16 @@ const HOOK = {
             if (splits.length != 6) {
               return
             }
-            let (txHash, fromChainId, toChainId, index, originContractAddress, originChainId) = splits
-            if (originContractAddress.length != 64 || toChainId != originChainId || parseInt(originChainId) != nftConfig.networkId) {
-              return
-            }
+            console.log("splits: ", splits)
+            let [txHash, fromChainId, toChainId, index, originContractAddress, originChainId] = splits
+            console.log("GET SPLITS txHash: ", txHash)
+            // if (originContractAddress.length != 64 || toChainId != originChainId || parseInt(originChainId) != nftConfig.networkId) {
+            //   console.log("SITUATION 1 RETURN")
+            //   return
+            // }
 
             if (originChainId != toChainId) {
+              console.log("SITUATION 2 RETURN")
               return
             }
 
