@@ -7,6 +7,7 @@ let db = require('../models')
 const HOOK = {
   updateMintOrUnlock: async (updateData) => {
     {
+      console.log( "!!!! START UPDATE MINT OR UNLOCK !!!!")
       console.log('updateData', updateData.deployHash)
       // event ClaimToken(address indexed _token, address indexed _addr, uint256 _amount, uint256 _originChainId, uint256 _fromChainId, uint256 _toChainId, uint256 _index, bytes32 _claimId);
       await db.Nft721Transaction.updateOne(
@@ -139,9 +140,11 @@ const HOOK = {
         } else if (nftConfig.nftbridge == storedContractByHash.hash) {
           console.log("OK !!! nftConfig.nftbridge == storedContractByHash.hash", storedContractByHash.hash)
           console.log("Now check unlock_nft EntryPoint !!!")
+          console.log("storedContractByHash.entryPoint", storedContractByHash.entryPoint)
+          console.log("entryPoint", entryPoint)
           
-          if (storedContractByHash.entryPoint == "unlock_nft") {
-
+          if (entryPoint == "unlock_nft") {
+            console.log("storedContractByHash.entryPoint", storedContractByHash.entryPoint)
             console.log("OK !!! entryPoint= unlock_nft")
             randomGoodRPC = await CasperHelper.getRandomGoodCasperRPCLink(height, randomGoodRPC)
             //unlock_id = <txHash>-<fromChainId>-<toChainId>-<index>-<originContractAddress>-<originChainId>
@@ -157,7 +160,9 @@ const HOOK = {
             console.log("splits: ", splits)
             let [txHash, fromChainId, toChainId, index, originContractAddress, originChainId] = splits
             console.log("GET SPLITS txHash: ", txHash)
-            if (parseInt(originChainId) != nftConfig.networkId) {
+            console.log(" !!!!! originChainId: ", originChainId)
+            console.log(" !!!!!!!  nftConfig.networkId: ", casperConfig.networkId)
+            if (originChainId != casperConfig.networkId) {
               console.log("NOT ORIGIN NFT FROM CASPER RETURN !!!!")
               return
 
@@ -173,17 +178,21 @@ const HOOK = {
             }
 
             let fromChainIdFromArgs = findArgParsed(args, "from_chainid")
+            console.log("fromChainIdFromArgs: ", fromChainIdFromArgs)
             let nftContractHash = findArgParsed(args, "nft_contract_hash")
+            console.log("!!!! nftContractHash: ", nftContractHash)
             if (nftContractHash.Hash) {
               nftContractHash = nftContractHash.Hash.slice(5)
             }
             let recipient = findArgParsed(args, "target_key")
+            console.log("recipient", recipient)
             if (!fromChainId || !nftContractHash || fromChainIdFromArgs != fromChainId || originContractAddress != nftContractHash) {
               return
             }
 
             let identifierMode = findArgParsed(args, "identifier_mode")
-            if (!identifierMode) {
+            console.log("identifierMode: ", identifierMode)
+            if (identifierMode == undefined) {
               console.log("NO IDENTIFIER-MODE RETURN !!!! ")
               return
             }
@@ -204,6 +213,7 @@ const HOOK = {
               block.block.header.height,
               claimId,
               tokenIds)
+            console.log(" !!!! !!!!!!!!!!!!!!!!!!!!!!   1!!!!!!!!!")
 
             await HOOK.updateMintOrUnlock(
               {
