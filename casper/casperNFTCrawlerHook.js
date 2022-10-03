@@ -140,7 +140,7 @@ const HOOK = {
           console.log("OK !!! nftConfig.nftbridge == storedContractByHash.hash", storedContractByHash.hash)
           console.log("Now check unlock_nft EntryPoint !!!")
           
-          if (entryPoint == "unlock_nft") {
+          if (storedContractByHash.entryPoint == "unlock_nft") {
 
             console.log("OK !!! entryPoint= unlock_nft")
             randomGoodRPC = await CasperHelper.getRandomGoodCasperRPCLink(height, randomGoodRPC)
