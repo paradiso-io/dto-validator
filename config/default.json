@@ -197,7 +197,7 @@
     },
     "97": {
       "bridge": "0x9927e816cCF2964a18AB0444A22B91cCe8a1f29D",
-      "nft721": "0xB1F9d85043Db65a445Fd3CE85cE3BBd121bB5610",
+      "nft721": "0xfb8f103Fd709Bed9DFF96ada6de50E48616f1895",
       "firstBlockCrawl": 18613003,
       "firstBlockNft721": 22050030,
       "wrapToken": "",
@@ -219,7 +219,7 @@
     },
     "43113": {
       "bridge": "0x7e3226239dbfd6bea1ce22208001dc28194cbec2",
-      "nft721": "0x874AEa72F26BDca83fCE5D0fC3F5CB29947803b5",
+      "nft721": "0xfb8f103Fd709Bed9DFF96ada6de50E48616f1895",
       "firstBlockCrawl": 8754306,
       "firstBlockNft721": 12650883 
     },
