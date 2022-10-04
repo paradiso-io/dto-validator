@@ -26,7 +26,7 @@
   "crawlChainIds": {
     "mainnet": [1, 56, 1284, 43114, 66],
     "testnet": [42, 97, 89, 1287, 4002, 43113, 80001],
-    "nft721testnet": [97, 43113, 42],
+    "nft721testnet": [97, 43113],
     "nft721mainnet": []
   },
   "blockchain": {
@@ -221,7 +221,7 @@
       "bridge": "0x7e3226239dbfd6bea1ce22208001dc28194cbec2",
       "nft721": "0xfb8f103Fd709Bed9DFF96ada6de50E48616f1895",
       "firstBlockCrawl": 8754306,
-      "firstBlockNft721": 12650883 
+      "firstBlockNft721": 14274000 
     },
     "80001": {
       "bridge": "0xAbB7ae870c54b893d20f75143BB8Fc389799ff42",

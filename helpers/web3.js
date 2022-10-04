@@ -43,6 +43,7 @@ let Web3Util = {
     let len = list.length
     let random = Math.floor(Math.random() * len)
     let rpc = list[random]
+    console.log("RPC: ", rpc)
     return rpc
   },
   getWeb3Socket: async (networkId) => {

@@ -43,7 +43,9 @@ async function processEvent(event, networkId) {
   let web3 = await Web3Utils.getWeb3(networkId)
 
   let originChainId = event.returnValues._originChainId;
+  console.log("originChainId", originChainId)
   let tokenAddress = event.returnValues._token.toLowerCase()
+  console.log("tokenAddress", tokenAddress)
   tokenAddress = decodeOriginToken(tokenAddress, originChainId)
   if (!tokenAddress) {
     logger.error("cannot decode contract hash tx %s, from chain %s", event.transactionHash, event.returnValues._fromChainId);
@@ -59,6 +61,9 @@ async function processEvent(event, networkId) {
   )
   let tokenIdsString = tokenIds
   let tokenMetadatas = []
+  console.log("config.blockchain[event.returnValues._originChainId]: ", config.blockchain[event.returnValues._originChainId])
+
+  console.log("config.blockchain[event.returnValues._originChainId].notEVM: ", config.blockchain[event.returnValues._originChainId].notEVM)
 
   if (!config.blockchain[event.returnValues._originChainId].notEVM) {
     web3ForOriginChainId = await Web3Utils.getWeb3(event.returnValues._originChainId)
@@ -77,6 +82,7 @@ async function processEvent(event, networkId) {
       tokenMetadatas.push(metadata)
     }
   } else {
+    // For originChainID = Casper
     let tokenDataConfig = nftConfig.tokens.find(
       (e) => e.originContractAddress.toLowerCase() == tokenAddress
     );
@@ -114,11 +120,14 @@ async function processEvent(event, networkId) {
   }
   console.log('metadata', tokenMetadatas, tokenName)
 
+  let identifierMode = null
   // get identifierMode
+  if (originChainId == CasperConfig.networkId){
   let randomGoodRPC = await CasperHelper.getRandomGoodCasperRPCLink(1)
   nftContract = await DTOWrappedNFT.createInstance(tokenAddress, randomGoodRPC, CasperConfig.chainName)
-  let identifierMode = await nftContract.identifierMode()
+  identifierMode = await nftContract.identifierMode()
   console.log("identifierMode: ", identifierMode)
+  }
 
   let block = await web3.eth.getBlock(event.blockNumber)
 
@@ -279,7 +288,7 @@ async function getPastEventForBatch(networkId, bridgeAddress, step, from, to) {
           } to ${toBlock}`
         )
       }
-
+      console.log("!!!! AAAAA")
       {
         let evts = allEvents.filter(e => e.event == "RequestMultiNFT721Bridge")
 
@@ -291,7 +300,7 @@ async function getPastEventForBatch(networkId, bridgeAddress, step, from, to) {
           );
         }
       }
-
+      console.log("!!!! BBBBB")
       {
         //claim events
         let evts = allEvents.filter(e => e.event == "ClaimMultiNFT721")
@@ -304,7 +313,7 @@ async function getPastEventForBatch(networkId, bridgeAddress, step, from, to) {
           );
         }
       }
-
+      console.log("!!!! CCCCC")
       // console.log('sleep 2 seconds and wait to continue')
       await sleep(1000)
 
