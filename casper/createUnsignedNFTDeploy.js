@@ -203,6 +203,7 @@ async function main() {
                     console.log("Unlock success. Save to DB success")
                 } else {
                     //verify format of  account address must be account hash
+                    //verify format of  account address must be account hash
                     let toAddress = tx.account // NFT account owner 
                     let splits = toAddress.split("-")
                     var re = /[0-9A-Fa-f]{6}/g;
@@ -230,23 +231,10 @@ async function main() {
                     let minidToCasper = new CLString(mintid)
 
                     // token metadata
+                    let tokenmetadatas = tx.tokenMetadatas.map((e) => CLValueBuilder.string(e))
+                    let token_metadatas = CLValueBuilder.list(tokenmetadatas)
                     let tokenIds = tx.tokenIds.map((e) => CLValueBuilder.string(e.toString()))
-                    let originTokenIds = []
-                    let fromChainId = tx.fromChainId
-                    for (const tokenId in tokenIds) {
-                        let originTokenId = await generalHelper.tryCallWithTrial(async () => {
-                            let contract = await Web3Utils.getNft721BridgeContract(fromChainId)
-                            let ret = await contract.methods.tokenMap(casperConfig.networkId, tx.originToken).call()
-                            let erc721WrappedToken = await Web3Utils.getWrappedNFT721Contract(fromChainId, ret)
-                            let originTokenId = await erc721WrappedToken.methods.mappedOriginTokenIds(tokenId).call()
-                            return originTokenId
-                        })
-                        if (originTokenId == undefined) {
-                            return res.status(400).json({ errors: 'Transaction information might be invalid or temporarily invalid' })
-                        }
-                        originTokenIds.push(originToken)
-                    }
-                    let token_ids = CLValueBuilder.list(originTokenIds)
+                    let token_ids = CLValueBuilder.list(tokenIds)
 
                     let ttl = 300000
 
