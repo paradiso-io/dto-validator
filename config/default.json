@@ -26,7 +26,7 @@
   "crawlChainIds": {
     "mainnet": [1, 56, 1284, 43114, 66],
     "testnet": [42, 97, 89, 1287, 4002, 43113, 80001],
-    "nft721testnet": [97, 43113],
+    "nft721testnet": [ 43113,97,5,11155111],
     "nft721mainnet": []
   },
   "blockchain": {
@@ -38,14 +38,6 @@
       "nativeName": "Ethereum",
       "nativeSymbol": "ETH"
     },
-    "4": {
-      "httpProvider": "https://rinkeby.infura.io/v3/99d4e19c704546fbbbdfe408d354b9c8",
-      "wsProvider": "",
-      "explorer": "https://rinkeby.etherscan.io",
-      "confirmations": 12,
-      "nativeName": "Ethereum",
-      "nativeSymbol": "ETH"
-    },
     "56": {
       "httpProvider": ["https://bsc-dataseed1.binance.org", "https://bsc-dataseed2.binance.org", "https://bsc-dataseed1.defibit.io/", "https://bsc-dataseed2.defibit.io/", "https://bsc-dataseed1.ninicoin.io/", "https://bsc-dataseed2.ninicoin.io/"],
       "wsProvider": "wss://bsc-ws-node.nariox.org:443",
@@ -53,6 +45,22 @@
       "confirmations": 30,
       "nativeName": "Binance",
       "nativeSymbol": "BNB"
+    },
+    "5": {
+      "httpProvider": ["https://rpc.ankr.com/eth_goerli", "https://goerli.infura.io/v3/9aa3d95b3bc440fa88ea12eaa4456161", "https://eth-goerli.public.blastapi.io/"],
+      "wsProvider": "",
+      "explorer": "https://goerli.etherscan.io/",
+      "confirmations": 10,
+      "nativeName": "Goerli",
+      "nativeSymbol": "Go"
+    },
+    "11155111": {
+      "httpProvider": ["https://nunki.htznr.fault.dev/rpc"],
+      "wsProvider": "",
+      "explorer": "https://sepolia.etherscan.io/",
+      "confirmations": 10,
+      "nativeName": "Sepolia",
+      "nativeSymbol": "Sepolia"
     },
     "1284": {
       "httpProvider": ["https://rpc.api.moonbeam.network"],
@@ -204,6 +212,18 @@
       "usdt": "",
       "usdc": "",
       "busd": ""
+    },
+    "11155111": {
+      "bridge": "",
+      "nft721": "0xfb8f103Fd709Bed9DFF96ada6de50E48616f1895",
+      "firstBlockCrawl": 2058907,
+      "firstBlockNft721": 2058907
+    },
+    "5": {
+      "bridge": "",
+      "nft721": "0xfb8f103Fd709Bed9DFF96ada6de50E48616f1895",
+      "firstBlockCrawl": 7743559,
+      "firstBlockNft721": 7743559
     },
     "1287": {
       "bridge": "0xEdB7b5c85B3ad1f309f02a5cc9D035FEb0F9A213",
