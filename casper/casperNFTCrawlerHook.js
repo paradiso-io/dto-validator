@@ -84,23 +84,30 @@ const HOOK = {
         let tokenData = nftConfig.tokens.find(
           (e) => e.contractHash == storedContractByHash.hash
         );
+        
         let args = storedContractByHash.args;
         let entryPoint = storedContractByHash.entry_point;
         console.log(" !!!! entryPointL ", entryPoint)
-        if (tokenData) {
+        if (tokenData && tokenData.originChainId != casperConfig.networkId) {
+          console.log("tokenData: ", tokenData)
           console.log('storedContractByHash', storedContractByHash)
           let nftContractHash = storedContractByHash.hash
           if (entryPoint == "mint") {
             randomGoodRPC = await CasperHelper.getRandomGoodCasperRPCLink(height, randomGoodRPC)
             let nftContract = await DTOWrappedNFT.createInstance(nftContractHash, randomGoodRPC, casperConfig.chainName)
             let identifierMode = await nftContract.identifierMode()
+            console.log("identifierMode: ", identifierMode)
             let tokenIds = CasperHelper.getTokenIdsFromArgs(identifierMode, args)
+            console.log("tokenIds: ", tokenIds)
             let metadatas = findArgParsed(args, "token_meta_datas")
+            console.log("metadatas: ", metadatas)
             let recipient = findArgParsed(args, "token_owner");
+            console.log("recipient: ", recipient)
             if (recipient.Account) {
               recipient = recipient.Account
             }
             let mintid = findArgParsed(args, "mint_id");
+            console.log("mintid: ", mintid)
             let claimId = mintid
             // mintid = <txHash>-<fromChainId>-<toChainId>-<index>-<originContractAddress>-<originChainId>
 
@@ -113,6 +120,7 @@ const HOOK = {
             let originChainId = parseInt(mintidSplits[5]);
 
             logger.info("Casper Network NFT Minting: %s %s", deploy.hash, claimId);
+            console.log("block.block.header.height: ", block.block.header.height)
 
             await HOOK.updateMintOrUnlock(
               {
@@ -250,6 +258,7 @@ const HOOK = {
         }
         randomGoodRPC = await CasperHelper.getRandomGoodCasperRPCLink(height)
         console.warn('randomGoodRPC', randomGoodRPC)
+        console.log("deploy.hash: ", deploy.hash)
         console.error(e)
       }
     }

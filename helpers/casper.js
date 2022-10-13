@@ -118,6 +118,7 @@ const CasperHelper = {
     },
     findArgParsed: function (args, argName) {
         let arg = CasperHelper.findArg(args, argName)
+        console.log("arg: ", args, argName, arg)
         return arg[1].parsed
     },
     getCasperRPC: async (height = 1) => {
