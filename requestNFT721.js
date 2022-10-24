@@ -197,7 +197,7 @@ async function processClaimEvent(event, networkId) {
     'uint256[]',
     event.returnValues._tokenIds,
   )
-  let tokenIdsString = tokenIds.join(',')
+  let tokenIdsString = tokenIds
 
   let originToken = event.returnValues._token.toLowerCase()
   let originChainId = parseInt(event.returnValues._originChainId)
