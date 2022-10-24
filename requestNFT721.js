@@ -65,23 +65,23 @@ async function processEvent(event, networkId) {
 
   console.log("config.blockchain[event.returnValues._originChainId].notEVM: ", config.blockchain[event.returnValues._originChainId].notEVM)
 
-  if (!config.blockchain[event.returnValues._originChainId].notEVM) {
-    web3ForOriginChainId = await Web3Utils.getWeb3(event.returnValues._originChainId)
-    tokenContract = await new web3ForOriginChainId.eth.Contract(ERC721, tokenAddress)
-    tokenSymbol = await tokenContract.methods.symbol().call()
-    tokenName = await tokenContract.methods.name().call()
+  if (config.blockchain[event.returnValues._originChainId].notEVM) {
+    // web3ForOriginChainId = await Web3Utils.getWeb3(event.returnValues._originChainId)
+    // tokenContract = await new web3ForOriginChainId.eth.Contract(ERC721, tokenAddress)
+    // tokenSymbol = await tokenContract.methods.symbol().call()
+    // tokenName = await tokenContract.methods.name().call()
 
-    for (var i = 0; i < tokenIds.length; i++) {
-      let uri = await tokenContract.methods.tokenURI(tokenIds[i]).call()
-      let metadata = {
-        name: tokenName,
-        token_uri: uri,
-        checksum: "940bffb3f2bba35f84313aa26da09ece3ad47045c6a1292c2bbd2df4ab1a55fb"
-      }
-      metadata = JSON.stringify(metadata)
-      tokenMetadatas.push(metadata)
-    }
-  } else {
+    // for (var i = 0; i < tokenIds.length; i++) {
+    //   let uri = await tokenContract.methods.tokenURI(tokenIds[i]).call()
+    //   let metadata = {
+    //     name: tokenName,
+    //     token_uri: uri,
+    //     checksum: "940bffb3f2bba35f84313aa26da09ece3ad47045c6a1292c2bbd2df4ab1a55fb"
+    //   }
+    //   metadata = JSON.stringify(metadata)
+    //   tokenMetadatas.push(metadata)
+    // }
+
     // For originChainID = Casper
     let tokenDataConfig = nftConfig.tokens.find(
       (e) => e.originContractAddress.toLowerCase() == tokenAddress
@@ -117,16 +117,70 @@ async function processEvent(event, networkId) {
         }
       }
     }
+
+  } else {
+
+    web3ForOriginChainId = await Web3Utils.getWeb3(event.returnValues._originChainId)
+    tokenContract = await new web3ForOriginChainId.eth.Contract(ERC721, tokenAddress)
+    tokenSymbol = await tokenContract.methods.symbol().call()
+    tokenName = await tokenContract.methods.name().call()
+
+    for (var i = 0; i < tokenIds.length; i++) {
+      let uri = await tokenContract.methods.tokenURI(tokenIds[i]).call()
+      let metadata = {
+        name: tokenName,
+        token_uri: uri,
+        checksum: "940bffb3f2bba35f84313aa26da09ece3ad47045c6a1292c2bbd2df4ab1a55fb"
+      }
+      metadata = JSON.stringify(metadata)
+      tokenMetadatas.push(metadata)
+    }
+
+    // // For originChainID = Casper
+    // let tokenDataConfig = nftConfig.tokens.find(
+    //   (e) => e.originContractAddress.toLowerCase() == tokenAddress
+    // );
+
+    // if (!tokenDataConfig || !tokenDataConfig.originSymbol || !tokenDataConfig.originName) {
+    //   logger.error('Failed to read token metadata, please try again later')
+    //   return
+    // }
+
+    // let randomGoodRPC = await CasperHelper.getRandomGoodCasperRPCLink(1)
+
+    // let nftContract = null
+    // tokenSymbol = tokenDataConfig.originSymbol
+    // tokenName = tokenDataConfig.originName
+
+
+    // for (var i = 0; i < tokenIds.length; i++) {
+    //   let tokenId = tokenIds[i]
+    //   let trial = 10
+    //   while (trial > 0) {
+    //     try {
+    //       //read metadata
+    //       nftContract = await DTOWrappedNFT.createInstance(tokenAddress, randomGoodRPC, CasperConfig.chainName)
+    //       let metadata = await nftContract.getTokenMetadata(tokenId)
+    //       console.log("metadata 11: ", metadata)
+    //       tokenMetadatas.push(metadata)
+    //       break
+    //     } catch (e) {
+    //       trial--
+    //       console.error(e.toString())
+    //       randomGoodRPC = await CasperHelper.getRandomGoodCasperRPCLink(1)
+    //     }
+    //   }
+    // }
   }
   console.log('metadata', tokenMetadatas, tokenName)
 
   let identifierMode = null
   // get identifierMode
-  if (originChainId == CasperConfig.networkId){
-  let randomGoodRPC = await CasperHelper.getRandomGoodCasperRPCLink(1)
-  nftContract = await DTOWrappedNFT.createInstance(tokenAddress, randomGoodRPC, CasperConfig.chainName)
-  identifierMode = await nftContract.identifierMode()
-  console.log("identifierMode: ", identifierMode)
+  if (originChainId == CasperConfig.networkId) {
+    let randomGoodRPC = await CasperHelper.getRandomGoodCasperRPCLink(1)
+    nftContract = await DTOWrappedNFT.createInstance(tokenAddress, randomGoodRPC, CasperConfig.chainName)
+    identifierMode = await nftContract.identifierMode()
+    console.log("identifierMode: ", identifierMode)
   }
 
   let block = await web3.eth.getBlock(event.blockNumber)
