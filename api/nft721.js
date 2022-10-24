@@ -642,7 +642,7 @@ router.post('/receive-signatures', [
             let recoveredAddress = Web3Utils.recoverSignerFromSignature(submitSignature.msgHash, submitSignature.r[0], submitSignature.s[0], submitSignature.v[0])
             if (!alreadySubmitters.includes(recoveredAddress.toLowerCase())) {
                 //reading required number of signature
-                nsole.log("Start read approverList")
+                console.log("Start read approverList")
                 let approverList = await GeneralHelper.tryCallWithTrial(async () => {
                     let bridgeContract = await Web3Utils.getNft721BridgeContract(toChainId)
                     let approverList = await bridgeContract.methods.getBridgeApprovers().call()
