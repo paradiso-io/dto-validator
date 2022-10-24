@@ -610,6 +610,11 @@ router.post('/receive-signatures', [
         if (!errors.isEmpty()) {
             return res.status(400).json({ errors: errors.array() })
         }
+        let randomTimeWait = Math.floor(Math.random() * 10)
+        console.log('waiiting ', randomTimeWait)
+        await GeneralHelper.sleep(randomTimeWait * 1000)
+        console.log('start sending and receiving signature ')
+
         let requestHash = req.body.requestHash
         let fromChainId = req.body.fromChainId
         let toChainId = req.body.toChainId
@@ -637,15 +642,19 @@ router.post('/receive-signatures', [
             let recoveredAddress = Web3Utils.recoverSignerFromSignature(submitSignature.msgHash, submitSignature.r[0], submitSignature.s[0], submitSignature.v[0])
             if (!alreadySubmitters.includes(recoveredAddress.toLowerCase())) {
                 //reading required number of signature
+                nsole.log("Start read approverList")
                 let approverList = await GeneralHelper.tryCallWithTrial(async () => {
                     let bridgeContract = await Web3Utils.getNft721BridgeContract(toChainId)
                     let approverList = await bridgeContract.methods.getBridgeApprovers().call()
                     return approverList
                 }, 10, 1000)
+                console.log("Done read approverList")
                 approverList = approverList.map(e => e.toLowerCase())
                 let included = approverList.includes(recoveredAddress)
                 // console.log('recoveredAddress', recoveredAddress, approverList, submitSignature)
+                console.log("included: ", included)
                 if (included) {
+                    console.log("Ok! find included !!! Now start to save to DB")
                     await db.Nft721Transaction.updateOne(
                         { requestHash: requestHash, fromChainId: fromChainId, toChainId: toChainId, index: index },
                         {
@@ -655,6 +664,7 @@ router.post('/receive-signatures', [
                         },
                         { upsert: true, new: true }
                     )
+                    console.log("Success save submited signatures to DB")
                 } else {
                     return res.status(400).json({ errors: 'invalid validators' })
                 }
