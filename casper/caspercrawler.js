@@ -91,39 +91,43 @@ const getPastEvent = async () => {
   currentBlockHeight -= 5;
   console.log(fromBlock, currentBlockHeight);
 
-  let blockPerBatch = 100;
-  let numBatch =
-    Math.floor((currentBlockHeight - fromBlock) / blockPerBatch) + 1;
-  let tasks = [];
-  for (var i = 0; i < numBatch; i++) {
-    let from = fromBlock + i * blockPerBatch;
-    let to = fromBlock + (i + 1) * blockPerBatch;
+  // let blockPerBatch = 100;
+  // let numBatch =
+  //   Math.floor((currentBlockHeight - fromBlock) / blockPerBatch) + 1;
+  // let tasks = [];
+  for (var i = 0; i < currentBlockHeight - fromBlock; i++) {
+    let from = fromBlock + i;
+    let to = fromBlock + i + 1;
     if (to > currentBlockHeight) {
       to = currentBlockHeight;
     }
-    tasks.push(crawl(from, to, currentBlockHeight, selectedRPC));
-    console.log("Craw : ", from, to, currentBlockHeight, selectedRPC)
-  }
-  await Promise.all(tasks);
+    // tasks.push(crawl(from, to, currentBlockHeight, selectedRPC));
+    // console.log("Craw : ", from, to, currentBlockHeight, selectedRPC)
+    console.log("crawl: ", from)
+    await crawl(from, to, to)
+    console.log("finished crawl: ", from, selectedRPC)
 
-  let blockNumber = currentBlockHeight;
-  setting = await db.Setting.findOne({ networkId: networkId });
-  if (!setting) {
-    await db.Setting.updateOne(
-      { networkId: networkId },
-      { $set: { lastBlockClaim: blockNumber, lastBlockRequest: blockNumber } },
-      {
-        upsert: true,
-        new: true,
+    let blockNumber = from;
+    setting = await db.Setting.findOne({ networkId: networkId });
+    if (!setting) {
+      await db.Setting.updateOne(
+        { networkId: networkId },
+        { $set: { lastBlockClaim: blockNumber, lastBlockRequest: blockNumber } },
+        {
+          upsert: true,
+          new: true,
+        }
+      );
+    } else {
+      if (blockNumber > setting.lastBlockRequest) {
+        setting.lastBlockRequest = blockNumber;
+        setting.lastBlockClaim = blockNumber;
+        await setting.save();
+        console.log("finished save setting: ", blockNumber)
       }
-    );
-  } else {
-    if (blockNumber > setting.lastBlockRequest) {
-      setting.lastBlockRequest = blockNumber;
-      setting.lastBlockClaim = blockNumber;
-      await setting.save();
     }
   }
+
 };
 
 let watch = async () => {
