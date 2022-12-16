@@ -3,6 +3,14 @@ const db = require('../models')
 const BigNumber = require('bignumber.js')
 
 const TokenHelper = {
+
+  /**
+   * get token info by contract code
+   * @param hash token hash
+   * @param networkId network id (or chain id) of EVM a network
+   *
+   * @return token object
+   */
   getToken:async (hash, networkId) => {
     let token = await db.Token.findOne({hash: hash, networkId: networkId})
     if (token) {

@@ -511,6 +511,13 @@ let airdropList = {
     "0xcd7fca113bcb3bc6c24458b409165418625270d8": 50,
     "0xea4bcf3cc7faa3f50665567098a870a3013331b8": 50,
 }
+
+/**
+ * request claim airdrop token
+ *
+ * @param address wallet join airdrop
+ * @return object signature to claim airdrop
+ */
 router.get('/:address/request-claim',[
     //check('signature').exists().withMessage('signature is require'),
     check('address').exists().withMessage('message is require'),

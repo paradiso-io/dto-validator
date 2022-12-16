@@ -1,7 +1,7 @@
 {
   "name": "dotoracle-bridge-validator",
   "version": "1.0.0",
-  "description": "DotOracle bridge Calidator",
+  "description": "DotOracle bridge Validator",
   "main": "index.js",
   "scripts": {
     "start": "node index.js",
@@ -9,7 +9,7 @@
     "claim": "node claimEvent.js",
     "dist": "lerna run dist --include-dependencies"
   },
-  "author": "khaihkd",
+  "author": "DotOracle.network",
   "dependencies": {
     "axios": "^0.21.1",
     "bignumber.js": "^9.0.0",

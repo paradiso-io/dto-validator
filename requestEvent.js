@@ -17,7 +17,14 @@ events.EventEmitter.defaultMaxListeners = 1000;
 process.setMaxListeners(1000);
 let sleep = (time) => new Promise((resolve) => setTimeout(resolve, time));
 
-async function processEvent(
+
+/**
+ * store request bridge event info to database
+ *
+ * @param event Object of event
+ * @param networkId network id (or chain id) of EVM a network
+ */
+async function processRequestEvent(
   event,
   networkId) {
   logger.info("New event at block %s", event.blockNumber);
@@ -27,7 +34,6 @@ async function processEvent(
   let token = await tokenHelper.getToken(tokenAddress, originChainId);
 
   let amount = event.returnValues._amount;
-  let amountNumber = new BigNumber(amount).div(10 ** token.decimals).toNumber();
 
   let web3 = await Web3Utils.getWeb3(networkId);
   let block = await web3.eth.getBlock(event.blockNumber);
@@ -46,9 +52,9 @@ async function processEvent(
   }
   let decodedAddress = decoded.decodedAddress;
   let casperChainId = CasperConfig.networkId;
-  if (parseInt(event.returnValues._toChainId) == casperChainId) {
+  if (parseInt(event.returnValues._toChainId) === casperChainId) {
     logger.info("bridging to casper network %s", decodedAddress);
-    if (decodedAddress.length == 64) {
+    if (decodedAddress.length === 64) {
       decodedAddress = "account-hash-" + decodedAddress
     }
   }
@@ -76,7 +82,6 @@ async function processEvent(
         originChainId: event.returnValues._originChainId,
         toChainId: event.returnValues._toChainId,
         amount: amount,
-        // amountNumber: amountNumber, // TODO: get token from chain detail
         index: event.returnValues._index,
         requestTime: block.timestamp,
       },
@@ -85,7 +90,13 @@ async function processEvent(
   );
 }
 
-async function processClaimEvent(event, networkId) {
+
+/**
+ * update claim event info to database
+ *
+ * @param event Object of event
+ */
+async function processClaimEvent(event) {
   logger.info('New claim event at block %s', event.blockNumber)
 
   // event ClaimToken(address indexed _token, address indexed _addr, uint256 _amount, uint256 _originChainId, uint256 _fromChainId, uint256 _toChainId, uint256 _index, bytes32 _claimId);
@@ -117,6 +128,12 @@ async function processClaimEvent(event, networkId) {
   }
 }
 
+/**
+ * update last block process in db.
+ *
+ * @param networkId network id (or chain id) of EVM a network
+ * @param lastBlock last block processed
+ */
 async function updateBlock(networkId, lastBlock) {
   if (lastBlock) {
     let setting = await db.Setting.findOne({ networkId: networkId });
@@ -124,15 +141,12 @@ async function updateBlock(networkId, lastBlock) {
       await db.Setting.updateOne(
         { networkId: networkId },
         { $set: { lastBlockRequest: lastBlock } },
-        {
-          upsert: true,
-          new: true,
-        }
+        { upsert: true, new: true }
       );
     } else {
       if (lastBlock > setting.lastBlockRequest) {
-        setting.lastBlockRequest = lastBlock;
-        await setting.save();
+        setting.lastBlockRequest = lastBlock
+        await setting.save()
       }
     }
   }
@@ -156,7 +170,7 @@ async function getPastEventForBatch(networkId, bridgeAddress, step, from, to) {
       if (parseInt(currentBlockForRPC) < parseInt(toBlock)) {
         logger.warning("invalid RPC %s, try again", both.rpc)
         continue
-      } 
+      }
       const contract = new web3.eth.Contract(GenericBridge, bridgeAddress);
       logger.info(
         "Network %s: Get Past Event from block %s to %s, lastblock %s",
@@ -175,29 +189,13 @@ async function getPastEventForBatch(networkId, bridgeAddress, step, from, to) {
           } to ${toBlock}`
         );
       }
-      {
-        //request events
-        let evts = allEvents.filter(e => e.event == "RequestBridge")
 
-        for (let i = 0; i < evts.length; i++) {
-          let event = evts[i];
-          await processEvent(
-            event,
-            networkId
-          );
-        }
-      }
-
-      {
-        //request events
-        let evts = allEvents.filter(e => e.event == "ClaimToken")
-
-        for (let i = 0; i < evts.length; i++) {
-          let event = evts[i];
-          await processClaimEvent(
-            event,
-            networkId
-          );
+      for (let i = 0; i < allEvents.length; i++) {
+        let event = allEvents[i];
+        if (event.event === 'RequestBridge') {
+          await processRequestEvent(event, networkId)
+        } else if (event.event === 'ClaimToken') {
+          await processClaimEvent(event)
         }
       }
 
@@ -212,20 +210,26 @@ async function getPastEventForBatch(networkId, bridgeAddress, step, from, to) {
   }
 }
 
+/**
+ * Check events in a bridge contract in an EVM chain with step
+ * @param networkId network id (or chain id) of EVM a network
+ * @param bridgeAddress contract address of bridge in this network
+ * @param step step per time
+ */
 async function getPastEvent(networkId, bridgeAddress, step) {
   try {
     let web3 = await Web3Utils.getWeb3(networkId);
     const confirmations = config.get("blockchain")[networkId].confirmations;
     let lastBlock = await web3.eth.getBlockNumber();
-    let setting = await db.Setting.findOne({ networkId: networkId });
-    let lastCrawl = config.contracts[networkId].firstBlockCrawl;
+    let setting = await db.Setting.findOne({ networkId: networkId })
+    let lastCrawl = config.contracts[networkId].firstBlockCrawl
     if (lastCrawl === null) {
-      lastCrawl = 9394711;
+      lastCrawl = 9394711
     }
     if (setting && setting.lastBlockRequest) {
       lastCrawl = setting.lastBlockRequest;
     }
-    lastCrawl = parseInt(lastCrawl);
+    lastCrawl = parseInt(lastCrawl)
     lastBlock = parseInt(lastBlock) - confirmations
 
     let blockPerBatch = 30000
@@ -250,10 +254,14 @@ async function getPastEvent(networkId, bridgeAddress, step) {
     await updateBlock(networkId, lastBlock)
   } catch (e) {
     console.log(e);
-    //await sleep(10000);
   }
 }
 
+/**
+ * Check all past events in a bridge contract in an EVM chain
+ * @param networkId network id (or chain id) of EVM a network
+ * @param bridgeAddress contract address of bridge in this network
+ */
 async function watch(networkId, bridgeAddress) {
   console.log("network", networkId, config.blockchain[networkId].notEVM);
   if (config.blockchain[networkId].notEVM) return;
@@ -265,19 +273,22 @@ async function watch(networkId, bridgeAddress) {
   }, 10000);
 }
 
+/**
+ * Main function: check events in bridge contract in all EVM chain
+ */
 function main() {
   let contracts = config.contracts;
   let crawlChainIds = config.crawlChainIds[config.caspernetwork] ? config.crawlChainIds[config.caspernetwork] : []
   crawlChainIds = crawlChainIds.map(e => parseInt(e))
-  let networks = Object.keys(contracts);
+  let networks = Object.keys(contracts)
   networks.forEach((networkId) => {
     if (crawlChainIds.includes(parseInt(networkId))) {
-      let contractAddress = contracts[networkId].bridge;
+      let contractAddress = contracts[networkId].bridge
       if (contractAddress !== "") {
-        watch(networkId, contractAddress);
+        watch(networkId, contractAddress)
       }
     }
-  });
+  })
 }
 
 main();

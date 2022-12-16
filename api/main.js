@@ -31,6 +31,15 @@ router.get('/tokenmap', [], async function (req, res) {
     })
 })
 
+/**
+ * History of an account
+ *
+ * @param account wallet address
+ * @param networkId network id (or chain id) of EVM a network
+ * @param limit limit records per page
+ * @param page page want to see
+ * @returns object history of request/claim bridge
+ */
 router.get('/transactions/:account/:networkId', [
     check('account').exists().isLength({ min: 42, max: 68 }).withMessage('address is incorrect.'),
     check('networkId').exists().isNumeric({ no_symbols: true }).withMessage('networkId is incorrect'),
@@ -164,6 +173,13 @@ router.get('/transaction-status/:requestHash/:fromChainId', [
     return res.json({ apiServer: myNodeResult.success, others: responses, index: index })
 })
 
+/**
+ * History of all bridge in all network
+ *
+ * @param limit limit records per page
+ * @param page page want to see
+ * @returns object history of request/claim bridge
+ */
 router.get('/history', [
     query('limit').isInt({ min: 0, max: 200 }).optional().withMessage('limit should greater than 0 and less than 200'),
     query('page').isNumeric({ no_symbols: true }).optional().withMessage('page must be number')
@@ -178,7 +194,7 @@ router.get('/history', [
     let total = await db.Transaction.countDocuments({})
     let transactions = await db.Transaction.find({}).sort({ requestTime: -1 }).limit(limit).skip(skip).lean().exec()
     for (const t of transactions) {
-        if (t.originToken == "0x1111111111111111111111111111111111111111") {
+        if (t.originToken === "0x1111111111111111111111111111111111111111") {
             t.originDecimals = 18
         } else {
             let token = await tokenHelper.getToken(t.originToken, t.originChainId)
@@ -193,6 +209,14 @@ router.get('/history', [
     })
 })
 
+/**
+ * verify a request bridge transaction
+ *
+ * @param requestHash request bridge transaction hash
+ * @param fromChainId network id (or chain id) of EVM a network
+ * @param index index of transaction
+ * @returns status of transaction: success or not
+ */
 router.get('/verify-transaction/:requestHash/:fromChainId/:index', [
     check('requestHash').exists().withMessage('message is require'),
     check('fromChainId').exists().isNumeric({ no_symbols: true }).withMessage('fromChainId is incorrect'),
@@ -207,13 +231,13 @@ router.get('/verify-transaction/:requestHash/:fromChainId/:index', [
     let fromChainId = req.params.fromChainId
     let index = req.params.index
     let transaction = {}
-    if (fromChainId != casperConfig.networkId) {
+    if (fromChainId !== casperConfig.networkId) {
         transaction = await eventHelper.getRequestEvent(fromChainId, requestHash, index)
     }
-    if (!transaction || (fromChainId != casperConfig.networkId && !transaction.requestHash)) {
+    if (!transaction || (fromChainId !== casperConfig.networkId && !transaction.requestHash)) {
         return res.json({ success: false })
     }
-    if (fromChainId != casperConfig.networkId) {
+    if (fromChainId !== casperConfig.networkId) {
         let web3 = await Web3Utils.getWeb3(fromChainId)
 
         if (!transaction) {
@@ -254,13 +278,13 @@ router.get('/verify-transaction/:requestHash/:fromChainId/:index', [
             let casperRPC = await CasperHelper.getCasperRPC(transaction.requestBlock)
             let deployResult = await casperRPC.getDeployInfo(CasperHelper.toCasperDeployHash(transaction.requestHash))
             let eventData = await CasperHelper.parseRequestFromCasper(deployResult)
-            if (eventData.toAddr.toLowerCase() != transaction.account.toLowerCase()
-                || eventData.originToken.toLowerCase() != transaction.originToken.toLowerCase()
-                || eventData.amount != transaction.amount
-                || eventData.fromChainId != transaction.fromChainId
-                || eventData.toChainId != transaction.toChainId
-                || eventData.originChainId != transaction.originChainId
-                || eventData.index != transaction.index) {
+            if (eventData.toAddr.toLowerCase() !== transaction.account.toLowerCase()
+                || eventData.originToken.toLowerCase() !== transaction.originToken.toLowerCase()
+                || eventData.amount !== transaction.amount
+                || eventData.fromChainId !== transaction.fromChainId
+                || eventData.toChainId !== transaction.toChainId
+                || eventData.originChainId !== transaction.originChainId
+                || eventData.index !== transaction.index) {
                 return res.json({ success: false })
             }
         } catch (e) {
@@ -271,11 +295,20 @@ router.get('/verify-transaction/:requestHash/:fromChainId/:index', [
     return res.json({ success: true })
 })
 
+/**
+ * Request to withdraw bridge request in destination chain
+ *
+ * @param requestHash request bridge transaction hash
+ * @param fromChainId request from network
+ * @param toChainId destination network
+ * @param index index of transaction
+ * @returns signature to claim token
+ */
 router.post('/request-withdraw', [
     //check('signature').exists().withMessage('signature is require'),
-    check('requestHash').exists().withMessage('message is require'),
+    check('requestHash').exists().withMessage('requestHash is require'),
     check('fromChainId').exists().isNumeric({ no_symbols: true }).withMessage('fromChainId is incorrect'),
-    check('toChainId').exists().isNumeric({ no_symbols: true }).withMessage('fromChainId is incorrect'),
+    check('toChainId').exists().isNumeric({ no_symbols: true }).withMessage('toChainId is incorrect'),
     check('index').exists().withMessage('index is require')
 ], async function (req, res, next) {
     const errors = validationResult(req)
@@ -295,7 +328,7 @@ router.post('/request-withdraw', [
     if (!transaction) {
         return res.status(400).json({ errors: "invalid transaction hash" })
     }
-    if (fromChainId != casperConfig.networkId) {
+    if (fromChainId !== casperConfig.networkId) {
         let web3 = await Web3Utils.getWeb3(fromChainId)
 
         if (!transaction) {
@@ -336,13 +369,13 @@ router.post('/request-withdraw', [
             let casperRPC = await CasperHelper.getCasperRPC(transaction.requestBlock)
             let deployResult = await casperRPC.getDeployInfo(CasperHelper.toCasperDeployHash(transaction.requestHash))
             let eventData = await CasperHelper.parseRequestFromCasper(deployResult)
-            if (eventData.toAddr.toLowerCase() != transaction.account.toLowerCase()
-                || eventData.originToken.toLowerCase() != transaction.originToken.toLowerCase()
-                || eventData.amount != transaction.amount
-                || eventData.fromChainId != transaction.fromChainId
-                || eventData.toChainId != transaction.toChainId
-                || eventData.originChainId != transaction.originChainId
-                || eventData.index != transaction.index) {
+            if (eventData.toAddr.toLowerCase() !== transaction.account.toLowerCase()
+                || eventData.originToken.toLowerCase() !== transaction.originToken.toLowerCase()
+                || eventData.amount !== transaction.amount
+                || eventData.fromChainId !== transaction.fromChainId
+                || eventData.toChainId !== transaction.toChainId
+                || eventData.originChainId !== transaction.originChainId
+                || eventData.index !== transaction.index) {
                 return res.status(400).json({ errors: 'conflict transaction data between local database and on-chain data ' + transaction.requestHash })
             }
         } catch (e) {
@@ -406,7 +439,7 @@ router.post('/request-withdraw', [
         symbol = "d" + symbol
     }
 
-    if (transaction.toChainId == casperConfig.networkId) {
+    if (transaction.toChainId === casperConfig.networkId) {
         return res.status(400).json({ errors: 'Dont manually claim on casper chain' })
     }
 
@@ -462,7 +495,7 @@ router.post('/request-withdraw', [
         r = goodR
         s = goodS
         v = goodV
-        
+
         if (r.length < minApprovers) {
             console.warn('Validators data are not fully synced yet, please try again later')
             return res.status(400).json({ errors: 'Validators data are not fully synced yet, please try again later' })

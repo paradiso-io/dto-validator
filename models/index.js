@@ -4,6 +4,7 @@ const mongoose = require('mongoose')
 const db = {}
 const config = require('config')
 
+// in validator node dont need store db info
 if (!config.checkTxOnChain) {
     mongoose.Promise = global.Promise
     mongoose.set('useCreateIndex', true)
