@@ -64,26 +64,37 @@ const Helper = {
 
         //update database
         await db.TokenMap.updateOne(
-            {address: address, networkId: networkId},
+            { address: address, networkId: networkId },
             {
                 $set: {
                     address: address,
                     networkId: networkId,
-                    name: name, 
+                    name: name,
                     symbol: symbol,
                     decimals: decimals,
                     mapInfo: mapInfo
                 }
             },
-            {upsert: true, new: true}
+            { upsert: true, new: true }
         )
     },
     getAllTokenInfos: async () => {
-        let tokenConfigInfo = casperHelper.getConfigInfo();
-        let tokens = tokenConfigInfo.tokens
-        for (const token of tokens) {
-            console.log('token', token)
-            await Helper.getTokenInfo(token)
+        {
+            let tokenConfigInfo = casperHelper.getConfigInfo();
+            let tokens = tokenConfigInfo.tokens
+            for (const token of tokens) {
+                console.log('token', token)
+                await Helper.getTokenInfo(token)
+            }
+        }
+        // get NFTs info
+        {
+            let tokenConfigInfo = casperHelper.getNFTConfig()
+            let tokens = tokenConfigInfo.tokens
+            for (const token of tokens) {
+                console.log('token', token)
+                await Helper.getTokenInfo(token)
+            }
         }
     }
 }

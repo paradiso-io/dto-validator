@@ -25,6 +25,13 @@ function toContractUnit(n, decimals) {
     .toFixed(0);
 }
 
+/**
+ * It updates the transaction record in the database with the claim hash and claim block number
+ * @param networkId - The network ID of the network you're listening to.
+ * @param blockNumber - The block number of the event
+ * @param lastBlock - The last block number that was processed.
+ * @param eventData - The data from the event.
+ */
 async function processMintEvent(networkId, blockNumber, lastBlock, eventData) {
   logger.info("New event at block %s", blockNumber);
   try {
@@ -64,6 +71,12 @@ async function processMintEvent(networkId, blockNumber, lastBlock, eventData) {
   }
 }
 
+/**
+ * It saves the request event data to the database
+ * @param blockNumber - the block number of the event
+ * @param lastBlock - the last block number that was processed
+ * @param eventData - the data of the event
+ */
 async function processRequestEvent(
   blockNumber,
   lastBlock,
@@ -112,10 +125,25 @@ async function processRequestEvent(
   }
 }
 
+/**
+ * It takes an array of arrays and a string, and returns the first array in the array of arrays that
+ * has the string as its first element
+ * @param args - The arguments passed to the command.
+ * @param argName - The name of the argument you want to find.
+ * @returns The first element of the array that matches the argument name.
+ */
 function findArg(args, argName) {
   return args.find((e) => e[0] == argName);
 }
 
+/**
+ * It reads the block by block, and for each block, it reads the deploy hashes one by one, and for each
+ * deploy hash, it reads the deploy details, and for each deploy detail, it checks if the deploy is a
+ * minting or a request, and if it is, it processes the minting or request event
+ * @param from - the block height to start crawling from
+ * @param to - the block height to crawl to
+ * @param lastBlockHeight - the last block height that has been processed
+ */
 async function crawl(from, to, lastBlockHeight) {
   let fromBlock = from
   let toBlock = to
@@ -300,6 +328,10 @@ async function crawl(from, to, lastBlockHeight) {
   }
 }
 
+/**
+ * It gets the latest block number from the Casper node and then crawls the events from the last block
+ * number in the database to the latest block number.
+ */
 const getPastEvent = async () => {
   let casperConfig = CasperHelper.getConfigInfo();
   let networkId = casperConfig.networkId;
@@ -352,6 +384,9 @@ const getPastEvent = async () => {
   }
 };
 
+/**
+ * It will get the past event and sleep for 10 seconds.
+ */
 let watch = async () => {
   while (true) {
     await getPastEvent();

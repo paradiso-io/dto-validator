@@ -2,6 +2,9 @@ const db = require('../models')
 const crypto = require('crypto')
 const generalHelper = require('../helpers/general')
 let i = 1
+/**
+ * It creates a random request to casper and saves it to the database
+ */
 async function main() {
     let tokens = ['USDT', 'USDC', 'BUSD', 'DAI', 'TUSD', 'UST']
     

@@ -1,4 +1,5 @@
 
+/* A helper function that is used to help with the code. */
 let GeneralHelper = {
     randomNumber: (min, max) => {
       return Math.floor(Math.random() * (max - min + 1)) + min

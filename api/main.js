@@ -105,6 +105,7 @@ router.get('/transactions/:account/:networkId', [
 })
 
 
+/* *|CURSOR_MARCADOR|* */
 router.get('/transaction-status/:requestHash/:fromChainId', [
     check('requestHash').exists().withMessage('message is required'),
     check('fromChainId').exists().isNumeric({ no_symbols: true }).withMessage('fromChainId is incorrect')

@@ -135,6 +135,13 @@ const idJSON = {
 
 
 
+/**
+ * It creates a libp2p node that uses the Bootstrap peer discovery module, and connects to the
+ * bootstrap nodes listed in the bootstrapMultiaddrs array
+ * @param peerId - The peerId of the node.
+ * @param listenAddrs - The addresses that the node will listen on.
+ * @returns A libp2p node
+ */
 const createBootstrapNode = (peerId, listenAddrs) => {
   return Libp2p.create({
     peerId,

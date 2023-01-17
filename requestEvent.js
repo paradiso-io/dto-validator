@@ -152,6 +152,14 @@ async function updateBlock(networkId, lastBlock) {
   }
 }
 
+/**
+ * It gets the past events from the bridge contract, and then processes them
+ * @param networkId - the network ID of the network you want to crawl
+ * @param bridgeAddress - The address of the bridge contract on the network you're crawling.
+ * @param step - the number of blocks to crawl at a time
+ * @param from - the block number to start crawling from
+ * @param to - the latest block number of the network
+ */
 async function getPastEventForBatch(networkId, bridgeAddress, step, from, to) {
   let lastBlock = to
   let lastCrawl = from

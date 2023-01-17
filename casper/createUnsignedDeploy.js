@@ -7,6 +7,11 @@ const { sha256 } = require("ethereum-cryptography/sha256");
 const logger = require("../helpers/logger");
 const { CLAccountHash, DeployUtil } = require("casper-js-sdk");
 const BigNumber = require("bignumber.js")
+
+/**
+ * It scans for transactions that have not been created on the CasperLabs blockchain yet, and creates
+ * them
+ */
 async function main() {
     while (true) {
         let casperConfig = CasperHelper.getConfigInfo()
