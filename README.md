@@ -1,10 +1,40 @@
-# Bridge deployment
+# Bridge validator
 
-## Deploy generic bridge smart contracts on all supported chains
+Bridge validator is bridge token/NFT contract to multi chains
 
-## Configure deployed bridge smart contracts in bridge-validator repo for all nodes
-### pull code validator from github to all nodes
-### configure contract addresses corresponding to chains
-### configure signer key for all signer nodes
+## Getting started
+### Requirements
+- Nodejs
+- npm/yarn 
+- Mongodb
+- Redis
+### Setup
+- Config your validator for Ethereum: create `local.json` in `config` directory with the following content
+```
+{
+     "signer": "<put private key of your DTO deposit wallet>"
+}
+```
+- install submodule and library
+```
+git submodule update --init
+npm install
+```
 
-## update front-end
+### Run
+- start api
+```
+npm run start
+```
+- crawl data
+```
+npm run request
+```
+
+## Contribute
+
+Bridge validator exists thanks to its contributors. There are many ways you can participate and help build high quality software. Check out the [contribution guide](CONTRIBUTING.md)!
+
+## License
+
+Bridge validator is released under the [MIT License](LICENSE).
