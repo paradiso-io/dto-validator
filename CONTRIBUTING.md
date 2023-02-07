@@ -15,7 +15,7 @@ As a contributor, you are expected to fork this repository, work on your own for
 
 ```
 cd bridge-validator
-git remote add upstream https://github.com/dotoracle/bridge-validator.git
+git remote add upstream https://github.com/dotoracle/dto-validator.git
 git fetch upstream
 git pull --rebase upstream mainnet
 ```
@@ -42,7 +42,7 @@ npm test
 npm run lint
 ```
 
-5) Go to [github.com/dotoracle/bridge-validator](https://github.com/dotoracle/bridge-validator/) in your web browser and issue a new pull request.
+5) Go to [github.com/dotoracle/dto-validator](https://github.com/dotoracle/dto-validator/) in your web browser and issue a new pull request.
 
 *IMPORTANT* Read the PR template very carefully and make sure to follow all the instructions. These instructions
 refer to some very important conditions that your PR must meet in order to be accepted, such as making sure that all tests pass, JS linting tests pass, Solidity linting tests pass, etc.

@@ -11,6 +11,7 @@ let Web3Util = {
     let contract = await new web3.eth.Contract(GenericBridgeABI, config.contracts[`${networkId}`].bridge)
     return contract
   },
+  /* Getting the web3 and RPC from the config file. */
   getWeb3AndRPC: async (networkId) => {
     let list = []
     if (Array.isArray(config.blockchain[networkId].httpProvider)) {
@@ -26,6 +27,7 @@ let Web3Util = {
   getWeb3Socket: async (networkId) => {
     return new Web3(new Web3.providers.WebsocketProvider(config.get('blockchain')[networkId].wsProvider))
   },
+  /* Signing the claim. */
   signClaim: (_originToken, _to, _amount, _chainIdsIndex, _txHash, _name, _symbol, _decimals) => {
     let web3 = new Web3()
     let signer = config.signer
@@ -34,6 +36,7 @@ let Web3Util = {
     let sig = web3.eth.accounts.sign(msgHash, signer);
     return { msgHash: msgHash, r: sig.r, s: sig.s, v: sig.v }
   },
+  /* Recovering the signer from the signature. */
   recoverSignerFromSignature: (msgHash, r, s, v) => {
     let web3 = new Web3()
     let recovered = web3.eth.accounts.recover(msgHash, v, r, s);

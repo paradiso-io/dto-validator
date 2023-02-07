@@ -4,11 +4,13 @@ const { ERC20Client } = require('casper-erc20-js-client')
 const BigNumber = require("bignumber.js");
 
 const CasperHelper = {
+    /* Getting the config info from the config file. */
     getConfigInfo: () => {
         let network = config.caspernetwork;
         const CasperContractConfig = require("../casper-contract-hash/config.json")
         return CasperContractConfig[network]
     },
+    /* Getting the RPC link from the config file. */
     getRandomCasperRPCLink: () => {
         let casperConfigInfo = CasperHelper.getConfigInfo();
         let rpcList = []
@@ -31,6 +33,7 @@ const CasperHelper = {
         let random = Math.floor(Math.random() * rpcList.length)
         return rpcList[random]
     },
+    /* To get a good RPC link. */
     getRandomGoodCasperRPCLink: async (minLastBlockHeight, currentRPC) => {
         if (currentRPC) {
             return currentRPC
@@ -72,6 +75,7 @@ const CasperHelper = {
         }
         return ""
     },
+    /* Getting the fee of the token. */
     getBridgeFee: (originTokenAddress) => {
         let casperConfig = CasperHelper.getConfigInfo()
         let tokens = casperConfig.tokens
@@ -82,6 +86,7 @@ const CasperHelper = {
         }
         return '0'
     },
+    /* Getting the MPC public key from the config file. */
     getMPCPubkey: () => {
         let casperConfig = CasperHelper.getConfigInfo()
         let mpcPubkey = casperConfig.mpcPubkey
@@ -112,6 +117,7 @@ const CasperHelper = {
         let clPubkey = CLPublicKey.fromHex(clPubkeyHex);
         return `account-hash-${Buffer.from(clPubkey.toAccountHash()).toString('hex')}`
     },
+    /* This function is used to parse the deploy result from Casper. */
     parseRequestFromCasper: async (deployResult) => {
         let deploy = deployResult.deploy;
         let casperConfig = CasperHelper.getConfigInfo()
