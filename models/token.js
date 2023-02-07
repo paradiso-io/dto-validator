@@ -8,6 +8,6 @@ const Token = new Schema({
     symbol: String,
     decimals: Number,
     totalSupply: Number,
-}, { timestamps: false, v: false })
+}, { timestamps: false, versionKey: false })
 
 module.exports = mongoose.model('Token', Token)

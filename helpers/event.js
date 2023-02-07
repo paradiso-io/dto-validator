@@ -10,7 +10,7 @@ const EventHelper = {
    * @param txHash transaction hash of request bridge action
    * @param txIndex index of this transaction
    */
-  getRequestEvent: async (networkId, txHash, txIndex) => {
+  getRequestEvent: async (networkId, txHash) => {
     let result = {}
     try {
       let web3 = await Web3Util.getWeb3(networkId)
@@ -45,21 +45,16 @@ const EventHelper = {
           let toChainId = parseInt(decoded.fromChainId)
           let index = parseInt(decoded.index)
 
-          if (!txIndex || index === parseInt(txIndex)) {
-            result = {
-              requestHash: txHash,
-              requestBlock: log.blockNumber,
-              account: account,
-              originToken: originToken,
-              fromChainId: fromChainId,
-              originChainId: originChainId,
-              toChainId: toChainId,
-              amount: amount,
-              index: index,
-            }
-            if (!txIndex) {
-              return result
-            }
+          return result = {
+            requestHash: txHash,
+            requestBlock: log.blockNumber,
+            account: account,
+            originToken: originToken,
+            fromChainId: fromChainId,
+            originChainId: originChainId,
+            toChainId: toChainId,
+            amount: amount,
+            index: index,
           }
         }
       }

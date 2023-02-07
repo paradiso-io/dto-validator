@@ -232,7 +232,7 @@ router.get('/verify-transaction/:requestHash/:fromChainId/:index', [
     let index = req.params.index
     let transaction = {}
     if (fromChainId !== casperConfig.networkId) {
-        transaction = await eventHelper.getRequestEvent(fromChainId, requestHash, index)
+        transaction = await eventHelper.getRequestEvent(fromChainId, requestHash)
     }
     if (!transaction || (fromChainId !== casperConfig.networkId && !transaction.requestHash)) {
         return res.json({ success: false })
@@ -322,12 +322,13 @@ router.post('/request-withdraw', [
     let transaction = {}
     if (!config.checkTxOnChain) {
         transaction = await db.Transaction.findOne({ requestHash: requestHash, fromChainId: fromChainId, toChainId: toChainId, index: index })
+        if (!transaction) {
+            transaction = await eventHelper.getRequestEvent(fromChainId, requestHash)
+        }
     } else {
-        transaction = await eventHelper.getRequestEvent(fromChainId, requestHash, index)
+        transaction = await eventHelper.getRequestEvent(fromChainId, requestHash)
     }
-    if (!transaction) {
-        return res.status(400).json({ errors: "invalid transaction hash" })
-    }
+
     if (fromChainId !== casperConfig.networkId) {
         let web3 = await Web3Utils.getWeb3(fromChainId)
 
@@ -363,12 +364,28 @@ router.post('/request-withdraw', [
         //casper
         try {
             transaction = await db.Transaction.findOne({ requestHash: requestHash, fromChainId: fromChainId })
+            let eventData = null
             if (!transaction) {
-                return res.json({ success: false })
+                let casperRPC = await CasperHelper.getCasperRPC(transaction.requestBlock)
+                let deployResult = await casperRPC.getDeployInfo(CasperHelper.toCasperDeployHash(transaction.requestHash))
+                eventData = await CasperHelper.parseRequestFromCasper(deployResult)
+
+                transaction = {
+                    account: eventData.toAddr.toLowerCase(),
+                    originToken: eventData.originToken.toLowerCase(),
+                    amount: eventData.amount,
+                    fromChainId: eventData.fromChainId,
+                    toChainId: eventData.toChainId,
+                    originChainId: eventData.originChainId,
+                    index: eventData.index,
+                }
             }
-            let casperRPC = await CasperHelper.getCasperRPC(transaction.requestBlock)
-            let deployResult = await casperRPC.getDeployInfo(CasperHelper.toCasperDeployHash(transaction.requestHash))
-            let eventData = await CasperHelper.parseRequestFromCasper(deployResult)
+            if (eventData === null) {
+                let casperRPC = await CasperHelper.getCasperRPC(transaction.requestBlock)
+                let deployResult = await casperRPC.getDeployInfo(CasperHelper.toCasperDeployHash(transaction.requestHash))
+                eventData = await CasperHelper.parseRequestFromCasper(deployResult)
+            }
+
             if (eventData.toAddr.toLowerCase() !== transaction.account.toLowerCase()
                 || eventData.originToken.toLowerCase() !== transaction.originToken.toLowerCase()
                 || eventData.amount !== transaction.amount
@@ -383,42 +400,6 @@ router.post('/request-withdraw', [
             return res.status(400).json({ errors: 'failed to get on-chain casper transction for ' + transaction.requestHash })
         }
     }
-    let otherSignature = []
-    if (config.signatureServer.length > 0) {
-        try {
-            let body = {
-                requestHash: req.body.requestHash,
-                fromChainId: req.body.fromChainId,
-                toChainId: req.body.toChainId,
-                index: req.body.index
-            }
-            let r = []
-            const requestSignatureFromOther = async function (i) {
-                try {
-                    console.log("requesting signature from ", config.signatureServer[i])
-                    let ret = await axios.post(config.signatureServer[i] + '/request-withdraw', body, { timeout: 20 * 1000 })
-                    let recoveredAddress = Web3Utils.recoverSignerFromSignature(ret.data.msgHash, ret.data.r[0], ret.data.s[0], ret.data.v[0])
-                    console.log("signature data ok ", config.signatureServer[i], recoveredAddress)
-                    return ret
-                } catch (e) {
-                    console.log("failed to get signature from ", config.signatureServer[i], e.toString())
-                    return { data: {} }
-                }
-            }
-            for (let i = 0; i < config.signatureServer.length; i++) {
-                r.push(requestSignatureFromOther(i))
-            }
-
-            const responses = await Promise.all(r)
-
-            for (let i = 0; i < config.signatureServer.length; i++) {
-                otherSignature.push(responses[i].data)
-            }
-
-        } catch (e) {
-            console.log(e)
-        }
-    }
 
     const nativeAddress = config.get('nativeAddress')
     let name, decimals, symbol
@@ -427,11 +408,22 @@ router.post('/request-withdraw', [
         symbol = config.blockchain[transaction.originChainId].nativeSymbol
         decimals = 18
     } else {
-        let web3Origin = await Web3Utils.getWeb3(transaction.originChainId)
-        let originTokenContract = await new web3Origin.eth.Contract(IERC20ABI, transaction.originToken)
-        name = await originTokenContract.methods.name().call()
-        decimals = await originTokenContract.methods.decimals().call()
-        symbol = await originTokenContract.methods.symbol().call()
+        let token = await db.Token.findOne({hash: transaction.originToken, networkId: transaction.originChainId})
+        if (!token) {
+            let web3Origin = await Web3Utils.getWeb3(transaction.originChainId)
+            let originTokenContract = await new web3Origin.eth.Contract(IERC20ABI, transaction.originToken)
+            name = await originTokenContract.methods.name().call()
+            decimals = await originTokenContract.methods.decimals().call()
+            symbol = await originTokenContract.methods.symbol().call()
+            await db.Token.updateOne({hash: transaction.originToken, networkId: transaction.originChainId}, {
+                $set: {name, symbol, decimals}
+            }, {upsert: true, new: true})
+        } else {
+            name = token.name
+            decimals = token.decimals
+            symbol = token.symbol
+        }
+
     }
     if (transaction.toChainId !== transaction.originChainId) {
         let nativeName = config.blockchain[transaction.toChainId].nativeName
@@ -448,6 +440,44 @@ router.post('/request-withdraw', [
     let v = []
     if (config.proxy) {
         let msgHash = ""
+
+        let otherSignature = []
+        if (config.signatureServer.length > 0) {
+            try {
+                let body = {
+                    requestHash: req.body.requestHash,
+                    fromChainId: req.body.fromChainId,
+                    toChainId: req.body.toChainId,
+                    index: req.body.index
+                }
+                let r = []
+                const requestSignatureFromOther = async function (i) {
+                    try {
+                        console.log("requesting signature from ", config.signatureServer[i])
+                        let ret = await axios.post(config.signatureServer[i] + '/request-withdraw', body, { timeout: 20 * 1000 })
+                        let recoveredAddress = Web3Utils.recoverSignerFromSignature(ret.data.msgHash, ret.data.r[0], ret.data.s[0], ret.data.v[0])
+                        console.log("signature data ok ", config.signatureServer[i], recoveredAddress)
+                        return ret
+                    } catch (e) {
+                        console.log("failed to get signature from ", config.signatureServer[i], e.toString())
+                        return { data: {} }
+                    }
+                }
+                for (let i = 0; i < config.signatureServer.length; i++) {
+                    r.push(requestSignatureFromOther(i))
+                }
+
+                const responses = await Promise.all(r)
+
+                for (let i = 0; i < config.signatureServer.length; i++) {
+                    otherSignature.push(responses[i].data)
+                }
+
+            } catch (e) {
+                console.log(e)
+            }
+        }
+
         //dont sign
         if (otherSignature.length > 0) {
             for (let i = 0; i < otherSignature.length; i++) {
@@ -461,26 +491,10 @@ router.post('/request-withdraw', [
         }
 
         //reading required number of signature
-        let minApprovers = 0
-        let approverList = []
-        let retry = 10
-        console.log("reading minApprovers", minApprovers)
-        while(retry > 0) {
-            try {
-                let bridgeContract = await Web3Utils.getBridgeContract(transaction.toChainId)
-                minApprovers = await bridgeContract.methods.minApprovers().call()
-                approverList = await bridgeContract.methods.getBridgeApprovers().call()
-                minApprovers = parseInt(minApprovers)
-                break
-            } catch(e) {
-                console.log("error in reading approver", minApprovers)
-                await GeneralHelper.sleep(5 * 1000)
-            }
-            retry--
-        }
-        approverList = approverList.map(e => e.toLowerCase())
-        //filtering only good signature
-        console.log("done reading minApprovers", minApprovers)
+        let approver = await Web3Utils.getApprovers(transaction.toChainId)
+        let minApprovers = approver.number
+        let approverList = approver.list
+
         let goodR = []
         let goodS = []
         let goodV = []
