@@ -164,6 +164,8 @@ async function getPastEventForBatch(networkId, bridgeAddress, step, from, to) {
   let lastBlock = to
   let lastCrawl = from
   logger.info(`Network ${networkId} start batch from ${from} to ${to}`)
+
+  let rpc_choosed = null
   while (lastBlock - lastCrawl > 0) {
     try {
       let toBlock;
@@ -174,9 +176,10 @@ async function getPastEventForBatch(networkId, bridgeAddress, step, from, to) {
       }
       let both = await Web3Utils.getWeb3AndRPC(networkId);
       let web3 = both.web3
+      rpc_choosed = both.rpc
       let currentBlockForRPC = await web3.eth.getBlockNumber()
       if (parseInt(currentBlockForRPC) < parseInt(toBlock)) {
-        logger.warning("invalid RPC %s, try again", both.rpc)
+        logger.warning("invalid RPC %s, try again", rpc_choosed)
         continue
       }
       const contract = new web3.eth.Contract(GenericBridge, bridgeAddress);
@@ -212,7 +215,7 @@ async function getPastEventForBatch(networkId, bridgeAddress, step, from, to) {
 
       lastCrawl = toBlock;
     } catch (e) {
-      logger.warn("Error network %s, waiting 5 seconds: %s", networkId, e)
+      logger.warn("Error network %s RPC: %s, waiting 5 seconds: %s", networkId, rpc_choosed, e)
       await sleep(5000)
     }
   }
