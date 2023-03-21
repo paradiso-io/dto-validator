@@ -252,7 +252,11 @@ async function getPastEvent(networkId, bridgeAddress, step) {
       if (to > lastBlock) {
         to = lastBlock
       }
-      tasks.push(getPastEventForBatch(networkId, bridgeAddress, step, from, to))
+      if (config.isSequent) {
+        await getPastEventForBatch(networkId, bridgeAddress, step, from, to)
+      } else {
+        tasks.push(getPastEventForBatch(networkId, bridgeAddress, step, from, to))
+      }
     }
 
     await Promise.all(tasks)
@@ -281,7 +285,7 @@ async function watch(networkId, bridgeAddress) {
 
   setInterval(async () => {
     await getPastEvent(networkId, bridgeAddress, step);
-  }, 10000);
+  }, config.blockchain[networkId].sleepTime);
 }
 
 /**
