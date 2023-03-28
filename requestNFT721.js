@@ -11,6 +11,7 @@ const CasperConfig = CasperHelper.getConfigInfo()
 const nftConfig = CasperHelper.getNFTConfig()
 const PreSignNFT = require("./helpers/preSignNFT")
 let { DTOWrappedNFT, NFTBridge } = require("casper-nft-utils")
+const sha256 = require("js-sha256")
 
 function decodeOriginToken(tokenHex, originChainId) {
   let web3 = Web3Utils.getSimpleWeb3()
@@ -130,7 +131,7 @@ async function processEvent(event, networkId) {
       let metadata = {
         name: tokenName,
         token_uri: uri,
-        checksum: "940bffb3f2bba35f84313aa26da09ece3ad47045c6a1292c2bbd2df4ab1a55fb"
+        checksum: sha256(uri) // "940bffb3f2bba35f84313aa26da09ece3ad47045c6a1292c2bbd2df4ab1a55fb"
       }
       metadata = JSON.stringify(metadata)
       tokenMetadatas.push(metadata)
@@ -387,7 +388,7 @@ async function getPastEvent(networkId, bridgeAddress, step) {
     let setting = await db.Setting.findOne({ networkId: networkId })
     let lastCrawl = config.contracts[networkId].firstBlockNft721;
     if (lastCrawl === null) {
-      lastCrawl = 9394711;
+      lastCrawl = 20184263;
     }
     if (setting && setting.lastNft721BlockRequest) {
       lastCrawl = setting.lastNft721BlockRequest;

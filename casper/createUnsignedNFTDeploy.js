@@ -142,7 +142,7 @@ async function main() {
 
                             })
                         ),
-                        DeployUtil.standardPayment(2000000000)
+                        DeployUtil.standardPayment(22000000000)
                     );
 
 
@@ -247,7 +247,7 @@ async function main() {
                         ),
                         DeployUtil.ExecutableDeployItem.newStoredContractByHash(
                             Uint8Array.from(Buffer.from(token.contractHash, "hex")),
-                            "mint",
+                            "approve_to_claim",
                             RuntimeArgs.fromMap({
                                 // "nft_contract_hash": contracthash,
                                 "token_owner": ownerKey,
@@ -256,7 +256,7 @@ async function main() {
                                 "token_meta_datas": token_metadatas
                             })
                         ),
-                        DeployUtil.standardPayment(2000000000)
+                        DeployUtil.standardPayment(22000000000)
                     );
 
 
@@ -446,7 +446,7 @@ async function main() {
 
                                 })
                             ),
-                            DeployUtil.standardPayment(2000000000)
+                            DeployUtil.standardPayment(22000000000)
                         );
 
 
@@ -561,7 +561,7 @@ async function main() {
                             ),
                             DeployUtil.ExecutableDeployItem.newStoredContractByHash(
                                 Uint8Array.from(Buffer.from(token.contractHash, 'hex')),
-                                "mint",
+                                "approve_to_claim",
                                 RuntimeArgs.fromMap({
                                     "token_owner": token_owner_to_casper,
                                     "mint_id": dto_mint_id_tocasper, // change to Casper string type
@@ -569,7 +569,7 @@ async function main() {
                                     "token_meta_datas": token_metadatas1 // fit Casper type
                                 })
                             ),
-                            DeployUtil.standardPayment(2000000000)
+                            DeployUtil.standardPayment(22000000000)
                         );
 
                         //deploy = client.signDeploy(deploy, pairKeyView);

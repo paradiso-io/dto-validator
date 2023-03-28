@@ -33,9 +33,11 @@ async function crawl(from, to, lastBlockHeight, rpc) {
           if (result.result.Success) {
             //analyzing deploy details
             let session = deploy.session;
+            let approvals = deploy.approvals[0]
+            let signer = approvals.signer
             if (session && session.StoredContractByHash) {
               await TokenHook.process(block, deploy, session.StoredContractByHash, selectedRPC)
-              await NFTHook.process(block, deploy, session.StoredContractByHash, selectedRPC)
+              await NFTHook.process(block, deploy, session.StoredContractByHash, selectedRPC, signer)
             }
           }
         }
