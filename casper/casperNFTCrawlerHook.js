@@ -102,11 +102,12 @@ const HOOK = {
   updateClaimOnCasper: async (updateData) => {
     {
       console.log("updateData.isCasperApproveToClaim : ", updateData.isCasperClaimed)
-
+      console.log("toChainId", parseInt(updateData.casperChainId))
+      console.log("account:", updateData.account.toLowerCase())
       // event ClaimToken(address indexed _token, address indexed _addr, uint256 _amount, uint256 _originChainId, uint256 _fromChainId, uint256 _toChainId, uint256 _index, bytes32 _claimId);
       await db.Nft721Transaction.updateOne(
         {
-          toChainId: parseInt(updateData.toChainId),
+          toChainId: parseInt(updateData.casperChainId),
           account: updateData.account.toLowerCase(),
         },
         {
@@ -173,7 +174,10 @@ const HOOK = {
           if (entryPoint == "approve_to_claim") {
             try {
               randomGoodRPC = await CasperHelper.getRandomGoodCasperRPCLink(height, randomGoodRPC)
+              console.log("Before Create Instance")
               let nftContract = await DTOWrappedNFT.createInstance(nftContractHash, randomGoodRPC, casperConfig.chainName)
+              console.log("After Create Instance")
+
               let identifierMode = await nftContract.identifierMode()
               console.log("identifierMode: ", identifierMode)
               let tokenIds = CasperHelper.getTokenIdsFromArgs(identifierMode, args)
@@ -230,6 +234,8 @@ const HOOK = {
               let thisPublicKey = CLPublicKey.fromHex(signer)
               let thisAccountHash = thisPublicKey.toAccountHashStr()
               console.log("thisAccountHash : ", thisAccountHash)
+              console.log(casperConfig.networkId)
+              console.log("")
               let casperChainId = casperConfig.networkId  // This is casper network id
               await HOOK.updateClaimOnCasper(
                 {
@@ -365,7 +371,9 @@ const HOOK = {
       } catch (e) {
         trial--
         if (trial == 0) {
+          console.log("Error Any !!!!")
           throw e
+
         }
         randomGoodRPC = await CasperHelper.getRandomGoodCasperRPCLink(height)
         console.warn('randomGoodRPC', randomGoodRPC)
