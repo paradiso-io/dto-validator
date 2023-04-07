@@ -7,6 +7,7 @@ const { sha256 } = require("ethereum-cryptography/sha256");
 const logger = require("../helpers/logger");
 const { CLAccountHash, DeployUtil } = require("casper-js-sdk");
 const BigNumber = require("bignumber.js")
+
 async function main() {
     while (true) {
         let casperConfig = CasperHelper.getConfigInfo()
@@ -67,7 +68,7 @@ async function main() {
                 new CLAccountHash(recipientAccountHashByte),
                 tx.amount,
                 mintid,
-                "400000000",
+                "6000000000",
                 ttl
             );
             let deployJson = JSON.stringify(DeployUtil.deployToJson(deploy));
@@ -165,7 +166,7 @@ async function main() {
                     new CLAccountHash(recipientAccountHashByte),
                     req.amount,
                     mintid,
-                    "400000000",
+                    "6000000000",
                     ttl
                 );
                 let deployJson = JSON.stringify(DeployUtil.deployToJson(deploy));

@@ -362,12 +362,16 @@ const CasperHelper = {
                     let nftNameFromConfigFile = _tokenData.originName
                     let nftContract = {}
                     //if (!nftSymbol || !nftName) { // Do not confi
+                    console.log("Before create instance")
                     nftContract = await DTOWrappedNFT.createInstance(nftContractHash, randomGoodRPC, casperConfig.chainName)
-                    await nftContract.init()
+                    // await nftContract.init()
+                    console.log("After create instance")
+
                     let nftSymbol = await nftContract.collectionSymbol()
-                    console.log("nftSymbol: ", nftSymbol)
+                    console.log(" ============")
+                    console.log("nftSymbol: ", nftSymbol, nftSymbolFromConfigFile)
                     let nftName = await nftContract.collectionName()
-                    console.log("nftName: ", nftName)
+                    console.log("nftName: ", nftName, nftNameFromConfigFile)
                     if (nftSymbolFromConfigFile != nftSymbol || nftNameFromConfigFile != nftName) {
                         throw "WRONG CONFIG nftSymbol OR nftName !!!!!";
                     }

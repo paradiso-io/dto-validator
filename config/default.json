@@ -24,9 +24,26 @@
     "testnet": "/ip4/139.99.9.174/tcp/63785/ipfs/QmVASRfp5mxD21XaAcSJFmbaAdukUwqK1AMs8tT4RT4b1n"
   },
   "crawlChainIds": {
-    "mainnet": [1, 56, 1284, 43114, 66],
-    "testnet": [42, 97, 89, 1287, 4002, 43113, 80001],
-    "nft721testnet": [ 43113,97,5,11155111,80001],
+    "mainnet": [
+      1,
+      56,
+      1284,
+      43114,
+      66
+    ],
+    "testnet": [
+      97,
+      89,
+      5,
+      1287,
+      4002,
+      43113,
+      80001
+    ],
+    "nft721testnet": [
+      43113,
+      97
+    ],
     "nft721mainnet": []
   },
   "blockchain": {
@@ -39,7 +56,14 @@
       "nativeSymbol": "ETH"
     },
     "56": {
-      "httpProvider": ["https://bsc-dataseed1.binance.org", "https://bsc-dataseed2.binance.org", "https://bsc-dataseed1.defibit.io/", "https://bsc-dataseed2.defibit.io/", "https://bsc-dataseed1.ninicoin.io/", "https://bsc-dataseed2.ninicoin.io/"],
+      "httpProvider": [
+        "https://bsc-dataseed1.binance.org",
+        "https://bsc-dataseed2.binance.org",
+        "https://bsc-dataseed1.defibit.io/",
+        "https://bsc-dataseed2.defibit.io/",
+        "https://bsc-dataseed1.ninicoin.io/",
+        "https://bsc-dataseed2.ninicoin.io/"
+      ],
       "wsProvider": "wss://bsc-ws-node.nariox.org:443",
       "explorer": "https://bscscan.com",
       "confirmations": 30,
@@ -47,15 +71,21 @@
       "nativeSymbol": "BNB"
     },
     "5": {
-      "httpProvider": ["https://rpc.ankr.com/eth_goerli", "https://goerli.infura.io/v3/9aa3d95b3bc440fa88ea12eaa4456161", "https://eth-goerli.public.blastapi.io/"],
+      "httpProvider": [
+        "https://rpc.ankr.com/eth_goerli",
+        "https://goerli.infura.io/v3/9aa3d95b3bc440fa88ea12eaa4456161",
+        "https://eth-goerli.public.blastapi.io/"
+      ],
       "wsProvider": "",
       "explorer": "https://goerli.etherscan.io/",
-      "confirmations": 10,
+      "confirmations": 5,
       "nativeName": "Goerli",
       "nativeSymbol": "Go"
     },
     "11155111": {
-      "httpProvider": ["https://nunki.htznr.fault.dev/rpc"],
+      "httpProvider": [
+        "https://nunki.htznr.fault.dev/rpc"
+      ],
       "wsProvider": "",
       "explorer": "https://sepolia.etherscan.io/",
       "confirmations": 10,
@@ -63,28 +93,38 @@
       "nativeSymbol": "Sepolia"
     },
     "1284": {
-      "httpProvider": ["https://rpc.api.moonbeam.network"],
+      "httpProvider": [
+        "https://rpc.api.moonbeam.network"
+      ],
       "explorer": "https://moonbeamscan.io",
       "confirmations": 30,
       "nativeName": "MoonBeam",
       "nativeSymbol": "GLMR"
     },
     "43114": {
-      "httpProvider": ["https://api.avax.network/ext/bc/C/rpc"],
+      "httpProvider": [
+        "https://api.avax.network/ext/bc/C/rpc"
+      ],
       "explorer": "https://snowtrace.io",
       "confirmations": 30,
       "nativeName": "Avalaunche",
       "nativeSymbol": "AVAX"
     },
     "66": {
-      "httpProvider": ["https://exchainrpc.okex.org"],
+      "httpProvider": [
+        "https://exchainrpc.okex.org"
+      ],
       "explorer": "https://www.oklink.com/en/okc",
       "confirmations": 30,
       "nativeName": "OKEX Chain",
       "nativeSymbol": "OKT"
     },
     "42": {
-      "httpProvider": ["https://speedy-nodes-nyc.moralis.io/6f1c50d092cad31805b2371f/eth/kovan", "https://kovan.infura.io/v3/3a6c72cdf9e846968d21c0f3605013fd", "https://kovan.infura.io/v3/99d4e19c704546fbbbdfe408d354b9c8"],
+      "httpProvider": [
+        "https://speedy-nodes-nyc.moralis.io/6f1c50d092cad31805b2371f/eth/kovan",
+        "https://kovan.infura.io/v3/3a6c72cdf9e846968d21c0f3605013fd",
+        "https://kovan.infura.io/v3/99d4e19c704546fbbbdfe408d354b9c8"
+      ],
       "wsProvider": "",
       "explorer": "https://kovan.etherscan.io",
       "confirmations": 6,
@@ -108,7 +148,15 @@
       "nativeSymbol": "fTOMO"
     },
     "97": {
-      "httpProvider": ["https://data-seed-prebsc-2-s1.binance.org:8545/", "https://data-seed-prebsc-1-s1.binance.org:8545/", "https://data-seed-prebsc-1-s2.binance.org:8545/", "https://data-seed-prebsc-2-s2.binance.org:8545/", "https://data-seed-prebsc-1-s3.binance.org:8545/", "https://data-seed-prebsc-2-s3.binance.org:8545/"],
+      "httpProvider": [
+        "https://bsc.gateway.pokt.network/v1/lb/1e815b7088bca30f000f78d9",
+        "https://data-seed-prebsc-2-s1.binance.org:8545/",
+        "https://data-seed-prebsc-1-s1.binance.org:8545/",
+        "https://data-seed-prebsc-1-s2.binance.org:8545/",
+        "https://data-seed-prebsc-2-s2.binance.org:8545/",
+        "https://data-seed-prebsc-1-s3.binance.org:8545/",
+        "https://data-seed-prebsc-2-s3.binance.org:8545/"
+      ],
       "wsProvider": "",
       "explorer": "https://testnet.bscscan.com",
       "confirmations": 2,
@@ -132,7 +180,10 @@
       "nativeSymbol": "fFTM"
     },
     "43113": {
-      "httpProvider": ["https://api.avax-test.network/ext/bc/C/rpc", "https://rpc.ankr.com/avalanche_fuji"],
+      "httpProvider": [
+        "https://api.avax-test.network/ext/bc/C/rpc",
+        "https://rpc.ankr.com/avalanche_fuji"
+      ],
       "wsProvider": "",
       "explorer": "https://testnet.snowtrace.io/",
       "confirmations": 2,
@@ -175,7 +226,7 @@
     },
     "1284": {
       "bridge": "0x328A523B71545ddE8CD12a685318F2777D68798D",
-      "firstBlockCrawl": 1288563 
+      "firstBlockCrawl": 1288563
     },
     "43114": {
       "bridge": "0x328A523B71545ddE8CD12a685318F2777D68798D",
@@ -240,8 +291,8 @@
     "43113": {
       "bridge": "0x7e3226239dbfd6bea1ce22208001dc28194cbec2",
       "nft721": "0xfb8f103Fd709Bed9DFF96ada6de50E48616f1895",
-      "firstBlockCrawl": 8754306,
-      "firstBlockNft721": 14274000 
+      "firstBlockCrawl": 20184263,
+      "firstBlockNft721": 20184263
     },
     "80001": {
       "bridge": "0xAbB7ae870c54b893d20f75143BB8Fc389799ff42",
@@ -260,7 +311,5 @@
   "signer": "",
   "checkTxOnChain": false,
   "proxy": true,
-  "signatureServer": [
-
-  ]
+  "signatureServer": []
 }

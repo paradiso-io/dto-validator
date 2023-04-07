@@ -30,6 +30,7 @@ async function main() {
     //const nft_contract = hash1
     //const contracthashbytearray = new CLByteArray(Uint8Array.from(Buffer.from(hash1, 'hex')));
     //const contracthash = new CLKey(contracthashbytearray);
+    let defaultTtl = 300000
 
     while (true) {
         try {
@@ -117,8 +118,6 @@ async function main() {
                     const nftContractHash = new CLKey(contracthashbytearray);
 
 
-                    let ttl = 300000
-
                     console.log("Start create deploy for UNLOCK_NFT")
 
                     // ARG: token_ids - token_hashes - from_chainid - identifier_mode - nft_contract_hash - target_key - unlock_id
@@ -126,7 +125,9 @@ async function main() {
                     let deploy = DeployUtil.makeDeploy(
                         new DeployUtil.DeployParams(
                             mpcPubkey,
-                            casperConfig.chainName
+                            casperConfig.chainName,
+                            1,
+                            defaultTtl,
                         ),
                         DeployUtil.ExecutableDeployItem.newStoredContractByHash(
                             Uint8Array.from(Buffer.from(casperNFTConfig.nftbridge, "hex")),
@@ -243,7 +244,9 @@ async function main() {
                     let deploy = DeployUtil.makeDeploy(
                         new DeployUtil.DeployParams(
                             mpcPubkey,
-                            casperConfig.chainName
+                            casperConfig.chainName,
+                            1,
+                            defaultTtl,
                         ),
                         DeployUtil.ExecutableDeployItem.newStoredContractByHash(
                             Uint8Array.from(Buffer.from(token.contractHash, "hex")),
@@ -430,7 +433,9 @@ async function main() {
                         let deploy = DeployUtil.makeDeploy(
                             new DeployUtil.DeployParams(
                                 mpcPubkey,
-                                casperConfig.chainName
+                                casperConfig.chainName,
+                                1,
+                                defaultTtl,
                             ),
                             DeployUtil.ExecutableDeployItem.newStoredContractByHash(
                                 Uint8Array.from(Buffer.from(casperNFTConfig.nftbridge, "hex")),
@@ -557,7 +562,9 @@ async function main() {
                             new DeployUtil.DeployParams(
                                 //pairKeyView.publicKey, // MPC public key
                                 mpcPubkey,
-                                casperConfig.chainName
+                                casperConfig.chainName,
+                                1,
+                                defaultTtl,
                             ),
                             DeployUtil.ExecutableDeployItem.newStoredContractByHash(
                                 Uint8Array.from(Buffer.from(token.contractHash, 'hex')),
