@@ -28,7 +28,8 @@ async function main() {
             
             //timestamp: generalHelper.now(),
             isProcessed: false,
-            mintid : i
+            mintid : i,
+            casperDeployCreated : false
         })
 
         await requestToCasper.save()

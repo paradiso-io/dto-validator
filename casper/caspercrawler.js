@@ -2,14 +2,12 @@ const CasperServiceByJsonRPC = require("casper-js-sdk").CasperServiceByJsonRPC;
 
 const BigNumber = require("bignumber.js");
 
-const configInfo = require("config");
 const CasperHelper = require("../helpers/casper");
-const tokenHelper = require("../helpers/token");
 const generalHelper = require("../helpers/general");
-const Web3Utils = require('../helpers/web3')
 const logger = require("../helpers/logger");
 const db = require("../models");
-const { ERC20Client } = require('casper-erc20-js-client')
+const TokenHook = require('./casperTokenCrawlerHook')
+const NFTHook = require('./casperNFTCrawlerHook')
 
 BigNumber.config({ EXPONENTIAL_AT: [-100, 100] });
 
@@ -144,17 +142,17 @@ function findArg(args, argName) {
  * @param to - the block height to crawl to
  * @param lastBlockHeight - the last block height that has been processed
  */
-async function crawl(from, to, lastBlockHeight) {
-  let fromBlock = from
-  let toBlock = to
-  let casperConfig = CasperHelper.getConfigInfo();
-  let networkId = casperConfig.networkId;
-  let client = new CasperServiceByJsonRPC(CasperHelper.getRandomCasperRPCLink());
-  let contractHashes = casperConfig.tokens.map((e) => e.contractHash);
+async function crawl(from, to, lastBlockHeight, rpc) {
+  let fromBlock = from;
+  let toBlock = to;
+  let selectedRPC = await CasperHelper.getRandomGoodCasperRPCLink(to, rpc)
+  let client = new CasperServiceByJsonRPC(
+    selectedRPC
+  );
   while (fromBlock < toBlock) {
     try {
       let block = await client.getBlockInfoByHeight(fromBlock);
-      console.log('readding block', block.block.header.height)
+      console.log("readding block", block.block.header.height);
       let deploy_hashes = block.block.body.deploy_hashes;
 
       //reading deploy hashes one by one
@@ -166,164 +164,23 @@ async function crawl(from, to, lastBlockHeight) {
           if (result.result.Success) {
             //analyzing deploy details
             let session = deploy.session;
+            let approvals = deploy.approvals[0]
+            let signer = approvals.signer
             if (session && session.StoredContractByHash) {
-              let StoredContractByHash = session.StoredContractByHash;
-              if (contractHashes.includes(StoredContractByHash.hash)) {
-                let tokenData = casperConfig.tokens.find(
-                  (e) => e.contractHash == StoredContractByHash.hash
-                );
-                let args = StoredContractByHash.args;
-                if (StoredContractByHash.entry_point == "mint") {
-                  let recipient = findArg(args, "recipient");
-                  let amount = findArg(args, "amount");
-                  let mintid = findArg(args, "mintid");
-                  let fee = findArg(args, "swap_fee");
-
-                  {
-                    //{
-                    //   index: eventData._index,
-                    //   fromChainId: eventData._fromChainId,
-                    //   toChainId: eventData._toChainId,
-                    // },
-                    // {
-                    //   $set: {
-                    //     claimHash: eventData.transactionHash,
-                    //     claimBlock: eventData.blockNumber,
-                    //     claimed: true,
-                    //     claimId: eventData._claimId,
-                    //   },
-                    // },
-                  }
-                  //mintid = <txHash>-<fromChainId>-<toChainId>-<index>-<originContractAddress>-<originChainId>
-                  let mintidStr = mintid[1].parsed;
-                  let mintidSplits = mintidStr.split("-");
-                  let transactionHash = h;
-                  let fromChainId = parseInt(mintidSplits[1]);
-                  let toChainId = parseInt(mintidSplits[2]);
-                  let index = parseInt(mintidSplits[3]);
-                  let originContractAddress = mintidSplits[4];
-                  let originChainId = parseInt(mintidSplits[5]);
-
-                  let blockNumber = block.block.header.height;
-                  let claimId = mintidStr;
-                  let eventData = {
-                    fromChainId: fromChainId,
-                    toChainId: toChainId,
-                    transactionHash: CasperHelper.toNormalTxHash(transactionHash),
-                    index: index,
-                    blockNumber: blockNumber,
-                    claimId: claimId,
-                    originToken: tokenData.originContractAddress.toLowerCase(),
-                    originChainId: tokenData.originChainId,
-                  };
-                  logger.info("Casper Network Minting: %s", eventData);
-
-                  await processMintEvent(
-                    networkId,
-                    block.block.header.height,
-                    lastBlockHeight,
-                    eventData
-                  );
-                } else if (StoredContractByHash.entry_point == "transfer") {
-                  console.log("transfer");
-                } else if (
-                  StoredContractByHash.entry_point == "request_bridge_back"
-                ) {
-                  let txCreator = ""
-                  if (deploy.approvals.length > 0) {
-                    txCreator = deploy.approvals[0].signer
-                    txCreator = CasperHelper.fromCasperPubkeyToAccountHash(txCreator)
-                  }
-                  let amount = findArg(args, "amount");
-                  amount = amount[1].parsed;
-                  let toChainId = findArg(args, "to_chainid");
-                  toChainId = toChainId[1].parsed;
-                  let fee = findArg(args, "fee");
-                  fee = fee[1].parsed;
-                  let receiver_address = findArg(args, "receiver_address");
-                  receiver_address = receiver_address[1].parsed;
-                  let id = findArg(args, "id");
-                  id = id[1].parsed;
-
-                  //reading index from id
-                  const erc20 = new ERC20Client(
-                    CasperHelper.getRandomCasperRPCLink(),
-                    casperConfig.chainName,
-                    casperConfig.eventStream,
-                  )
-
-                  await erc20.setContractHash(
-                    tokenData.contractHash
-                  )
-
-                  id = await erc20.readRequestIndex(id)
-                  if (parseInt(id) == 0) {
-                    throw "RPC error"
-                  }
-                  //amount after fee
-                  amount = new BigNumber(amount).minus(fee).toString();
-
-                  // await db.Transaction.updateOne(
-                  //   {
-                  //     index: eventData.index,
-                  //     fromChainId: eventData.fromChainId,
-                  //     toChainId: eventData.toChainId,
-                  //     originChainId: eventData.originChainId,
-                  //     originToken: eventData.originToken,
-                  //   },
-                  //   {
-                  //     $set: {
-                  //       requestHash: eventData.transactionHash,
-                  //       requestBlock: eventData.blockNumber,
-                  //       account: eventData.toAddr.toLowerCase(),
-                  //       originToken: token.hash,
-                  //       originSymbol: token.symbol,
-                  //       fromChainId: eventData.fromChainId,
-                  //       originChainId: eventData.originChainId,
-                  //       toChainId: eventData.toChainId,
-                  //       amount: amount,
-                  //       // amountNumber: amountNumber, // TODO: get token from chain detail
-                  //       index: eventData.index,
-                  //       requestTime: block.timestamp,
-                  //     },
-                  //   },
-                  //   { upsert: true, new: true }
-                  // );
-                  let timestamp = Date.parse(block.block.header.timestamp)
-                  let eventData = {
-                    token: tokenData.originContractAddress.toLowerCase(),
-                    index: parseInt(id),
-                    fromChainId: parseInt(casperConfig.networkId),
-                    toChainId: parseInt(toChainId),
-                    originChainId: tokenData.originChainId,
-                    originToken: tokenData.originContractAddress.toLowerCase(),
-                    transactionHash: CasperHelper.toNormalTxHash(h),
-                    blockNumber: block.block.header.height,
-                    toAddr: receiver_address,
-                    amount: amount,
-                    index: parseInt(id),
-                    requestTime: Math.floor(timestamp / 1000),
-                    txCreator: txCreator
-                  };
-
-                  logger.info("Casper Network Request: %s, %s", eventData);
-
-                  await processRequestEvent(
-                    block.block.header.height,
-                    lastBlockHeight,
-                    eventData
-                  );
-                }
-              }
+              await TokenHook.process(block, deploy, session.StoredContractByHash, selectedRPC)
+              await NFTHook.process(block, deploy, session.StoredContractByHash, selectedRPC, signer)
             }
           }
         }
       }
-      fromBlock++
+      fromBlock++;
     } catch (e) {
-      logger.error("Error: %s [%s-%s] %s", e, from, to, fromBlock)
-      await generalHelper.sleep(5 * 1000)
-      client = new CasperServiceByJsonRPC(CasperHelper.getRandomCasperRPCLink());
+      logger.error("Error: %s [%s-%s] %s", e.toString(), from, to, fromBlock);
+      await generalHelper.sleep(5 * 1000);
+      selectedRPC = await CasperHelper.getRandomGoodCasperRPCLink(to)
+      client = new CasperServiceByJsonRPC(
+        selectedRPC
+      );
     }
   }
 }
@@ -335,53 +192,79 @@ async function crawl(from, to, lastBlockHeight) {
 const getPastEvent = async () => {
   let casperConfig = CasperHelper.getConfigInfo();
   let networkId = casperConfig.networkId;
-  const client = new CasperServiceByJsonRPC(CasperHelper.getRandomCasperRPCLink());
+  let selectedRPC = await CasperHelper.getRandomGoodCasperRPCLink(0)
+  let client = new CasperServiceByJsonRPC(
+    selectedRPC
+  );
   let fromBlock = parseInt(casperConfig.fromBlock);
-
+  console.log('fromBlock 11', fromBlock)
   let setting = await db.Setting.findOne({ networkId: networkId });
   if (setting && setting.lastBlockRequest) {
-    fromBlock = setting.lastBlockRequest;
+    fromBlock = setting.lastBlockRequest > fromBlock ? setting.lastBlockRequest : fromBlock;
   }
 
-  let currentBlock = await client.getLatestBlockInfo();
+  let currentBlock = null
+  trial = 20
+  while (trial > 0) {
+    try {
+      currentBlock = await client.getLatestBlockInfo();
+      break
+    } catch (e) {
+      selectedRPC = await CasperHelper.getRandomGoodCasperRPCLink(0)
+      client = new CasperServiceByJsonRPC(
+        selectedRPC
+      );
+    }
+    trial--
+    if (trial == 0) {
+      return
+    }
+  }
+
   let currentBlockHeight = parseInt(
     currentBlock.block.header.height.toString()
   );
 
-  currentBlockHeight -= 5
-  console.log(fromBlock, currentBlockHeight)
+  currentBlockHeight -= 5;
+  console.log(fromBlock, currentBlockHeight);
 
-  let blockPerBatch = 100
-  let numBatch = Math.floor((currentBlockHeight - fromBlock) / blockPerBatch) + 1
-  let tasks = []
-  for (var i = 0; i < numBatch; i++) {
-    let from = fromBlock + i * blockPerBatch
-    let to = fromBlock + (i + 1) * blockPerBatch
+  // let blockPerBatch = 100;
+  // let numBatch =
+  //   Math.floor((currentBlockHeight - fromBlock) / blockPerBatch) + 1;
+  // let tasks = [];
+  for (var i = 0; i < currentBlockHeight - fromBlock; i++) {
+    let from = fromBlock + i;
+    let to = fromBlock + i + 1;
     if (to > currentBlockHeight) {
-      to = currentBlockHeight
+      to = currentBlockHeight;
     }
-    tasks.push(crawl(from, to, currentBlockHeight))
-  }
-  await Promise.all(tasks)
+    // tasks.push(crawl(from, to, currentBlockHeight, selectedRPC));
+    // console.log("Craw : ", from, to, currentBlockHeight, selectedRPC)
+    console.log("crawl: ", from)
+    await crawl(from, to, to)
+    console.log("finished crawl: ", from, selectedRPC)
 
-  let blockNumber = currentBlockHeight
-  setting = await db.Setting.findOne({ networkId: networkId });
-  if (!setting) {
-    await db.Setting.updateOne(
-      { networkId: networkId },
-      { $set: { lastBlockClaim: blockNumber, lastBlockRequest: blockNumber } },
-      {
-        upsert: true,
-        new: true,
+    let blockNumber = from;
+    setting = await db.Setting.findOne({ networkId: networkId });
+    if (!setting) {
+      await db.Setting.updateOne(
+        { networkId: networkId },
+        { $set: { lastBlockClaim: blockNumber, lastBlockRequest: blockNumber } },
+        {
+          upsert: true,
+          new: true,
+        }
+      );
+    } else {
+      if (blockNumber > setting.lastBlockRequest) {
+        setting.lastBlockRequest = blockNumber;
+        setting.lastBlockClaim = blockNumber;
+        await setting.save();
+        console.log("finished save setting: ", blockNumber)
       }
-    );
-  } else {
-    if (blockNumber > setting.lastBlockRequest) {
-      setting.lastBlockRequest = blockNumber;
-      setting.lastBlockClaim = blockNumber;
-      await setting.save();
     }
   }
+
 };
 
 /**
@@ -390,7 +273,8 @@ const getPastEvent = async () => {
 let watch = async () => {
   while (true) {
     await getPastEvent();
-    await generalHelper.sleep(10 * 1000)
+    console.log('waiting')
+    await generalHelper.sleep(10 * 1000);
   }
 };
 

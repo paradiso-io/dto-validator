@@ -24,8 +24,27 @@
     "testnet": "/ip4/139.99.9.174/tcp/63785/ipfs/QmVASRfp5mxD21XaAcSJFmbaAdukUwqK1AMs8tT4RT4b1n"
   },
   "crawlChainIds": {
-    "mainnet": [1, 56, 1284, 43114, 66],
-    "testnet": []
+    "mainnet": [
+      1,
+      56,
+      1284,
+      43114,
+      66
+    ],
+    "testnet": [
+      97,
+      89,
+      5,
+      1287,
+      4002,
+      43113,
+      80001
+    ],
+    "nft721testnet": [
+      43113,
+      97
+    ],
+    "nft721mainnet": []
   },
   "blockchain": {
     "1": {
@@ -38,13 +57,42 @@
       "sleepTime": 150000
     },
     "56": {
-      "httpProvider": ["https://bsc-dataseed1.binance.org", "https://bsc-dataseed2.binance.org", "https://bsc-dataseed1.defibit.io/", "https://bsc-dataseed2.defibit.io/", "https://bsc-dataseed1.ninicoin.io/", "https://bsc-dataseed2.ninicoin.io/"],
+      "httpProvider": [
+        "https://bsc-dataseed1.binance.org",
+        "https://bsc-dataseed2.binance.org",
+        "https://bsc-dataseed1.defibit.io/",
+        "https://bsc-dataseed2.defibit.io/",
+        "https://bsc-dataseed1.ninicoin.io/",
+        "https://bsc-dataseed2.ninicoin.io/"
+      ],
       "wsProvider": "wss://bsc-ws-node.nariox.org:443",
       "explorer": "https://bscscan.com",
       "confirmations": 30,
       "nativeName": "Binance",
       "nativeSymbol": "BNB",
       "sleepTime": 60000
+    },
+    "5": {
+      "httpProvider": [
+        "https://rpc.ankr.com/eth_goerli",
+        "https://goerli.infura.io/v3/9aa3d95b3bc440fa88ea12eaa4456161",
+        "https://eth-goerli.public.blastapi.io/"
+      ],
+      "wsProvider": "",
+      "explorer": "https://goerli.etherscan.io/",
+      "confirmations": 5,
+      "nativeName": "Goerli",
+      "nativeSymbol": "Go"
+    },
+    "11155111": {
+      "httpProvider": [
+        "https://nunki.htznr.fault.dev/rpc"
+      ],
+      "wsProvider": "",
+      "explorer": "https://sepolia.etherscan.io/",
+      "confirmations": 10,
+      "nativeName": "Sepolia",
+      "nativeSymbol": "Sepolia"
     },
     "1284": {
       "httpProvider": ["https://rpc.api.moonbeam.network"],
@@ -55,7 +103,9 @@
       "sleepTime": 300000
     },
     "43114": {
-      "httpProvider": ["https://api.avax.network/ext/bc/C/rpc"],
+      "httpProvider": [
+        "https://api.avax.network/ext/bc/C/rpc"
+      ],
       "explorer": "https://snowtrace.io",
       "confirmations": 30,
       "nativeName": "Avalaunche",
@@ -63,7 +113,9 @@
       "sleepTime": 60000
     },
     "66": {
-      "httpProvider": ["https://exchainrpc.okex.org"],
+      "httpProvider": [
+        "https://exchainrpc.okex.org"
+      ],
       "explorer": "https://www.oklink.com/en/okc",
       "confirmations": 30,
       "nativeName": "OKEX Chain",
@@ -71,7 +123,11 @@
       "sleepTime": 80000
     },
     "42": {
-      "httpProvider": ["https://speedy-nodes-nyc.moralis.io/6f1c50d092cad31805b2371f/eth/kovan"],
+      "httpProvider": [
+        "https://speedy-nodes-nyc.moralis.io/6f1c50d092cad31805b2371f/eth/kovan",
+        "https://kovan.infura.io/v3/3a6c72cdf9e846968d21c0f3605013fd",
+        "https://kovan.infura.io/v3/99d4e19c704546fbbbdfe408d354b9c8"
+      ],
       "wsProvider": "",
       "explorer": "https://kovan.etherscan.io",
       "confirmations": 6,
@@ -98,10 +154,18 @@
       "sleepTime": 60000
     },
     "97": {
-      "httpProvider": ["https://speedy-nodes-nyc.moralis.io/6f1c50d092cad31805b2371f/bsc/testnet"],
+      "httpProvider": [
+        "https://bsc.gateway.pokt.network/v1/lb/1e815b7088bca30f000f78d9",
+        "https://data-seed-prebsc-2-s1.binance.org:8545/",
+        "https://data-seed-prebsc-1-s1.binance.org:8545/",
+        "https://data-seed-prebsc-1-s2.binance.org:8545/",
+        "https://data-seed-prebsc-2-s2.binance.org:8545/",
+        "https://data-seed-prebsc-1-s3.binance.org:8545/",
+        "https://data-seed-prebsc-2-s3.binance.org:8545/"
+      ],
       "wsProvider": "",
       "explorer": "https://testnet.bscscan.com",
-      "confirmations": 30,
+      "confirmations": 2,
       "nativeName": "Binance Testnet",
       "nativeSymbol": "fBNB",
       "sleepTime": 60000
@@ -119,16 +183,19 @@
       "httpProvider": "https://rpc.testnet.fantom.network/",
       "wsProvider": "",
       "explorer": "https://testnet.ftmscan.com/",
-      "confirmations": 30,
+      "confirmations": 2,
       "nativeName": "Fantom Testnet",
       "nativeSymbol": "fFTM",
       "sleepTime": 60000
     },
     "43113": {
-      "httpProvider": ["https://speedy-nodes-nyc.moralis.io/6f1c50d092cad31805b2371f/avalanche/testnet"],
+      "httpProvider": [
+        "https://api.avax-test.network/ext/bc/C/rpc",
+        "https://rpc.ankr.com/avalanche_fuji"
+      ],
       "wsProvider": "",
       "explorer": "https://testnet.snowtrace.io/",
-      "confirmations": 30,
+      "confirmations": 2,
       "nativeName": "Avalanche Testnet",
       "nativeSymbol": "fAVAX",
       "sleepTime": 60000
@@ -165,9 +232,14 @@
       "usdt": "0xdac17f958d2ee523a2206206994597c13d831ec7",
       "usdc": "0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48"
     },
+    "4": {
+      "bridge": "",
+      "nft721": "0x39B38ce58998743D82ccB006A56B5FAA4dd3A588",
+      "firstBlockNft721": 11130799
+    },
     "1284": {
       "bridge": "0x328A523B71545ddE8CD12a685318F2777D68798D",
-      "firstBlockCrawl": 1288563 
+      "firstBlockCrawl": 1288563
     },
     "43114": {
       "bridge": "0x328A523B71545ddE8CD12a685318F2777D68798D",
@@ -183,39 +255,63 @@
     },
     "42": {
       "bridge": "0xF1f62E51766037BDc5202CfDED157fF688A09C5f",
+      "nft721": "0x3705B763171a61777b761712222d6189ec527431",
       "firstBlockCrawl": 31131932,
+      "firstBlockNft721": 33343566,
       "wrapToken": "",
       "usdt": "",
       "usdc": "",
       "busd": ""
     },
     "89": {
-      "bridge": "0xeB7B94C34412f0415F468dC1854A8Cc0Ff7771d6",
+      "bridge": "0x2c1Fe6259CCD17BC4C652299252B4d8b745263C4",
       "firstBlockCrawl": 21822349
     },
     "97": {
       "bridge": "0x9927e816cCF2964a18AB0444A22B91cCe8a1f29D",
+      "nft721": "0xfb8f103Fd709Bed9DFF96ada6de50E48616f1895",
       "firstBlockCrawl": 18613003,
+      "firstBlockNft721": 22050030,
       "wrapToken": "",
       "usdt": "",
       "usdc": "",
       "busd": ""
     },
+    "11155111": {
+      "bridge": "",
+      "nft721": "0xfb8f103Fd709Bed9DFF96ada6de50E48616f1895",
+      "firstBlockCrawl": 2058907,
+      "firstBlockNft721": 2058907
+    },
+    "5": {
+      "bridge": "",
+      "nft721": "0xfb8f103Fd709Bed9DFF96ada6de50E48616f1895",
+      "firstBlockCrawl": 7743559,
+      "firstBlockNft721": 7743559
+    },
     "1287": {
       "bridge": "0xEdB7b5c85B3ad1f309f02a5cc9D035FEb0F9A213",
-      "firstBlockCrawl": 2026697
+      "nft721": "0x58029c7f774A5EF7bE77D178ffB9962215f9430A",
+      "firstBlockCrawl": 2026697,
+      "firstBlockNft721": 2528035
     },
     "4002": {
       "bridge": "0x106F6E9Ba8A93297b0a94A75BB7863e37a663A80",
-      "firstBlockCrawl": 5934008
+      "nft721": "0xeB7B94C34412f0415F468dC1854A8Cc0Ff7771d6",
+      "firstBlockCrawl": 5934008,
+      "firstBlockNft721": 10109943
     },
     "43113": {
       "bridge": "0x7e3226239dbfd6bea1ce22208001dc28194cbec2",
-      "firstBlockCrawl": 8754306
+      "nft721": "0xfb8f103Fd709Bed9DFF96ada6de50E48616f1895",
+      "firstBlockCrawl": 20184263,
+      "firstBlockNft721": 20184263
     },
     "80001": {
       "bridge": "0xAbB7ae870c54b893d20f75143BB8Fc389799ff42",
-      "firstBlockCrawl": 26010084
+      "nft721": "0x39B38ce58998743D82ccB006A56B5FAA4dd3A588",
+      "firstBlockCrawl": 26010084,
+      "firstBlockNft721": 27268507
     }
   },
   "db": {
@@ -228,5 +324,6 @@
   "isSequent": true,
   "signer": "",
   "checkTxOnChain": false,
+  "proxy": true,
   "signatureServer": []
 }

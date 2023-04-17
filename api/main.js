@@ -321,7 +321,7 @@ router.post('/request-withdraw', [
     let toChainId = req.body.toChainId
     let index = req.body.index
     let transaction = {}
-    if (!config.checkTxOnChain) {
+    if (!config.checkTxOnChain || fromChainId == casperConfig.networkId) {
         transaction = await db.Transaction.findOne({ requestHash: requestHash, fromChainId: fromChainId, toChainId: toChainId, index: index })
         if (!transaction) {
             transaction = await eventHelper.getRequestEvent(fromChainId, requestHash)

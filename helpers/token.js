@@ -1,6 +1,7 @@
 const Web3Util = require('./web3')
 const db = require('../models')
 const BigNumber = require('bignumber.js')
+const ERC20 = require('../contracts/ERC20.json')
 
 const TokenHelper = {
 
@@ -48,6 +49,12 @@ const TokenHelper = {
     } catch (e) {
       return await db.Token.findOne({hash: hash, networkId: networkId})
     }
+  },
+  getTokenSymbol:async (hash, networkId) => {
+    const web3 = await Web3Util.getWeb3(networkId)
+    let contract = new web3.eth.Contract(ERC20, hash)
+
+    return contract.methods.symbol().call()
   },
   removeXMLInvalidChars: async (string, removeDiscouragedChars = true) => {
     // remove everything forbidden by XML 1.0 specifications, plus the unicode replacement character U+FFFD

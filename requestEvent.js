@@ -9,6 +9,7 @@ const GenericBridge = require("./contracts/GenericBridge");
 const db = require("./models");
 const CasperHelper = require("./helpers/casper");
 const CasperConfig = CasperHelper.getConfigInfo();
+
 BigNumber.config({ EXPONENTIAL_AT: [-100, 100] });
 const baseUnit = 10 ** 18;
 
@@ -144,8 +145,9 @@ async function updateBlock(networkId, lastBlock) {
         { upsert: true, new: true }
       );
     } else {
-      if (lastBlock > setting.lastBlockRequest) {
-        setting.lastBlockRequest = lastBlock
+      let lastBlockRequest = setting.lastBlockRequest ? setting.lastBlockRequest : 0
+      if (lastBlock > lastBlockRequest) {
+        setting.lastBlockRequest = lastBlock;
         await setting.save()
       }
     }
@@ -179,7 +181,7 @@ async function getPastEventForBatch(networkId, bridgeAddress, step, from, to) {
       rpc_choosed = both.rpc
       let currentBlockForRPC = await web3.eth.getBlockNumber()
       if (parseInt(currentBlockForRPC) < parseInt(toBlock)) {
-        logger.warning("invalid RPC %s, try again", rpc_choosed)
+        logger.warn("invalid RPC %s, try again", rpc_choosed)
         continue
       }
       const contract = new web3.eth.Contract(GenericBridge, bridgeAddress);
