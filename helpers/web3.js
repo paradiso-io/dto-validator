@@ -97,6 +97,40 @@ let Web3Util = {
     }
     approverList = approverList.map(e => e.toLowerCase())
     return { minApprovers, approverList }
+  },
+  getApprovers: async (chainId) => {
+    let approver = await db.Approver.findOne({chainId: String(chainId)})
+    // if not found or expired (in 24 hours - fetch again every 24 hours)
+    if (!approver || approver.fetchedAt < general.now() - 24 * 3600) {
+      let retry = 10
+      while(retry > 0) {
+        try {
+          let bridgeContract = await Web3Util.getBridgeContract(chainId)
+          let minApprovers = await bridgeContract.methods.minApprovers().call()
+          let approverList = await bridgeContract.methods.getBridgeApprovers().call()
+          approverList = approverList.map(e => e.toLowerCase())
+          await db.Approver.updateOne({chainId: String(chainId)}, {
+            $set: {
+              minNumber: parseInt(minApprovers),
+              list: approverList,
+              fetchedAt: general.now()
+            }
+          }, {upsert: true, new: true})
+
+          return {number: parseInt(minApprovers), list: approverList}
+        } catch(e) {
+          console.log("error in reading approver")
+          await GeneralHelper.sleep(5 * 1000)
+        }
+        retry--
+      }
+      if (approver) {
+        return {number: approver.minNumber, list: approver.list}
+      }
+      return {number: 0, list: []}
+    } else {
+      return {number: approver.minNumber, list: approver.list}
+    }
   }
 }
 
