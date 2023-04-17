@@ -5,6 +5,7 @@ const Nft721BridgeABI = require('../contracts/NFT721Bridge.json')
 const PrivateKeyProvider = require("truffle-privatekey-provider");
 const DTOBridgeNFT721ABI = require('../contracts/DTOBridgeNFT721.json')
 const GeneralHelper = require('./general')
+const db = require('../models')
 
 let Web3Util = {
   getWeb3: async (networkId) => {
@@ -101,7 +102,7 @@ let Web3Util = {
   getApprovers: async (chainId) => {
     let approver = await db.Approver.findOne({chainId: String(chainId)})
     // if not found or expired (in 24 hours - fetch again every 24 hours)
-    if (!approver || approver.fetchedAt < general.now() - 24 * 3600) {
+    if (!approver || approver.fetchedAt < GeneralHelper.now() - 24 * 3600) {
       let retry = 10
       while(retry > 0) {
         try {
@@ -113,7 +114,7 @@ let Web3Util = {
             $set: {
               minNumber: parseInt(minApprovers),
               list: approverList,
-              fetchedAt: general.now()
+              fetchedAt: GeneralHelper.now()
             }
           }, {upsert: true, new: true})
 
