@@ -14,6 +14,7 @@
     "axios": "^0.21.1",
     "bignumber.js": "^9.0.0",
     "casper-cep47-js-client": "file:./packages/cep47-client",
+    "casper-cep78-js-client": "file:./packages/cep78-client",
     "casper-erc20-js-client": "file:./packages/erc20-client",
     "casper-js-client-helper": "file:./packages/client-helper",
     "casper-js-sdk": "2.8.0",
