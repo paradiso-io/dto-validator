@@ -361,7 +361,7 @@ router.post('/request-withdraw', [
     }
     if (!config.checkTxOnChain || fromChainId == casperConfig.networkId) {
         transaction = await db.Transaction.findOne({ requestHash: requestHash, fromChainId: fromChainId, toChainId: toChainId, index: index })
-        if (!transaction) {
+        if (!transaction && fromChainId != casperConfig.networkId) {
             await fetchTransactionFromEVMIfNot(fromChainId, requestHash)
             transaction = await eventHelper.getRequestEvent(fromChainId, requestHash)
             logger.info('done getRequestEvent %s', transaction)
