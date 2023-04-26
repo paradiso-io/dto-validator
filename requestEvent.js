@@ -294,18 +294,27 @@ async function watch(networkId, bridgeAddress) {
  * Main function: check events in bridge contract in all EVM chain
  */
 function main() {
-  let contracts = config.contracts;
-  let crawlChainIds = config.crawlChainIds[config.caspernetwork] ? config.crawlChainIds[config.caspernetwork] : []
-  crawlChainIds = crawlChainIds.map(e => parseInt(e))
-  let networks = Object.keys(contracts)
-  networks.forEach((networkId) => {
-    if (crawlChainIds.includes(parseInt(networkId))) {
-      let contractAddress = contracts[networkId].bridge
-      if (contractAddress !== "") {
-        watch(networkId, contractAddress)
+  if (config.proxy) {
+    let contracts = config.contracts;
+    let crawlChainIds = config.crawlChainIds[config.caspernetwork] ? config.crawlChainIds[config.caspernetwork] : []
+    crawlChainIds = crawlChainIds.map(e => parseInt(e))
+    let networks = Object.keys(contracts)
+    networks.forEach((networkId) => {
+      if (crawlChainIds.includes(parseInt(networkId))) {
+        let contractAddress = contracts[networkId].bridge
+        if (contractAddress !== "") {
+          watch(networkId, contractAddress)
+        }
       }
-    }
-  })
+    })
+  } else {
+    logger.info("validators dont crawl every single block as previous version, exit the function now")
+  }
 }
 
 main();
+
+module.exports = {
+  getPastEvent,
+  getPastEventForBatch
+}

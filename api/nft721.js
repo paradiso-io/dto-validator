@@ -14,6 +14,29 @@ const casperConfig = CasperHelper.getConfigInfo()
 const GeneralHelper = require('../helpers/general')
 const { default: BigNumber } = require('bignumber.js')
 const preSignNFT = require('../helpers/preSignNFT')
+const { getPastEventForBatch } = require('../requestNFT721')
+
+async function fetchTransactionFromEVMIfNot(fromChainId, requestHash) {
+    // dont re-index if this is a proxy as the proxy node already index all events in requestEvent and requestNFT721
+    if (config.proxy) return
+    
+    let transaction = await db.Transaction.findOne({ requestHash: requestHash, fromChainId: fromChainId })
+    if (!transaction) {
+        const web3 = await Web3Utils.getWeb3(fromChainId)
+        let onChainTx = await GeneralHelper.tryCallWithTrial(async () => {
+            let onChainTx = await web3.eth.getTransaction(requestHash)
+            return onChainTx
+        })
+        
+        if (!onChainTx) {
+            return res.status(400).json({ errors: 'invalid transaction hash' })
+        }
+
+        const blockNumberToIndex = onChainTx.blockNumber
+        await getPastEventForBatch(fromChainId, config.contracts[`${fromChainId}`].nft721, 10, blockNumberToIndex - 1, blockNumberToIndex + 1)
+    }
+}
+
 router.get('/transactions/:account/:networkId', [
     check('account').exists().isLength({ min: 42, max: 68 }).withMessage('address is incorrect.'),
     check('networkId').exists().isNumeric({ no_symbols: true }).withMessage('networkId is incorrect'),
@@ -88,6 +111,7 @@ router.get('/transaction-status/:requestHash/:fromChainId', [
         {
             //check transaction on-chain
             if (fromChainId != casperConfig.networkId) {
+                await fetchTransactionFromEVMIfNot(fromChainId, requestHash)
                 let transaction = await eventHelper.getRequestNft721Event(fromChainId, requestHash)
                 if (!transaction || !transaction.requestHash) {
                     //cant find transaction on-chain
@@ -178,6 +202,7 @@ router.get('/verify-transaction/:requestHash/:fromChainId/:index', [
     let transaction = {}
     console.log('fromChainId', fromChainId, casperConfig.networkId)
     if (fromChainId != casperConfig.networkId) {
+        await fetchTransactionFromEVMIfNot(fromChainId, requestHash)
         transaction = await eventHelper.getRequestNft721Event(fromChainId, requestHash, index)
     }
     if (!transaction || (fromChainId != casperConfig.networkId && !transaction.requestHash)) {
@@ -268,6 +293,7 @@ router.post('/request-withdraw', [
         if (!config.checkTxOnChain || fromChainId == casperConfig.networkId) {
             transaction = await db.Nft721Transaction.findOne({ requestHash: requestHash, fromChainId: fromChainId, toChainId: toChainId, index: index })
         } else {
+            await fetchTransactionFromEVMIfNot(fromChainId, requestHash)
             transaction = await eventHelper.getRequestNft721Event(fromChainId, requestHash, index)
         }
         if (!transaction) {

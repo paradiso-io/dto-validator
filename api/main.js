@@ -12,6 +12,7 @@ const CasperHelper = require('../helpers/casper')
 const logger = require('../helpers/logger')
 const casperConfig = CasperHelper.getConfigInfo()
 const tokenHelper = require("../helpers/token");
+const { getPastEventForBatch } = require('../requestEvent')
 const GeneralHelper = require('../helpers/general')
 
 router.get('/status', [], async function (req, res) {
@@ -30,6 +31,26 @@ router.get('/tokenmap', [], async function (req, res) {
         tokenMap
     })
 })
+
+async function fetchTransactionFromEVMIfNot(fromChainId, requestHash) {
+    // dont re-index if this is a proxy as the proxy node already index all events in requestEvent and requestNFT721
+    if (config.proxy) return
+    let transaction = await db.Transaction.findOne({ requestHash: requestHash, fromChainId: fromChainId })
+    if (!transaction) {
+        const web3 = await Web3Utils.getWeb3(fromChainId)
+        let onChainTx = await GeneralHelper.tryCallWithTrial(async () => {
+            let onChainTx = await web3.eth.getTransaction(requestHash)
+            return onChainTx
+        })
+        
+        if (!onChainTx) {
+            return res.status(400).json({ errors: 'invalid transaction hash' })
+        }
+
+        const blockNumberToIndex = onChainTx.blockNumber
+        await getPastEventForBatch(fromChainId, config.contracts[`${fromChainId}`].bridge, 10, blockNumberToIndex - 1, blockNumberToIndex + 1)
+    }
+}
 
 /**
  * History of an account
@@ -123,14 +144,15 @@ router.get('/transaction-status/:requestHash/:fromChainId', [
         {
             //check transaction on-chain
             if (fromChainId != casperConfig.networkId) {
-                let transaction = await eventHelper.getRequestEvent(fromChainId, requestHash)
+                await fetchTransactionFromEVMIfNot(fromChainId, requestHash)
+                transaction = await eventHelper.getRequestEvent(fromChainId, requestHash)
                 if (!transaction || !transaction.requestHash) {
                     //cant find transaction on-chain
                     return res.status(400).json({ errors: "transaction not found" })
                 }
                 index = transaction.index
             } else {
-                transaction = await db.Transaction.findOne({ requestHash: requestHash, fromChainId: fromChainId })
+                let transaction = await db.Transaction.findOne({ requestHash: requestHash, fromChainId: fromChainId })
                 index = transaction.index
             }
         }
@@ -233,6 +255,7 @@ router.get('/verify-transaction/:requestHash/:fromChainId/:index', [
     let index = req.params.index
     let transaction = {}
     if (fromChainId !== casperConfig.networkId) {
+        await fetchTransactionFromEVMIfNot(fromChainId, requestHash)
         transaction = await eventHelper.getRequestEvent(fromChainId, requestHash)
     }
     if (!transaction || (fromChainId !== casperConfig.networkId && !transaction.requestHash)) {
@@ -327,6 +350,7 @@ router.post('/request-withdraw', [
             transaction = await eventHelper.getRequestEvent(fromChainId, requestHash)
         }
     } else {
+        await fetchTransactionFromEVMIfNot(fromChainId, requestHash)
         transaction = await eventHelper.getRequestEvent(fromChainId, requestHash)
     }
 

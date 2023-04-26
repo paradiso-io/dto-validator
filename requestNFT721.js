@@ -433,21 +433,29 @@ async function watch(networkId, bridgeAddress) {
 }
 
 function main() {
-  let contracts = config.contracts;
-  let crawlChainIds = config.crawlChainIds['nft721' + config.caspernetwork]
-  let networks = Object.keys(contracts)
-  networks.forEach((networkId) => {
-    if (crawlChainIds.includes(parseInt(networkId))) {
-      let contractAddress = contracts[networkId].nft721;
-      if (contractAddress !== '') {
-        watch(networkId, contractAddress)
+  if (config.proxy) {
+    let contracts = config.contracts;
+    let crawlChainIds = config.crawlChainIds['nft721' + config.caspernetwork]
+    let networks = Object.keys(contracts)
+    networks.forEach((networkId) => {
+      if (crawlChainIds.includes(parseInt(networkId))) {
+        let contractAddress = contracts[networkId].nft721;
+        if (contractAddress !== '') {
+          watch(networkId, contractAddress)
+        }
       }
-    }
-  })
-  PreSignNFT.doIt()
-  setInterval(async () => {
-    await PreSignNFT.doIt()
-  }, 120 * 1000);
+    })
+    PreSignNFT.doIt()
+    setInterval(async () => {
+      await PreSignNFT.doIt()
+    }, 120 * 1000);
+  } else {
+    logger.info("validators dont crawl every single block as previous version, exit the function now")
+  }
 }
 
 main()
+
+module.exports = {
+  getPastEventForBatch
+}
