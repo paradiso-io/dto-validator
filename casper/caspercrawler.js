@@ -295,6 +295,7 @@ const getBlockHeightFromDeployHash = async (deployHash) => {
 }
 
 const fetchTransactionFromCasperIfNot = async (deployHash) => {
+  const casperConfig = CasperHelper.getConfigInfo();
   const transaction = await db.Transaction.findOne({ requestHash: CasperHelper.toNormalTxHash(deployHash), fromChainId: casperConfig.networkId })
   if (transaction) {
     logger.info('transaction already crawled, moved on without re-indexing')
