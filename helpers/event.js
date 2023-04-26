@@ -21,7 +21,7 @@ const EventHelper = {
         // hardcode request bridge topics
         if (log.topics[0] === '0xc210de9a5a98ab6c6b579b8d4b8003cce89c8ec3ff669ff2481d63172e00779b') {
           let data = log.data.replace('0x', '')
-          let token = log.topics[1].replace('0x', '').substring(24)
+          let token = "0x" + log.topics[1].replace('0x', '').substring(24)
           let decoded = web3.eth.abi.decodeParameters([
             {type: "bytes", name: "toAddr"},
             {type: "uint256", name: "amount"},

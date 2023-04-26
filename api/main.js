@@ -37,18 +37,20 @@ async function fetchTransactionFromEVMIfNot(fromChainId, requestHash) {
     if (config.proxy) return
     let transaction = await db.Transaction.findOne({ requestHash: requestHash, fromChainId: fromChainId })
     if (!transaction) {
+        logger.info("fetching transcation from chain %s", fromChainId)
         const web3 = await Web3Utils.getWeb3(fromChainId)
         let onChainTx = await GeneralHelper.tryCallWithTrial(async () => {
             let onChainTx = await web3.eth.getTransaction(requestHash)
             return onChainTx
         })
-        
+        logger.info("done fetching transcation from chain %s", fromChainId)        
         if (!onChainTx) {
             return res.status(400).json({ errors: 'invalid transaction hash' })
         }
 
         const blockNumberToIndex = onChainTx.blockNumber
         await getPastEventForBatch(fromChainId, config.contracts[`${fromChainId}`].bridge, 10, blockNumberToIndex - 1, blockNumberToIndex + 1)
+        logger.info('done fetching events from evm for erc20 tokens')
     }
 }
 
@@ -347,7 +349,9 @@ router.post('/request-withdraw', [
     if (!config.checkTxOnChain || fromChainId == casperConfig.networkId) {
         transaction = await db.Transaction.findOne({ requestHash: requestHash, fromChainId: fromChainId, toChainId: toChainId, index: index })
         if (!transaction) {
+            await fetchTransactionFromEVMIfNot(fromChainId, requestHash)
             transaction = await eventHelper.getRequestEvent(fromChainId, requestHash)
+            logger.info('done getRequestEvent %s', transaction)
         }
     } else {
         await fetchTransactionFromEVMIfNot(fromChainId, requestHash)
@@ -369,7 +373,6 @@ router.post('/request-withdraw', [
         if (!onChainTx) {
             return res.status(400).json({ errors: 'invalid transaction hash' })
         }
-
         let latestBlockNumber = await web3.eth.getBlockNumber()
         let confirmations = config.blockchain[fromChainId].confirmations
         if (latestBlockNumber - transaction.requestBlock < confirmations) {
@@ -426,13 +429,17 @@ router.post('/request-withdraw', [
         }
     }
 
+    logger.info('0')
     const nativeAddress = config.get('nativeAddress')
     let name, decimals, symbol
+    console.log("compare", transaction.originToken.toLowerCase(), nativeAddress)
     if (transaction.originToken.toLowerCase() === nativeAddress.toLowerCase()) {
+        logger.info('0.1')
         name = config.blockchain[transaction.originChainId].nativeName
         symbol = config.blockchain[transaction.originChainId].nativeSymbol
         decimals = 18
     } else {
+        logger.info('0.2')
         let token = await db.Token.findOne({ hash: transaction.originToken, networkId: transaction.originChainId })
         if (!token) {
             let web3Origin = await Web3Utils.getWeb3(transaction.originChainId)
@@ -448,8 +455,9 @@ router.post('/request-withdraw', [
             decimals = token.decimals
             symbol = token.symbol
         }
-
+        logger.info('0.3')
     }
+    logger.info('1')
     if (transaction.toChainId !== transaction.originChainId) {
         let nativeName = config.blockchain[transaction.toChainId].nativeName
         name = "DTO Wrapped " + name + `(${nativeName})`
