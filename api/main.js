@@ -14,6 +14,7 @@ const casperConfig = CasperHelper.getConfigInfo()
 const tokenHelper = require("../helpers/token");
 const { getPastEventForBatch } = require('../requestEvent')
 const GeneralHelper = require('../helpers/general')
+const { fetchTransactionFromCasperIfNot } = require('../casper/caspercrawler')
 
 router.get('/status', [], async function (req, res) {
     return res.json({ status: 'ok' })
@@ -142,6 +143,10 @@ router.get('/transaction-status/:requestHash/:fromChainId', [
     let fromChainId = req.params.fromChainId
     let index = req.query.index ? req.query.index : 0
 
+    if (fromChainId == casperConfig.networkId) {
+        await fetchTransactionFromCasperIfNot(requestHash)
+    }
+
     if (!req.query.index) {
         {
             //check transaction on-chain
@@ -256,6 +261,11 @@ router.get('/verify-transaction/:requestHash/:fromChainId/:index', [
     let fromChainId = req.params.fromChainId
     let index = req.params.index
     let transaction = {}
+
+    if (fromChainId == casperConfig.networkId) {
+        await fetchTransactionFromCasperIfNot(requestHash)
+    }
+
     if (fromChainId !== casperConfig.networkId) {
         await fetchTransactionFromEVMIfNot(fromChainId, requestHash)
         transaction = await eventHelper.getRequestEvent(fromChainId, requestHash)
@@ -346,6 +356,9 @@ router.post('/request-withdraw', [
     let toChainId = req.body.toChainId
     let index = req.body.index
     let transaction = {}
+    if (fromChainId == casperConfig.networkId) {
+        await fetchTransactionFromCasperIfNot(requestHash)
+    }
     if (!config.checkTxOnChain || fromChainId == casperConfig.networkId) {
         transaction = await db.Transaction.findOne({ requestHash: requestHash, fromChainId: fromChainId, toChainId: toChainId, index: index })
         if (!transaction) {

@@ -8,7 +8,7 @@ const logger = require("../helpers/logger");
 const db = require("../models");
 const TokenHook = require('./casperTokenCrawlerHook')
 const NFTHook = require('./casperNFTCrawlerHook')
-
+const config = require('config')
 BigNumber.config({ EXPONENTIAL_AT: [-100, 100] });
 
 function toToken(n, decimals) {
@@ -271,11 +271,42 @@ const getPastEvent = async () => {
  * It will get the past event and sleep for 10 seconds.
  */
 let watch = async () => {
-  while (true) {
-    await getPastEvent();
-    console.log('waiting')
-    await generalHelper.sleep(10 * 1000);
+  if (config.proxy) {
+    while (true) {
+      await getPastEvent();
+      console.log('waiting')
+      await generalHelper.sleep(10 * 1000);
+    }
+  } else {
+    logger.info("validators dont crawl every single block as previous version, exit the function now")
   }
 };
 
+const getBlockHeightFromDeployHash = async (deployHash) => {
+  let selectedRPC = await CasperHelper.getRandomGoodCasperRPCLink(1, null)
+  let client = new CasperServiceByJsonRPC(
+    selectedRPC
+  );
+
+  const deploy = await client.getDeployInfo(deployHash)
+  const blockHash = deploy.execution_results[0].block_hash
+  const block = await client.getBlockInfo(blockHash)
+  return block.block.header.height
+}
+
+const fetchTransactionFromCasperIfNot = async (deployHash) => {
+  const transaction = await db.Transaction.findOne({ requestHash: CasperHelper.toNormalTxHash(deployHash), fromChainId: casperConfig.networkId })
+  if (transaction) {
+    logger.info('transaction already crawled, moved on without re-indexing')
+    return
+  }
+  deployHash = CasperHelper.toCasperDeployHash(deployHash)
+  const blockHeight = await getBlockHeightFromDeployHash(deployHash)
+  await crawl(blockHeight, blockHeight, blockHeight, null)
+}
+
 watch();
+
+module.exports = {
+  fetchTransactionFromCasperIfNot
+}

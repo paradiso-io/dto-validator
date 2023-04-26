@@ -15,11 +15,12 @@ const GeneralHelper = require('../helpers/general')
 const { default: BigNumber } = require('bignumber.js')
 const preSignNFT = require('../helpers/preSignNFT')
 const { getPastEventForBatch } = require('../requestNFT721')
+const { fetchTransactionFromCasperIfNot } = require('../casper/caspercrawler')
 
 async function fetchTransactionFromEVMIfNot(fromChainId, requestHash) {
     // dont re-index if this is a proxy as the proxy node already index all events in requestEvent and requestNFT721
     if (config.proxy) return
-    
+
     let transaction = await db.Transaction.findOne({ requestHash: requestHash, fromChainId: fromChainId })
     if (!transaction) {
         const web3 = await Web3Utils.getWeb3(fromChainId)
@@ -106,6 +107,10 @@ router.get('/transaction-status/:requestHash/:fromChainId', [
     let requestHash = req.params.requestHash
     let fromChainId = req.params.fromChainId
     let index = req.query.index ? req.query.index : ''
+
+    if (fromChainId == casperConfig.networkId) {
+        await fetchTransactionFromCasperIfNot(requestHash)
+    }
 
     if (req.query.index !== '') {
         {
@@ -201,6 +206,11 @@ router.get('/verify-transaction/:requestHash/:fromChainId/:index', [
     let index = req.params.index
     let transaction = {}
     console.log('fromChainId', fromChainId, casperConfig.networkId)
+
+    if (fromChainId == casperConfig.networkId) {
+        await fetchTransactionFromCasperIfNot(requestHash)
+    }
+
     if (fromChainId != casperConfig.networkId) {
         await fetchTransactionFromEVMIfNot(fromChainId, requestHash)
         transaction = await eventHelper.getRequestNft721Event(fromChainId, requestHash, index)
@@ -290,6 +300,11 @@ router.post('/request-withdraw', [
         let toChainId = req.body.toChainId
         let index = req.body.index
         let transaction = {}
+
+        if (fromChainId == casperConfig.networkId) {
+            await fetchTransactionFromCasperIfNot(requestHash)
+        }
+
         if (!config.checkTxOnChain || fromChainId == casperConfig.networkId) {
             transaction = await db.Nft721Transaction.findOne({ requestHash: requestHash, fromChainId: fromChainId, toChainId: toChainId, index: index })
         } else {
