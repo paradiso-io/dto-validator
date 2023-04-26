@@ -176,7 +176,7 @@ async function crawl(from, to, lastBlockHeight, rpc) {
       fromBlock++;
     } catch (e) {
       logger.error("Error: %s [%s-%s] %s", e.toString(), from, to, fromBlock);
-      await generalHelper.sleep(5 * 1000);
+      await generalHelper.sleep(100);
       selectedRPC = await CasperHelper.getRandomGoodCasperRPCLink(to)
       client = new CasperServiceByJsonRPC(
         selectedRPC
@@ -291,7 +291,7 @@ const getBlockHeightFromDeployHash = async (deployHash) => {
   const deploy = await client.getDeployInfo(deployHash)
   const blockHash = deploy.execution_results[0].block_hash
   const block = await client.getBlockInfo(blockHash)
-  return block.block.header.height
+  return { height: block.block.header.height, selectedRPC }
 }
 
 const fetchTransactionFromCasperIfNot = async (deployHash) => {
@@ -302,8 +302,10 @@ const fetchTransactionFromCasperIfNot = async (deployHash) => {
     return
   }
   deployHash = CasperHelper.toCasperDeployHash(deployHash)
-  const blockHeight = await getBlockHeightFromDeployHash(deployHash)
-  await crawl(blockHeight, blockHeight, blockHeight, null)
+  const { height: blockHeight, selectedRPC } = await getBlockHeightFromDeployHash(deployHash)
+  console.log('blockHeight', blockHeight, deployHash)
+  await crawl(blockHeight, blockHeight + 1, blockHeight + 1, selectedRPC)
+  console.log('done crawl casper')
 }
 
 watch();

@@ -311,7 +311,7 @@ router.get('/verify-transaction/:requestHash/:fromChainId/:index', [
             if (!transaction) {
                 return res.json({ success: false })
             }
-            let casperRPC = await CasperHelper.getCasperRPC(transaction.requestBlock)
+            let casperRPC = await CasperHelper.getRandomGoodCasperRPCLink(transaction.requestBlock)
             let deployResult = await casperRPC.getDeployInfo(CasperHelper.toCasperDeployHash(transaction.requestHash))
             let eventData = await CasperHelper.parseRequestFromCasper(deployResult)
             if (eventData.toAddr.toLowerCase() !== transaction.account.toLowerCase()
@@ -371,7 +371,8 @@ router.post('/request-withdraw', [
         transaction = await eventHelper.getRequestEvent(fromChainId, requestHash)
     }
 
-    if (fromChainId !== casperConfig.networkId) {
+    console.log('tx', transaction, fromChainId, casperConfig.networkId)
+    if (parseInt(fromChainId) !== casperConfig.networkId) {
         let web3 = await Web3Utils.getWeb3(fromChainId)
 
         if (!transaction) {
@@ -407,7 +408,7 @@ router.post('/request-withdraw', [
             transaction = await db.Transaction.findOne({ requestHash: requestHash, fromChainId: fromChainId })
             let eventData = null
             if (!transaction) {
-                let casperRPC = await CasperHelper.getCasperRPC(transaction.requestBlock)
+                let casperRPC = await CasperHelper.getRandomGoodCasperRPCLink(transaction.requestBlock)
                 let deployResult = await casperRPC.getDeployInfo(CasperHelper.toCasperDeployHash(transaction.requestHash))
                 eventData = await CasperHelper.parseRequestFromCasper(deployResult)
 
@@ -422,7 +423,7 @@ router.post('/request-withdraw', [
                 }
             }
             if (eventData === null) {
-                let casperRPC = await CasperHelper.getCasperRPC(transaction.requestBlock)
+                let casperRPC = await CasperHelper.getRandomGoodCasperRPCLink(transaction.requestBlock)
                 let deployResult = await casperRPC.getDeployInfo(CasperHelper.toCasperDeployHash(transaction.requestHash))
                 eventData = await CasperHelper.parseRequestFromCasper(deployResult)
             }
