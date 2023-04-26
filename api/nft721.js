@@ -261,7 +261,7 @@ router.get('/verify-transaction/:requestHash/:fromChainId/:index', [
             if (!transaction) {
                 return res.json({ success: false })
             }
-            let casperRPC = await CasperHelper.getRandomGoodCasperRPCLink(transaction.requestBlock)
+            let casperRPC = await CasperHelper.getCasperRPC(transaction.requestBlock)
             let deployResult = await casperRPC.getDeployInfo(CasperHelper.toCasperDeployHash(transaction.requestHash))
             if (!CasperHelper.isDeploySuccess(deployResult)) {
                 return res.json({ success: false })
@@ -394,7 +394,7 @@ router.post('/request-withdraw', [
         } else {
             //casper
             try {
-                let casperRPC = await CasperHelper.getRandomGoodCasperRPCLink(transaction.requestBlock)
+                let casperRPC = await CasperHelper.getCasperRPC(transaction.requestBlock)
                 let deployResult = await casperRPC.getDeployInfo(CasperHelper.toCasperDeployHash(transaction.requestHash))
                 if (!CasperHelper.isDeploySuccess(deployResult)) {
                     return res.status(400).json({ errors: 'request transaction failed' })
