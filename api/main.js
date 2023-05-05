@@ -455,7 +455,8 @@ router.post('/request-withdraw', [
     } else {
         logger.info('0.2')
         let token = await db.Token.findOne({ hash: transaction.originToken, networkId: transaction.originChainId })
-        if (!token) {
+        
+        {
             let web3Origin = await Web3Utils.getWeb3(transaction.originChainId)
             let originTokenContract = await new web3Origin.eth.Contract(IERC20ABI, transaction.originToken)
             name = await originTokenContract.methods.name().call()
@@ -464,10 +465,11 @@ router.post('/request-withdraw', [
             await db.Token.updateOne({ hash: transaction.originToken, networkId: transaction.originChainId }, {
                 $set: { name, symbol, decimals }
             }, { upsert: true, new: true })
-        } else {
-            name = token.name
-            decimals = token.decimals
-            symbol = token.symbol
+        } 
+        if (token) {
+            if (token.name != name || token.symbol != symbol || token.decimals != decimals) {
+                return res.status(400).json({ errors: 'Chain state of token ' + token.hash + ' and local database mismatch, dont sign!' })
+            }
         }
         logger.info('0.3')
     }
