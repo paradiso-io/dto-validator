@@ -6,13 +6,12 @@ const logger = require("./helpers/logger");
 const Web3Utils = require("./helpers/web3");
 const tokenHelper = require("./helpers/token");
 const GenericBridge = require("./contracts/GenericBridge");
+const EventHook = require("./contracts/EventHook");
 const db = require("./models");
 const CasperHelper = require("./helpers/casper");
 const CasperConfig = CasperHelper.getConfigInfo();
 
 BigNumber.config({ EXPONENTIAL_AT: [-100, 100] });
-const baseUnit = 10 ** 18;
-
 // fix warning max listener
 events.EventEmitter.defaultMaxListeners = 1000;
 process.setMaxListeners(1000);
@@ -70,6 +69,7 @@ async function processRequestEvent(
       index: event.returnValues._index,
       fromChainId: event.returnValues._fromChainId,
       toChainId: event.returnValues._toChainId,
+      requestHash: event.transactionHash
     },
     {
       $set: {
@@ -267,11 +267,128 @@ async function getPastEvent(networkId, bridgeAddress, step) {
       `network ${networkId}: done for blocks from ${lastCrawl
       } to ${lastBlock}`
     );
-
-    await updateBlock(networkId, lastBlock)
+    
+    // dont update here, already update in watch function
+    // await updateBlock(networkId, lastBlock)
+    return lastBlock
   } catch (e) {
     console.log(e);
   }
+  return 0
+}
+
+async function getPastEventForBatchForWrapNonEVM(networkId, eventHookAddress, step, from, to) {
+  let lastBlock = to
+  let lastCrawl = from
+  logger.info(`Network ${networkId} start batch from ${from} to ${to}`)
+
+  let rpc_choosed = null
+  while (lastBlock - lastCrawl > 0) {
+    try {
+      let toBlock;
+      if (lastBlock - lastCrawl > step) {
+        toBlock = lastCrawl + step;
+      } else {
+        toBlock = lastBlock;
+      }
+      let both = await Web3Utils.getWeb3AndRPC(networkId);
+      let web3 = both.web3
+      rpc_choosed = both.rpc
+      let currentBlockForRPC = await web3.eth.getBlockNumber()
+      if (parseInt(currentBlockForRPC) < parseInt(toBlock)) {
+        logger.warn("invalid RPC %s, try again", rpc_choosed)
+        continue
+      }
+      const contract = new web3.eth.Contract(EventHook, eventHookAddress);
+      logger.info(
+        "Network %s: Get Past Event from block %s to %s, lastblock %s",
+        networkId,
+        lastCrawl + 1,
+        toBlock,
+        lastBlock
+      );
+      let allEvents = await contract.getPastEvents("allEvents", {
+        fromBlock: lastCrawl + 1,
+        toBlock: toBlock,
+      });
+      if (allEvents.length > 0) {
+        logger.info(
+          `network ${networkId}: there are ${allEvents.length} events from ${lastCrawl + 1
+          } to ${toBlock}`
+        );
+      }
+
+      for (let i = 0; i < allEvents.length; i++) {
+        let event = allEvents[i];
+        if (event.event === 'RequestBridge') {
+          await processRequestEvent(event, networkId)
+        } else if (event.event === 'ClaimToken') {
+          await processClaimEvent(event)
+        }
+      }
+
+      // console.log('sleep 2 seconds and wait to continue')
+      await sleep(1000);
+
+      lastCrawl = toBlock;
+    } catch (e) {
+      logger.warn("Error network %s RPC: %s, waiting 5 seconds: %s", networkId, rpc_choosed, e)
+      await sleep(5000)
+    }
+  }
+}
+
+/**
+ * Check events in a bridge contract in an EVM chain with step
+ * @param networkId network id (or chain id) of EVM a network
+ * @param bridgeAddress contract address of bridge in this network
+ * @param step step per time
+ */
+async function getPastEventForWrapNonEVM(networkId, eventHookAddress, step) {
+  try {
+    let web3 = await Web3Utils.getWeb3(networkId);
+    const confirmations = config.get("blockchain")[networkId].confirmations;
+    let lastBlock = await web3.eth.getBlockNumber();
+    let setting = await db.Setting.findOne({ networkId: networkId })
+    let lastCrawl = config.contracts[networkId].firstBlockCrawl
+    if (lastCrawl === null) {
+      lastCrawl = 9394711
+    }
+    if (setting && setting.lastBlockRequest) {
+      lastCrawl = setting.lastBlockRequest;
+    }
+    lastCrawl = parseInt(lastCrawl)
+    lastBlock = parseInt(lastBlock) - confirmations
+
+    let blockPerBatch = 30000
+    let numBatch = Math.floor((lastBlock - lastCrawl) / blockPerBatch) + 1
+    let tasks = []
+    for (var i = 0; i < numBatch; i++) {
+      let from = lastCrawl + i * blockPerBatch
+      let to = lastCrawl + (i + 1) * blockPerBatch
+      if (to > lastBlock) {
+        to = lastBlock
+      }
+      if (config.isSequent) {
+        await getPastEventForBatchForWrapNonEVM(networkId, eventHookAddress, step, from, to)
+      } else {
+        tasks.push(getPastEventForBatchForWrapNonEVM(networkId, eventHookAddress, step, from, to))
+      }
+    }
+
+    await Promise.all(tasks)
+
+    logger.info(
+      `network ${networkId}: done for blocks from ${lastCrawl
+      } to ${lastBlock}`
+    );
+    // dont update here as it is updated in watch function
+    // await updateBlock(networkId, lastBlock)
+    return lastBlock
+  } catch (e) {
+    console.log(e);
+  }
+  return 0
 }
 
 /**
@@ -279,14 +396,22 @@ async function getPastEvent(networkId, bridgeAddress, step) {
  * @param networkId network id (or chain id) of EVM a network
  * @param bridgeAddress contract address of bridge in this network
  */
-async function watch(networkId, bridgeAddress) {
+async function watch(networkId, bridgeAddress, eventHookAddress) {
   console.log("network", networkId, config.blockchain[networkId].notEVM);
   if (config.blockchain[networkId].notEVM) return;
   let step = 1000;
-  await getPastEvent(networkId, bridgeAddress, step);
+  if (eventHookAddress && eventHookAddress !== "") {
+    await getPastEventForWrapNonEVM(networkId, eventHookAddress, step)
+  }
+  const lastBlock = await getPastEvent(networkId, bridgeAddress, step)
+  await updateBlock(networkId, lastBlock)
 
   setInterval(async () => {
-    await getPastEvent(networkId, bridgeAddress, step);
+    if (eventHookAddress && eventHookAddress !== "") {
+      await getPastEventForWrapNonEVM(networkId, eventHookAddress, step)
+    }    
+    const lastBlock = await getPastEvent(networkId, bridgeAddress, step);
+    await updateBlock(networkId, lastBlock)
   }, config.blockchain[networkId].sleepTime);
 }
 
@@ -302,8 +427,9 @@ function main() {
     networks.forEach((networkId) => {
       if (crawlChainIds.includes(parseInt(networkId))) {
         let contractAddress = contracts[networkId].bridge
+        const eventHookAddress = contracts[networkId].wrapNonEVMEventHook
         if (contractAddress !== "") {
-          watch(networkId, contractAddress)
+          watch(networkId, contractAddress, eventHookAddress)
         }
       }
     })
