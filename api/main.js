@@ -44,7 +44,7 @@ async function fetchTransactionFromEVMIfNot(fromChainId, requestHash) {
             let onChainTx = await web3.eth.getTransaction(requestHash)
             return onChainTx
         })
-        logger.info("done fetching transcation from chain %s", fromChainId)        
+        logger.info("done fetching transcation from chain %s", fromChainId)
         if (!onChainTx) {
             return res.status(400).json({ errors: 'invalid transaction hash' })
         }
@@ -427,6 +427,7 @@ router.post('/request-withdraw', [
                 let deployResult = await casperRPC.getDeployInfo(CasperHelper.toCasperDeployHash(transaction.requestHash))
                 eventData = await CasperHelper.parseRequestFromCasper(deployResult)
             }
+            logger.warn("eventData : %s , requestHash : %s", eventData, requestHash)
 
             if (eventData.toAddr.toLowerCase() !== transaction.account.toLowerCase()
                 || eventData.originToken.toLowerCase() !== transaction.originToken.toLowerCase()
@@ -572,6 +573,14 @@ router.post('/request-withdraw', [
     } else {
         let txHashToSign = transaction.requestHash.includes("0x") ? transaction.requestHash : ("0x" + transaction.requestHash)
         logger.info("txHashToSign %s", txHashToSign)
+        logger.warn("signing data %s , %s , %s, %s , %s , %s,%s , %s , %s,%s , %s  ", transaction.originToken,
+            transaction.account,
+            transaction.amount,
+            transaction.originChainId, transaction.fromChainId, transaction.toChainId, transaction.index,
+            txHashToSign,
+            name,
+            symbol,
+            decimals)
         let sig = Web3Utils.signClaim(
             transaction.originToken,
             transaction.account,
