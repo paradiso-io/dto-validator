@@ -155,7 +155,6 @@
     },
     "97": {
       "httpProvider": [
-        "https://bsc.gateway.pokt.network/v1/lb/1e815b7088bca30f000f78d9",
         "https://data-seed-prebsc-2-s1.binance.org:8545/",
         "https://data-seed-prebsc-1-s1.binance.org:8545/",
         "https://data-seed-prebsc-1-s2.binance.org:8545/",
