@@ -91,6 +91,93 @@ async function processRequestEvent(
   );
 }
 
+async function processRequestEventForWrapNonEVM(
+  event,
+  networkId) {
+  logger.info("New event at block %s", event.blockNumber);
+
+  let originChainId = event.returnValues._originChainId;
+  let tokenAddress = event.returnValues._token;
+  // decoding token address
+  let decoded;
+  try {
+    decoded = web3.eth.abi.decodeParameters(
+      [{ type: "string", name: "decodedAddress" }],
+      tokenAddress
+    );
+  } catch (e) {
+    logger.error("cannot decode token address");
+    return;
+  }
+
+  // tokenAddress is contract package hash on casper
+  tokenAddress = decoded.decodedAddress
+  // find token in configured pairs
+  const pairs = CasperConfig.pairedTokensToEthereum.pairs
+  const pair = pairs.find(e => e.contractPackageHash == tokenAddress)
+
+  if (!pair) {
+    logger.error("unsupported token");
+    return;
+  }
+
+  let amount = event.returnValues._amount;
+
+  let web3 = await Web3Utils.getWeb3(networkId);
+  let block = await web3.eth.getBlock(event.blockNumber);
+
+  // event RequestBridge(address indexed _token, bytes indexed _addr, uint256 _amount, uint256 _originChainId, uint256 _fromChainId, uint256 _toChainId, uint256 _index);
+  let toAddrBytes = event.returnValues._toAddr;
+  try {
+    decoded = web3.eth.abi.decodeParameters(
+      [{ type: "string", name: "decodedAddress" }],
+      toAddrBytes
+    );
+  } catch (e) {
+    logger.error("cannot decode recipient address");
+    return;
+  }
+  let decodedAddress = decoded.decodedAddress;
+  let casperChainId = CasperConfig.networkId;
+  if (parseInt(event.returnValues._toChainId) === casperChainId) {
+    logger.info("bridging to casper network %s", decodedAddress);
+    if (decodedAddress.length === 64) {
+      decodedAddress = "account-hash-" + decodedAddress
+    }
+  }
+
+  //reading transaction creator
+  let transactionHash = event.transactionHash
+  let onChainTx = await web3.eth.getTransaction(transactionHash)
+  if (!onChainTx) return;
+  let txCreator = onChainTx.from.toLowerCase()
+  await db.Transaction.updateOne(
+    {
+      index: event.returnValues._index,
+      fromChainId: event.returnValues._fromChainId,
+      toChainId: event.returnValues._toChainId,
+      requestHash: event.transactionHash
+    },
+    {
+      $set: {
+        requestHash: event.transactionHash,
+        requestBlock: event.blockNumber,
+        account: decodedAddress.toLowerCase(),
+        txCreator: txCreator,
+        originToken: pair.contractPackageHash,
+        originSymbol: pair.symbol,
+        fromChainId: event.returnValues._fromChainId,
+        originChainId: originChainId,
+        toChainId: event.returnValues._toChainId,
+        amount: amount,
+        index: event.returnValues._index,
+        requestTime: block.timestamp,
+      },
+    },
+    { upsert: true, new: true }
+  );
+}
+
 
 /**
  * update claim event info to database
@@ -117,6 +204,52 @@ async function processClaimEvent(event) {
       toChainId: event.returnValues._toChainId,
       originChainId: event.returnValues._originChainId,
       originToken: event.returnValues._token.toLowerCase()
+    },
+      {
+        $set: {
+          claimHash: event.transactionHash,
+          claimBlock: event.blockNumber,
+          claimed: true,
+          claimId: event.returnValues._claimId
+        }
+      }, { upsert: true, new: true })
+  }
+}
+
+async function processClaimEventForWrapNonEVM(event) {
+  logger.info('New claim event at block %s', event.blockNumber)
+
+  let decoded;
+  try {
+    decoded = web3.eth.abi.decodeParameters(
+      [{ type: "string", name: "decodedAddress" }],
+      event.returnValues._token
+    );
+  } catch (e) {
+    logger.error("cannot decode token address");
+    return;
+  }
+
+  // tokenAddress is contract package hash on casper
+  const originToken = decoded.decodedAddress
+
+  // event ClaimToken(address indexed _token, address indexed _addr, uint256 _amount, uint256 _originChainId, uint256 _fromChainId, uint256 _toChainId, uint256 _index, bytes32 _claimId);
+  let requestTx = db.Transaction.findOne({
+    index: event.returnValues._index,
+    fromChainId: event.returnValues._fromChainId,
+    toChainId: event.returnValues._toChainId,
+    originChainId: event.returnValues._originChainId,
+    originToken: originToken
+  })
+  if (!requestTx) {
+    logger.warn("Dont find request tx for claim event %s", event)
+  } else {
+    await db.Transaction.updateOne({
+      index: event.returnValues._index,
+      fromChainId: event.returnValues._fromChainId,
+      toChainId: event.returnValues._toChainId,
+      originChainId: event.returnValues._originChainId,
+      originToken: originToken
     },
       {
         $set: {
@@ -321,9 +454,9 @@ async function getPastEventForBatchForWrapNonEVM(networkId, eventHookAddress, st
       for (let i = 0; i < allEvents.length; i++) {
         let event = allEvents[i];
         if (event.event === 'RequestBridge') {
-          await processRequestEvent(event, networkId)
+          await processRequestEventForWrapNonEVM(event, networkId)
         } else if (event.event === 'ClaimToken') {
-          await processClaimEvent(event)
+          await processClaimEventForWrapNonEVM(event)
         }
       }
 
