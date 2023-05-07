@@ -304,6 +304,7 @@
     "43113": {
       "bridge": "0x7e3226239dbfd6bea1ce22208001dc28194cbec2",
       "nft721": "0xfb8f103Fd709Bed9DFF96ada6de50E48616f1895",
+      "wrapNonEVMEventHook": "0x4cAD232Ecc2aB2C87C794839A78AcBF009B2A879",
       "firstBlockCrawl": 20184263,
       "firstBlockNft721": 20184263
     },

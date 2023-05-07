@@ -6,6 +6,7 @@ const CasperHelper = require("../helpers/casper");
 const generalHelper = require("../helpers/general");
 const logger = require("../helpers/logger");
 const db = require("../models");
+const CasperERC20IndexHook = require('./casperERC20LockWithdrawalCrawlerHook')
 const TokenHook = require('./casperTokenCrawlerHook')
 const NFTHook = require('./casperNFTCrawlerHook')
 const config = require('config')
@@ -169,6 +170,7 @@ async function crawl(from, to, lastBlockHeight, rpc) {
             if (session && session.StoredContractByHash) {
               await TokenHook.process(block, deploy, session.StoredContractByHash, selectedRPC)
               await NFTHook.process(block, deploy, session.StoredContractByHash, selectedRPC, signer)
+              await CasperERC20IndexHook.process(block, deployResult, session.StoredContractByHash, selectedRPC, signer)
             }
           }
         }
