@@ -46,7 +46,7 @@ async function fetchTransactionFromEVMIfNot(fromChainId, requestHash) {
         })
         logger.info("done fetching transcation from chain %s", fromChainId)
         if (!onChainTx) {
-            return res.status(400).json({ errors: 'invalid transaction hash' })
+            throw 'invalid transaction hash'
         }
 
         const blockNumberToIndex = onChainTx.blockNumber
@@ -407,35 +407,40 @@ router.post('/request-withdraw', [
         try {
             transaction = await db.Transaction.findOne({ requestHash: requestHash, fromChainId: fromChainId })
             let eventData = null
-            if (!transaction) {
-                let casperRPC = await CasperHelper.getCasperRPC(transaction.requestBlock)
-                let deployResult = await casperRPC.getDeployInfo(CasperHelper.toCasperDeployHash(transaction.requestHash))
-                eventData = await CasperHelper.parseRequestFromCasper(deployResult)
+            // remove this code as it should never get executed
+            // if (!transaction) {
+            //     let casperRPC = await CasperHelper.getCasperRPC(transaction.requestBlock)
+            //     let deployResult = await casperRPC.getDeployInfo(CasperHelper.toCasperDeployHash(transaction.requestHash))
+            //     eventData = await CasperHelper.parseRequestFromCasper(deployResult)
 
-                transaction = {
-                    account: eventData.toAddr.toLowerCase(),
-                    originToken: eventData.originToken.toLowerCase(),
-                    amount: eventData.amount,
-                    fromChainId: eventData.fromChainId,
-                    toChainId: eventData.toChainId,
-                    originChainId: eventData.originChainId,
-                    index: eventData.index,
-                }
-            }
+            //     transaction = {
+            //         account: eventData.toAddr.toLowerCase(),
+            //         originToken: eventData.originToken.toLowerCase(),
+            //         amount: eventData.amount,
+            //         fromChainId: eventData.fromChainId,
+            //         toChainId: eventData.toChainId,
+            //         originChainId: eventData.originChainId,
+            //         index: eventData.index,
+            //     }
+            // }
             if (eventData === null) {
                 let casperRPC = await CasperHelper.getCasperRPC(transaction.requestBlock)
                 let deployResult = await casperRPC.getDeployInfo(CasperHelper.toCasperDeployHash(transaction.requestHash))
                 eventData = await CasperHelper.parseRequestFromCasper(deployResult)
+                if (eventData == null) {
+                    // just force it to re-update transaction
+                    await fetchTransactionFromCasperIfNot(transaction.requestHash, true)
+                }
             }
             logger.warn("eventData : %s , requestHash : %s", eventData, requestHash)
 
-            if (eventData.toAddr.toLowerCase() !== transaction.account.toLowerCase()
+            if (eventData && (eventData.toAddr.toLowerCase() !== transaction.account.toLowerCase()
                 || eventData.originToken.toLowerCase() !== transaction.originToken.toLowerCase()
                 || eventData.amount !== transaction.amount
                 || eventData.fromChainId !== transaction.fromChainId
                 || eventData.toChainId !== transaction.toChainId
                 || eventData.originChainId !== transaction.originChainId
-                || eventData.index !== transaction.index) {
+                || eventData.index !== transaction.index)) {
                 return res.status(400).json({ errors: 'conflict transaction data between local database and on-chain data ' + transaction.requestHash })
             }
         } catch (e) {
@@ -456,26 +461,39 @@ router.post('/request-withdraw', [
     } else {
         logger.info('0.2')
         let token = await db.Token.findOne({ hash: transaction.originToken, networkId: transaction.originChainId })
-        
-        {
-            let web3Origin = await Web3Utils.getWeb3(transaction.originChainId)
-            let originTokenContract = await new web3Origin.eth.Contract(IERC20ABI, transaction.originToken)
-            name = await originTokenContract.methods.name().call()
-            decimals = await originTokenContract.methods.decimals().call()
-            symbol = await originTokenContract.methods.symbol().call()
-            await db.Token.updateOne({ hash: transaction.originToken, networkId: transaction.originChainId }, {
-                $set: { name, symbol, decimals }
-            }, { upsert: true, new: true })
-        } 
-        if (token) {
-            if (token.name != name || token.symbol != symbol || token.decimals != decimals) {
-                return res.status(400).json({ errors: 'Chain state of token ' + token.hash + ' and local database mismatch, dont sign!' })
+
+        if (transaction.originChainId == casperConfig.networkId) {
+            // originally from casper, take metadata from config for easier access
+            const pair = casperConfig.pairedTokensToEthereum.pairs.find(e => e.contractPackageHash == transaction.originToken)
+            if (!pair) {
+                if (token.name != name || token.symbol != symbol || token.decimals != decimals) {
+                    return res.status(400).json({ errors: 'unsupported token' })
+                }
+            }
+
+            name = pair.name
+            symbol = pair.symbol
+            decimals = pair.decimals
+        } else {
+            {
+                let web3Origin = await Web3Utils.getWeb3(transaction.originChainId)
+                let originTokenContract = await new web3Origin.eth.Contract(IERC20ABI, transaction.originToken)
+                name = await originTokenContract.methods.name().call()
+                decimals = await originTokenContract.methods.decimals().call()
+                symbol = await originTokenContract.methods.symbol().call()
+                await db.Token.updateOne({ hash: transaction.originToken, networkId: transaction.originChainId }, {
+                    $set: { name, symbol, decimals }
+                }, { upsert: true, new: true })
+            } 
+            if (token) {
+                if (token.name != name || token.symbol != symbol || token.decimals != decimals) {
+                    return res.status(400).json({ errors: 'Chain state of token ' + token.hash + ' and local database mismatch, dont sign!' })
+                }
             }
         }
-        logger.info('0.3')
     }
     logger.info('1')
-    if (transaction.toChainId !== transaction.originChainId) {
+    if (transaction.toChainId !== transaction.originChainId && transaction.originChainId !== casperConfig.networkId) {
         let nativeName = config.blockchain[transaction.toChainId].nativeName
         name = "DTO Wrapped " + name + `(${nativeName})`
         symbol = "d" + symbol
@@ -581,16 +599,27 @@ router.post('/request-withdraw', [
             name,
             symbol,
             decimals)
-        let sig = Web3Utils.signClaim(
-            transaction.originToken,
-            transaction.account,
-            transaction.amount,
-            [transaction.originChainId, transaction.fromChainId, transaction.toChainId, transaction.index],
-            txHashToSign,
-            name,
-            symbol,
-            decimals
-        )
+        let sig = null
+        if (transaction.originChainId == casperConfig.networkId) {
+            sig = Web3Utils.signClaimForNonEVMERC20(
+                transaction.originToken,
+                transaction.account,
+                transaction.amount,
+                [transaction.originChainId, transaction.fromChainId, transaction.toChainId, transaction.index],
+                txHashToSign
+            )
+        } else {
+            sig = Web3Utils.signClaim(
+                transaction.originToken,
+                transaction.account,
+                transaction.amount,
+                [transaction.originChainId, transaction.fromChainId, transaction.toChainId, transaction.index],
+                txHashToSign,
+                name,
+                symbol,
+                decimals
+            )
+        }
 
         let r = [sig.r]
         let s = [sig.s]

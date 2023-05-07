@@ -30,7 +30,7 @@ async function fetchTransactionFromEVMIfNot(fromChainId, requestHash) {
         })
         
         if (!onChainTx) {
-            return res.status(400).json({ errors: 'invalid transaction hash' })
+            throw 'invalid transaction hash'
         }
 
         const blockNumberToIndex = onChainTx.blockNumber

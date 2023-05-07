@@ -71,6 +71,14 @@ let Web3Util = {
     let sig = web3.eth.accounts.sign(msgHash, signer);
     return { msgHash: msgHash, r: sig.r, s: sig.s, v: sig.v }
   },
+  signClaimForNonEVMERC20: (_originToken, _to, _amount, _chainIdsIndex, _txHash) => {
+    let web3 = new Web3()
+    let signer = config.signer
+    let encoded = web3.eth.abi.encodeParameters(['bytes', 'address', 'uint256', 'uint256[]', 'bytes32'], [web3.eth.abi.encodeParameters(['string'], [_originToken]), _to, _amount, _chainIdsIndex, _txHash])
+    let msgHash = web3.utils.sha3(encoded);
+    let sig = web3.eth.accounts.sign(msgHash, signer);
+    return { msgHash: msgHash, r: sig.r, s: sig.s, v: sig.v }
+  },
 
   /* Recovering the signer from the signature. */
   recoverSignerFromSignature: (msgHash, r, s, v) => {
