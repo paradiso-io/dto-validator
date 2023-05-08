@@ -38,7 +38,10 @@ router.get('/bridgeSupportConfig', [], async function (req, res) {
     return res.json({
         tokenBridgeEnabled: true,
         nftBridgeEnabled: config.nftBridgeEnabled ? true : false,
-        casperIssuedERC20: config.casperIssuedERC20 ? true : false
+        casperIssuedERC20: config.casperIssuedERC20 ? true : false,
+        crawlChainIds: config.crawlChainIds,
+        contracts: config.contracts,
+        bootstrap: config.bootstrap
     })
 })
 
