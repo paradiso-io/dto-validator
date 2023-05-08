@@ -1,5 +1,5 @@
 const db = require('../models')
-const crypto = require('crypto')
+const config = require('config')
 const generalHelper = require('../helpers/general')
 const CasperHelper = require('../helpers/casper')
 const { ERC20Client } = require("casper-erc20-js-client");
@@ -7,12 +7,12 @@ const { sha256 } = require("ethereum-cryptography/sha256");
 const logger = require("../helpers/logger");
 const { CLAccountHash, DeployUtil } = require("casper-js-sdk");
 const BigNumber = require("bignumber.js")
-
+const NFTSign = require('./createUnsignedNFTDeploy')
 /**
  * It scans for transactions that have not been created on the CasperLabs blockchain yet, and creates
  * them
  */
-async function main() {
+async function startSignForToken() {
     while (true) {
         let casperConfig = CasperHelper.getConfigInfo()
         let casperChainId = casperConfig.networkId
@@ -230,7 +230,13 @@ async function main() {
         console.log('sleep 10 seconds before create an other tx')
         await generalHelper.sleep(10000)
     }
+}
 
+async function main() {
+    startSignForToken();
+    if (config.nftBridgeEnabled) {
+        NFTSign.start();
+    }
 }
 
 main()
