@@ -2,10 +2,9 @@ const BigNumber = require("bignumber.js");
 const CasperHelper = require("../helpers/casper");
 const logger = require("../helpers/logger");
 const db = require("../models");
-const { CLValueParsers, CLTypeTag, CLValueBuilder, CLU256BytesParser, CLKeyBytesParser, CLStringBytesParser } = require("casper-js-sdk");
+const { CLU256BytesParser, CLKeyBytesParser, CLStringBytesParser } = require("casper-js-sdk");
 const CWeb3 = require('casper-web3')
 const blake = require("blakejs");
-const { unlock } = require("../api/main");
 BigNumber.config({ EXPONENTIAL_AT: [-100, 100] });
 
 
@@ -20,61 +19,7 @@ const parseEvents = (
   },
   value // deploy
 ) => {
-  const eventNames = Object.keys(EventList)
-  logger.warn('parsing deploy %s', value.execution_result)
-  if (value.execution_result.result.Success) {
-    const { transforms } =
-      value.execution_result.result.Success.effect;
-
-    const cep47Events = transforms.reduce((acc, val) => {
-      if (
-        val.transform.hasOwnProperty("WriteCLValue") &&
-        typeof val.transform.WriteCLValue.parsed === "object" &&
-        val.transform.WriteCLValue.parsed !== null
-      ) {
-        const maybeCLValue = CLValueParsers.fromJSON(
-          val.transform.WriteCLValue
-        );
-        const clValue = maybeCLValue.unwrap();
-        if (clValue && clValue.clType().tag === CLTypeTag.Map) {
-          const hash = (clValue).get(
-            CLValueBuilder.string("contract_package_hash")
-          );
-          const event = (clValue).get(CLValueBuilder.string("event_type"));
-          console.log('hash', hash)
-          if (
-            hash &&
-            (hash.data === contractPackageHash) &&
-            event &&
-            eventNames.includes(event.data)
-          ) {
-            const data = {}
-            for (const c of clValue.data) {
-              data[c[0].data] = c[1].data
-            }
-            // check whether data has enough fields
-            const requiredFields = EventList[event.value().toLowerCase()]
-            const good = true
-            for (const f of requiredFields) {
-              if (!data[f]) {
-                logger.warn('cannot find field %s', f)
-                good = false
-                break
-              }
-            }
-            if (good) {
-              acc = [...acc, { name: event.value(), data, custodianContractPkg: hash.value().toString() }];
-            }
-          }
-        }
-      }
-      return acc;
-    }, []);
-
-    return { error: null, success: !!cep47Events.length, data: cep47Events };
-  }
-
-  return null;
+  return CWeb3.Contract.parseEvents(EventList, value, contractPackageHash)
 };
 
 
@@ -159,7 +104,7 @@ const HOOK = {
     let height = parseInt(block.block.header.height)
     while (trial > 0) {
       try {
-        console.log("checking deploy", deploy.deploy.hash)
+        logger.info("checking deploy %s", deploy.deploy.hash)
         let casperConfig = CasperHelper.getConfigInfo();
         const pairedTokensToEthereum = casperConfig.pairedTokensToEthereum
         const originContractPackageHashes = pairedTokensToEthereum.pairs.map(e => e.contractPackageHash)
@@ -189,8 +134,7 @@ const HOOK = {
             
             const activeCustodianContractHash = await CWeb3.Contract.getActiveContractHash(pairedTokensToEthereum.custodianContractPackageHash, casperConfig.chainName)
             const contract = await CWeb3.Contract.createInstanceWithRemoteABI(activeCustodianContractHash, randomGoodRPC, casperConfig.chainName)
-            const isUnlock = await contract.getter.unlockIds(unlockIdKey, false)
-
+            const unlock = await contract.getter.unlockIds(unlockIdKey, false)
             if (!unlock) {
               logger.warn('the event not happen in the custodian contract')
               return
@@ -252,8 +196,6 @@ const HOOK = {
             let receiverAddress = ret.result.val.value().toString()
 
             ret = new CLKeyBytesParser().fromBytesWithRemainder(ret.remainder)
-            let _from = ret.result.val.value().toString()
-            console.log('from', ret.result.val.value(), ret.remainder)
 
             let timestamp = Date.parse(block.block.header.timestamp);
             let eventData = {
