@@ -26,10 +26,19 @@ router.get('/tvl', [], async function (req, res) {
         tvl
     })
 })
+
 router.get('/tokenmap', [], async function (req, res) {
     let tokenMap = await db.TokenMap.find({})
     return res.json({
         tokenMap
+    })
+})
+
+router.get('/bridgeSupportConfig', [], async function (req, res) {
+    return res.json({
+        tokenBridgeEnabled: true,
+        nftBridgeEnabled: config.nftBridgeEnabled ? true : false,
+        casperIssuedERC20: config.casperIssuedERC20 ? true : false
     })
 })
 
