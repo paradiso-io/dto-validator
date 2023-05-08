@@ -14,8 +14,8 @@ const casperConfig = CasperHelper.getConfigInfo()
 const GeneralHelper = require('../helpers/general')
 const { default: BigNumber } = require('bignumber.js')
 const preSignNFT = require('../helpers/preSignNFT')
-const { getPastEventForBatch } = require('../requestNFT721')
-const { fetchTransactionFromCasperIfNot } = require('../casper/caspercrawler')
+const { getPastEventForBatch } = require('../requestNFT721Helper')
+const { fetchTransactionFromCasperIfNot } = require('../casper/caspercrawlerHelper')
 
 async function fetchTransactionFromEVMIfNot(fromChainId, requestHash) {
     // dont re-index if this is a proxy as the proxy node already index all events in requestEvent and requestNFT721

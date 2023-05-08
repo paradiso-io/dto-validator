@@ -12,9 +12,9 @@ const CasperHelper = require('../helpers/casper')
 const logger = require('../helpers/logger')
 const casperConfig = CasperHelper.getConfigInfo()
 const tokenHelper = require("../helpers/token");
-const { getPastEventForBatch } = require('../requestEvent')
+const { getPastEventForBatch } = require('../requestEventHelper')
 const GeneralHelper = require('../helpers/general')
-const { fetchTransactionFromCasperIfNot } = require('../casper/caspercrawler')
+const { fetchTransactionFromCasperIfNot } = require('../casper/caspercrawlerHelper')
 
 router.get('/status', [], async function (req, res) {
     return res.json({ status: 'ok' })
