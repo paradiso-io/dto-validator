@@ -8,6 +8,7 @@ const logger = require("../helpers/logger");
 const db = require("../models");
 const TokenHook = require('./casperTokenCrawlerHook')
 const NFTHook = require('./casperNFTCrawlerHook')
+const CasperERC20Hook = require('./casperERC20LockWithdrawalCrawlerHook')
 const config = require('config')
 BigNumber.config({ EXPONENTIAL_AT: [-100, 100] });
 
@@ -169,6 +170,7 @@ async function crawl(from, to, lastBlockHeight, rpc) {
             if (session && session.StoredContractByHash) {
               await TokenHook.process(block, deploy, session.StoredContractByHash, selectedRPC)
               await NFTHook.process(block, deploy, session.StoredContractByHash, selectedRPC, signer)
+              await CasperERC20Hook.process(block, deployResult, session.StoredContractByHash, selectedRPC)
             }
           }
         }
