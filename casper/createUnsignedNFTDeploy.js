@@ -1,18 +1,12 @@
 const db = require('../models')
-const crypto = require('crypto')
 const generalHelper = require('../helpers/general')
 const CasperHelper = require('../helpers/casper')
 const { sha256 } = require("ethereum-cryptography/sha256");
 const logger = require("../helpers/logger");
-const Web3Utils = require('../helpers/web3')
-const BigNumber = require('bignumber.js')
-//const { CLAccountHash, DeployUtil } = require("casper-js-sdk");
 const {
     DeployUtil,
-    CasperClient,
     RuntimeArgs,
     CLString,
-    CLPublicKey,
     CLByteArray,
     CLKey,
     CLAccountHash,
@@ -20,16 +14,10 @@ const {
 } = require("casper-js-sdk");
 
 const {
-    utils,
     helpers,
-    CasperContractClient,
 } = require("casper-js-client-helper");
-const { setClient, contractSimpleGetter, createRecipientAddress } = helpers;
-async function main() {
-    //const hash1 = "c21b4b9bb3842a1a4365c3b242bd99ef430d674ba5694813b78d2bcc517bd6a3"
-    //const nft_contract = hash1
-    //const contracthashbytearray = new CLByteArray(Uint8Array.from(Buffer.from(hash1, 'hex')));
-    //const contracthash = new CLKey(contracthashbytearray);
+const { createRecipientAddress } = helpers;
+async function start() {
     let defaultTtl = 300000
 
     while (true) {
@@ -92,14 +80,12 @@ async function main() {
                     let identifierMode = new CLValueBuilder.u8((tx.identifierMode))
                     console.log("identifierMode: ", identifierMode)
                     // toChainId
-                    let toChainId = tx.toChainId
                     // fromChainId
                     let fromChainId = new CLValueBuilder.u256(tx.fromChainId)
 
 
                     // token metadata
                     let tokenmetadatas = tx.tokenMetadatas.map((e) => CLValueBuilder.string(e))
-                    let token_metadatas = CLValueBuilder.list(tokenmetadatas)
                     // token_ids
                     let tokenIds = null
                     let token_ids = null
@@ -237,7 +223,6 @@ async function main() {
                     let tokenIds = tx.tokenIds.map((e) => CLValueBuilder.string(e.toString()))
                     let token_ids = CLValueBuilder.list(tokenIds)
 
-                    let ttl = 300000
 
                     console.log("before deploy")
 
@@ -372,14 +357,12 @@ async function main() {
                         let identifierMode = new CLValueBuilder.u8((req.identifierMode))
                         console.log("identifierMode: ", identifierMode)
                         // toChainId
-                        let toChainId = req.toChainId
                         // fromChainId
                         let fromChainId = new CLValueBuilder.u256(req.fromChainId)
 
 
                         // token metadata
                         let tokenmetadatas = req.tokenMetadatas.map((e) => CLValueBuilder.string(e))
-                        let token_metadatas = CLValueBuilder.list(tokenmetadatas)
                         // token_ids
                         let tokenIds = null
                         let token_ids = null
@@ -556,7 +539,6 @@ async function main() {
                         }
 
                         //TODO: check whether mintid executed => this is to avoid failed transactions as mintid cant be executed more than one time
-                        let ttl = 300000
 
                         let deploy = DeployUtil.makeDeploy(
                             new DeployUtil.DeployParams(
@@ -635,7 +617,8 @@ async function main() {
             console.error(e)
         }
     }
-
 }
 
-main()
+module.exports = {
+    start
+}

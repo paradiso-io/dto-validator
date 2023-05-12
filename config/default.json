@@ -320,10 +320,16 @@
       "testnet": "mongodb://localhost:27017/dtoBridge"
     }
   },
+  "configAPI": {
+    "mainnet": "https://bridge-mainnet.dotoracle.network",
+    "testnet": "https://api.dotoracle.network"
+  },
+  "fetchConfigFromAPI": true,
   "caspernetwork": "mainnet",
   "isSequent": true,
   "signer": "",
   "checkTxOnChain": false,
   "proxy": true,
-  "signatureServer": []
+  "signatureServer": [],
+  "nftBridgeEnabled": false
 }

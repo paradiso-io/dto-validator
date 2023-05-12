@@ -12,9 +12,9 @@ const CasperHelper = require('../helpers/casper')
 const logger = require('../helpers/logger')
 const casperConfig = CasperHelper.getConfigInfo()
 const tokenHelper = require("../helpers/token");
-const { getPastEventForBatch } = require('../requestEvent')
+const { getPastEventForBatch } = require('../requestEventHelper')
 const GeneralHelper = require('../helpers/general')
-const { fetchTransactionFromCasperIfNot } = require('../casper/caspercrawler')
+const { fetchTransactionFromCasperIfNot } = require('../casper/caspercrawlerHelper')
 
 router.get('/status', [], async function (req, res) {
     return res.json({ status: 'ok' })
@@ -26,10 +26,22 @@ router.get('/tvl', [], async function (req, res) {
         tvl
     })
 })
+
 router.get('/tokenmap', [], async function (req, res) {
     let tokenMap = await db.TokenMap.find({})
     return res.json({
         tokenMap
+    })
+})
+
+router.get('/bridgeSupportConfig', [], async function (req, res) {
+    return res.json({
+        tokenBridgeEnabled: true,
+        nftBridgeEnabled: config.nftBridgeEnabled ? true : false,
+        casperIssuedERC20: config.casperIssuedERC20 ? true : false,
+        crawlChainIds: config.crawlChainIds,
+        contracts: config.contracts,
+        bootstrap: config.bootstrap
     })
 })
 
