@@ -271,7 +271,6 @@ router.get('/verify-transaction/:requestHash/:fromChainId/:index', [
 
     let requestHash = req.params.requestHash
     let fromChainId = req.params.fromChainId
-    let index = req.params.index
     let transaction = {}
 
     if (fromChainId == casperConfig.networkId) {
@@ -321,20 +320,25 @@ router.get('/verify-transaction/:requestHash/:fromChainId/:index', [
         try {
             transaction = await db.Transaction.findOne({ requestHash: requestHash, fromChainId: fromChainId })
             if (!transaction) {
-                return res.json({ success: false })
+                await fetchTransactionFromCasperIfNot(transaction.requestHash, true)
+                transaction = await db.Transaction.findOne({ requestHash: requestHash, fromChainId: fromChainId })
+                if (!transaction) {
+                    return res.json({ success: false })
+                }
             }
-            let casperRPC = await CasperHelper.getCasperRPC(transaction.requestBlock)
-            let deployResult = await casperRPC.getDeployInfo(CasperHelper.toCasperDeployHash(transaction.requestHash))
-            let eventData = await CasperHelper.parseRequestFromCasper(deployResult)
-            if (eventData.toAddr.toLowerCase() !== transaction.account.toLowerCase()
-                || eventData.originToken.toLowerCase() !== transaction.originToken.toLowerCase()
-                || eventData.amount !== transaction.amount
-                || eventData.fromChainId !== transaction.fromChainId
-                || eventData.toChainId !== transaction.toChainId
-                || eventData.originChainId !== transaction.originChainId
-                || eventData.index !== transaction.index) {
-                return res.json({ success: false })
-            }
+            // redundant checks
+            // let casperRPC = await CasperHelper.getCasperRPC(transaction.requestBlock)
+            // let deployResult = await casperRPC.getDeployInfo(CasperHelper.toCasperDeployHash(transaction.requestHash))
+            // let eventData = await CasperHelper.parseRequestFromCasper(deployResult)
+            // if (eventData.toAddr.toLowerCase() !== transaction.account.toLowerCase()
+            //     || eventData.originToken.toLowerCase() !== transaction.originToken.toLowerCase()
+            //     || eventData.amount !== transaction.amount
+            //     || eventData.fromChainId !== transaction.fromChainId
+            //     || eventData.toChainId !== transaction.toChainId
+            //     || eventData.originChainId !== transaction.originChainId
+            //     || eventData.index !== transaction.index) {
+            //     return res.json({ success: false })
+            // }
         } catch (e) {
             console.error(e)
             return res.json({ success: false })
@@ -418,7 +422,13 @@ router.post('/request-withdraw', [
         //casper
         try {
             transaction = await db.Transaction.findOne({ requestHash: requestHash, fromChainId: fromChainId })
-            let eventData = null
+            if (!transaction) {
+                await fetchTransactionFromCasperIfNot(transaction.requestHash, true)
+                transaction = await db.Transaction.findOne({ requestHash: requestHash, fromChainId: fromChainId })
+                if (!transaction) {
+                    return res.json({ success: false })
+                }
+            }
             // remove this code as it should never get executed
             // if (!transaction) {
             //     let casperRPC = await CasperHelper.getCasperRPC(transaction.requestBlock)
@@ -435,26 +445,27 @@ router.post('/request-withdraw', [
             //         index: eventData.index,
             //     }
             // }
-            if (eventData === null) {
-                let casperRPC = await CasperHelper.getCasperRPC(transaction.requestBlock)
-                let deployResult = await casperRPC.getDeployInfo(CasperHelper.toCasperDeployHash(transaction.requestHash))
-                eventData = await CasperHelper.parseRequestFromCasper(deployResult)
-                if (eventData == null) {
-                    // just force it to re-update transaction
-                    await fetchTransactionFromCasperIfNot(transaction.requestHash, true)
-                }
-            }
-            logger.warn("eventData : %s , requestHash : %s", eventData, requestHash)
+            // redundant checks
+            // if (eventData === null) {
+            //     let casperRPC = await CasperHelper.getCasperRPC(transaction.requestBlock)
+            //     let deployResult = await casperRPC.getDeployInfo(CasperHelper.toCasperDeployHash(transaction.requestHash))
+            //     eventData = await CasperHelper.parseRequestFromCasper(deployResult)
+            //     if (eventData == null) {
+            //         // just force it to re-update transaction
+            //         await fetchTransactionFromCasperIfNot(transaction.requestHash, true)
+            //     }
+            // }
+            // logger.warn("eventData : %s , requestHash : %s", eventData, requestHash)
 
-            if (eventData && (eventData.toAddr.toLowerCase() !== transaction.account.toLowerCase()
-                || eventData.originToken.toLowerCase() !== transaction.originToken.toLowerCase()
-                || eventData.amount !== transaction.amount
-                || eventData.fromChainId !== transaction.fromChainId
-                || eventData.toChainId !== transaction.toChainId
-                || eventData.originChainId !== transaction.originChainId
-                || eventData.index !== transaction.index)) {
-                return res.status(400).json({ errors: 'conflict transaction data between local database and on-chain data ' + transaction.requestHash })
-            }
+            // if (eventData && (eventData.toAddr.toLowerCase() !== transaction.account.toLowerCase()
+            //     || eventData.originToken.toLowerCase() !== transaction.originToken.toLowerCase()
+            //     || eventData.amount !== transaction.amount
+            //     || eventData.fromChainId !== transaction.fromChainId
+            //     || eventData.toChainId !== transaction.toChainId
+            //     || eventData.originChainId !== transaction.originChainId
+            //     || eventData.index !== transaction.index)) {
+            //     return res.status(400).json({ errors: 'conflict transaction data between local database and on-chain data ' + transaction.requestHash })
+            // }
         } catch (e) {
             console.error(e)
             return res.status(400).json({ errors: 'failed to get on-chain casper transction for ' + transaction.requestHash })
