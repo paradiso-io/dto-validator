@@ -244,7 +244,7 @@ router.get('/history', [
             t.originDecimals = token.decimals
         } else {
             const pairedTokensToEthereum = casperConfig.pairedTokensToEthereum
-            const pair = pairedTokensToEthereum.find(e => e.contractPackageHash == t.originToken)
+            const pair = pairedTokensToEthereum.pairs.find(e => e.contractPackageHash == t.originToken)
             if (pair) {
                 t.originDecimals = pair.decimals
             } 
