@@ -3,13 +3,13 @@
     "anonymous": false,
     "inputs": [
       {
-        "indexed": true,
+        "indexed": false,
         "internalType": "bytes",
         "name": "_token",
         "type": "bytes"
       },
       {
-        "indexed": true,
+        "indexed": false,
         "internalType": "address",
         "name": "_toAddr",
         "type": "address"
@@ -77,7 +77,7 @@
     "anonymous": false,
     "inputs": [
       {
-        "indexed": true,
+        "indexed": false,
         "internalType": "bytes",
         "name": "_token",
         "type": "bytes"
