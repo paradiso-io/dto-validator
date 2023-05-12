@@ -423,7 +423,7 @@ router.post('/request-withdraw', [
         try {
             transaction = await db.Transaction.findOne({ requestHash: requestHash, fromChainId: fromChainId })
             if (!transaction) {
-                await fetchTransactionFromCasperIfNot(transaction.requestHash, true)
+                await fetchTransactionFromCasperIfNot(requestHash, true)
                 transaction = await db.Transaction.findOne({ requestHash: requestHash, fromChainId: fromChainId })
                 if (!transaction) {
                     return res.json({ success: false })
