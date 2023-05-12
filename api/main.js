@@ -12,7 +12,7 @@ const CasperHelper = require('../helpers/casper')
 const logger = require('../helpers/logger')
 const casperConfig = CasperHelper.getConfigInfo()
 const tokenHelper = require("../helpers/token");
-const { getPastEventForBatch } = require('../requestEventHelper')
+const { getPastEventForBatch, getPastEventForBatchForWrapNonEVM } = require('../requestEventHelper')
 const GeneralHelper = require('../helpers/general')
 const { fetchTransactionFromCasperIfNot } = require('../casper/caspercrawlerHelper')
 
@@ -63,6 +63,7 @@ async function fetchTransactionFromEVMIfNot(fromChainId, requestHash) {
 
         const blockNumberToIndex = onChainTx.blockNumber
         await getPastEventForBatch(fromChainId, config.contracts[`${fromChainId}`].bridge, 10, blockNumberToIndex - 1, blockNumberToIndex + 1)
+        await getPastEventForBatchForWrapNonEVM(fromChainId, config.contracts[`${fromChainId}`].wrapNonEVMEventHook, 10, blockNumberToIndex - 1, blockNumberToIndex + 1)
         logger.info('done fetching events from evm for erc20 tokens')
     }
 }
@@ -238,9 +239,15 @@ router.get('/history', [
     for (const t of transactions) {
         if (t.originToken === "0x1111111111111111111111111111111111111111") {
             t.originDecimals = 18
-        } else {
+        } else if (t.originChainId != casperConfig.networkId) {
             let token = await tokenHelper.getToken(t.originToken, t.originChainId)
             t.originDecimals = token.decimals
+        } else {
+            const pairedTokensToEthereum = casperConfig.pairedTokensToEthereum
+            const pair = pairedTokensToEthereum.find(e => e.contractPackageHash == t.originToken)
+            if (pair) {
+                t.originDecimals = pair.decimals
+            } 
         }
     }
     return res.json({
