@@ -259,7 +259,7 @@ router.get('/history', [
  * @param index index of transaction
  * @returns status of transaction: success or not
  */
-router.get('/verify-transaction/:requestHash/:fromChainId/:index', [
+router.get('/verify-transaction/:requestHash/:fromChainId/:index/:amount', [
     check('requestHash').exists().withMessage('message is require'),
     check('fromChainId').exists().isNumeric({ no_symbols: true }).withMessage('fromChainId is incorrect'),
     check('index').exists().withMessage('index is require')
@@ -272,6 +272,7 @@ router.get('/verify-transaction/:requestHash/:fromChainId/:index', [
     let requestHash = req.params.requestHash
     let fromChainId = req.params.fromChainId
     let index = req.params.index
+    let amount = req.params.amount
     let transaction = {}
 
     if (fromChainId == casperConfig.networkId) {
@@ -293,6 +294,10 @@ router.get('/verify-transaction/:requestHash/:fromChainId/:index', [
         }
         if (transaction.claimed === true) {
             return res.json({ success: true, claimed: true })
+        }
+
+        if (transaction.amount != amount) {
+            return res.json({ success: false })
         }
 
         //re-verify whether tx still in the chain and confirmed (enough confirmation)
