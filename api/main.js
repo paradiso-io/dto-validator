@@ -45,11 +45,11 @@ router.get('/bridgeSupportConfig', [], async function (req, res) {
     })
 })
 
-async function fetchTransactionFromEVMIfNot(fromChainId, requestHash) {
+async function fetchTransactionFromEVMIfNot(fromChainId, requestHash, forced = false) {
     // dont re-index if this is a proxy as the proxy node already index all events in requestEvent and requestNFT721
     if (config.proxy) return
     let transaction = await db.Transaction.findOne({ requestHash: requestHash, fromChainId: fromChainId })
-    if (!transaction) {
+    if (!transaction || forced) {
         logger.info("fetching transcation from chain %s", fromChainId)
         const web3 = await Web3Utils.getWeb3(fromChainId)
         let onChainTx = await GeneralHelper.tryCallWithTrial(async () => {
@@ -287,6 +287,10 @@ router.get('/verify-transaction/:requestHash/:fromChainId/:index', [
     if (fromChainId !== casperConfig.networkId) {
         await fetchTransactionFromEVMIfNot(fromChainId, requestHash)
         transaction = await eventHelper.getRequestEvent(fromChainId, requestHash)
+        if (!transaction.requestHash) {
+            await fetchTransactionFromEVMIfNot(fromChainId, requestHash, true)
+            transaction = await db.Transaction.findOne({ requestHash: requestHash, fromChainId: fromChainId })
+        }
     }
     if (!transaction || (fromChainId !== casperConfig.networkId && !transaction.requestHash)) {
         return res.json({ success: false })
@@ -299,6 +303,10 @@ router.get('/verify-transaction/:requestHash/:fromChainId/:index', [
         }
         if (transaction.claimed === true) {
             return res.json({ success: true, claimed: true })
+        }
+
+        if (transaction.index != parseInt(req.params.index)) {
+            return res.json({ success: false })
         }
 
         //re-verify whether tx still in the chain and confirmed (enough confirmation)
@@ -332,6 +340,9 @@ router.get('/verify-transaction/:requestHash/:fromChainId/:index', [
                 if (!transaction) {
                     return res.json({ success: false })
                 }
+            }
+            if (transaction.index != parseInt(req.params.index)) {
+                return res.json({ success: false })
             }
             // redundant checks
             // let casperRPC = await CasperHelper.getCasperRPC(transaction.requestBlock)
