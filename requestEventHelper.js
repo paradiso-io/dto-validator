@@ -148,6 +148,7 @@ async function processRequestEventForWrapNonEVM(
   //reading transaction creator
   let transactionHash = event.transactionHash
   let onChainTx = await web3.eth.getTransaction(transactionHash)
+  console.log('onchain tx', onChainTx, event.returnValues)
   if (!onChainTx) return;
   let txCreator = onChainTx.from.toLowerCase()
   await db.Transaction.updateOne(
