@@ -5,9 +5,10 @@ const CasperHelper = require('../helpers/casper')
 const { ERC20Client } = require("casper-erc20-js-client");
 const { sha256 } = require("ethereum-cryptography/sha256");
 const logger = require("../helpers/logger");
-const { CLAccountHash, DeployUtil } = require("casper-js-sdk");
+const { CLAccountHash, DeployUtil, CLByteArray } = require("casper-js-sdk");
 const BigNumber = require("bignumber.js")
 const NFTSign = require('./createUnsignedNFTDeploy')
+const { Contract } = require('casper-web3');
 /**
  * It scans for transactions that have not been created on the CasperLabs blockchain yet, and creates
  * them
@@ -59,23 +60,46 @@ async function startSignForToken() {
                 );
                 continue
             }
-            await erc20.setContractHash(token.contractHash)
-            let recipientAccountHashByte = Uint8Array.from(
-                Buffer.from(toAddress.slice(13), 'hex'),
-            )
+            
             //mintid = <txHash>-<fromChainId>-<toChainId>-<index>-<originContractAddress>-<originChainId>
             let mintid = `${tx.requestHash}-${tx.fromChainId}-${tx.toChainId}-${tx.index}-${tx.originToken}-${tx.originChainId}`
 
+            let recipientAccountHashByte = Uint8Array.from(
+                Buffer.from(toAddress.slice(13), 'hex'),
+            )
+            let deploy
             let ttl = 300000
-            let deploy = await erc20.createUnsignedMint(
-                mpcPubkey,
-                new CLAccountHash(recipientAccountHashByte),
-                tx.amount,
-                mintid,
-                "6000000000",
-                ttl
-            );
-            let deployJson = JSON.stringify(DeployUtil.deployToJson(deploy));
+            let deployJson
+            if (tx.originChainId == casperChainId) {
+                const custodianContractPackageHash = casperConfig.pairedTokensToEthereum.custodianContractPackageHash
+                const custodialContractHash = await Contract.getActiveContractHash(custodianContractPackageHash, casperConfig.chainName)
+                const contractInstance = await Contract.createInstanceWithRemoteABI(custodialContractHash, selectedGoodRPC, casperConfig.chainName)
+                console.log('creating deploy for casper issued erc20')
+                deploy = await contractInstance.contractCalls.unlockErc20.makeUnsignedDeploy({
+                    publicKey: mpcPubkey,
+                    args: {
+                        targetKey: new CLAccountHash(recipientAccountHashByte),
+                        erc20ContractPackageHash: new CLByteArray(Uint8Array.from(Buffer.from(token.contractPackageHash, 'hex'))),
+                        unlockId: mintid,
+                        amount: tx.amount
+                    },
+                    paymentAmount: 10000000000,
+                    ttl: ttl
+                })
+                deployJson = JSON.stringify(Contract.deployToJson(deploy));
+                console.log(deployJson)
+            } else {
+                await erc20.setContractHash(token.contractHash)
+                deploy = await erc20.createUnsignedMint(
+                    mpcPubkey,
+                    new CLAccountHash(recipientAccountHashByte),
+                    tx.amount,
+                    mintid,
+                    "6000000000",
+                    ttl
+                );
+                deployJson = JSON.stringify(DeployUtil.deployToJson(deploy));
+            }
             let hashToSign = sha256(Buffer.from(deploy.hash)).toString("hex")
             let deployHash = Buffer.from(deploy.hash).toString('hex')
             logger.info(
@@ -112,7 +136,7 @@ async function startSignForToken() {
                         toChainId: tx.toChainId,
                         originChainId: tx.originChainId,
                         originToken: tx.originToken.toLowerCase(),
-                        destinationContractHash: token.contractHash,
+                        destinationContractHash: token.contractHash ? token.contractHash : token.contractPackageHash,
                         timestamp: Math.floor(deploy.header.timestamp / 1000),
                         ttl: Math.floor(deploy.header.ttl / 1000),
                         deadline: Math.floor((deploy.header.timestamp + deploy.header.ttl) / 1000),
@@ -155,7 +179,6 @@ async function startSignForToken() {
                 if (!token) {
                     continue
                 }
-                await erc20.setContractHash(token.contractHash)
 
                 let recipientAccountHashByte = Uint8Array.from(
                     Buffer.from(toAddress.slice(13), 'hex'),
@@ -165,15 +188,36 @@ async function startSignForToken() {
 
                 //TODO: check whether mintid executed => this is to avoid failed transactions as mintid cant be executed more than one time
                 let ttl = 300000
-                let deploy = await erc20.createUnsignedMint(
-                    mpcPubkey,
-                    new CLAccountHash(recipientAccountHashByte),
-                    req.amount,
-                    mintid,
-                    "6000000000",
-                    ttl
-                );
-                let deployJson = JSON.stringify(DeployUtil.deployToJson(deploy));
+                let deploy
+                let deployJson
+                if (req.originChainId == casperChainId) {
+                    const custodianContractPackageHash = casperConfig.pairedTokensToEthereum.custodianContractPackageHash
+                    const custodialContractHash = await Contract.getActiveContractHash(custodianContractPackageHash, casperConfig.chainName)
+                    const contractInstance = await Contract.createInstanceWithRemoteABI(custodialContractHash, selectedGoodRPC, casperConfig.chainName)
+                    deploy = await contractInstance.contractCalls.unlockErc20.makeUnsignedDeploy({
+                        publicKey: mpcPubkey,
+                        args: {
+                            targetKey: new CLAccountHash(recipientAccountHashByte),
+                            erc20ContractPackageHash: new CLByteArray(Uint8Array.from(Buffer.from(token.contractPackageHash, 'hex'))),
+                            unlockId: mintid,
+                            amount: req.amount
+                        },
+                        paymentAmount: 10000000000,
+                        ttl: ttl
+                    })
+                    deployJson = JSON.stringify(DeployUtil.deployToJson(deploy));
+                } else {
+                    await erc20.setContractHash(token.contractHash)
+                    deploy = await erc20.createUnsignedMint(
+                        mpcPubkey,
+                        new CLAccountHash(recipientAccountHashByte),
+                        req.amount,
+                        mintid,
+                        "6000000000",
+                        ttl
+                    );
+                    deployJson = JSON.stringify(DeployUtil.deployToJson(deploy));
+                }
                 let hashToSign = sha256(Buffer.from(deploy.hash)).toString("hex")
                 let deployHash = Buffer.from(deploy.hash).toString('hex')
                 logger.info(
@@ -210,7 +254,7 @@ async function startSignForToken() {
                             toChainId: req.toChainId,
                             originChainId: req.originChainId,
                             originToken: req.originToken.toLowerCase(),
-                            destinationContractHash: token.contractHash,
+                            destinationContractHash: token.contractHash ? token.contractHash : token.contractPackageHash,
                             timestamp: Math.floor(deploy.header.timestamp / 1000),
                             ttl: Math.floor(deploy.header.ttl / 1000),
                             deadline: Math.floor((deploy.header.timestamp + deploy.header.ttl) / 1000),

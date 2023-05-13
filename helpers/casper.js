@@ -108,8 +108,14 @@ const CasperHelper = {
     },
     getCasperTokenInfoFromOriginToken: (originTokenAddress, originChainId) => {
         let casperConfig = CasperHelper.getConfigInfo()
-        let tokens = casperConfig.tokens
-        let token = tokens.find((e) => e.originContractAddress.toLowerCase() == originTokenAddress.toLowerCase() && e.originChainId == originChainId)
+        let token
+        if (originChainId != casperConfig.networkId) {
+            let tokens = casperConfig.tokens
+            token = tokens.find((e) => e.originContractAddress.toLowerCase() == originTokenAddress.toLowerCase() && e.originChainId == originChainId)
+        } else {
+            let pairs = casperConfig.pairedTokensToEthereum.pairs
+            token = pairs.find((e) => e.contractPackageHash.toLowerCase() == originTokenAddress.toLowerCase())
+        }
         return token
     },
     getCasperNFTTokenInfoFromOriginToken: (originTokenAddress, originChainId) => {
