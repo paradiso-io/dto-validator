@@ -519,16 +519,21 @@ router.post('/request-withdraw', [
                 }
                 let r = []
                 const requestSignatureFromOther = async function (i) {
-                    try {
-                        console.log("requesting signature from ", config.signatureServer[i])
-                        let ret = await axios.post(config.signatureServer[i] + '/request-withdraw', body, { timeout: 20 * 1000 })
-                        let recoveredAddress = Web3Utils.recoverSignerFromSignature(ret.data.msgHash, ret.data.r[0], ret.data.s[0], ret.data.v[0])
-                        console.log("signature data ok ", config.signatureServer[i], recoveredAddress)
-                        return ret
-                    } catch (e) {
-                        console.log("failed to get signature from ", config.signatureServer[i], e.toString())
-                        return { data: {} }
-                    }
+                    let trial = 5;
+                while (trial > 0) {
+                        try {
+                            console.log("requesting signature from ", config.signatureServer[i])
+                            let ret = await axios.post(config.signatureServer[i] + '/request-withdraw', body, { timeout: 20 * 1000 })
+                            let recoveredAddress = Web3Utils.recoverSignerFromSignature(ret.data.msgHash, ret.data.r[0], ret.data.s[0], ret.data.v[0])
+                            console.log("signature data ok ", config.signatureServer[i], recoveredAddress, ret.data.msgHash)
+                            return ret
+                        } catch (e) {
+                            // console.log("failed to get signature from ", config.signatureServer[i], e.toString())
+                            trial--
+                        }
+                }
+               console.log("failed to get signature from ", config.signatureServer[i])
+               return { data: {} }
                 }
                 for (let i = 0; i < config.signatureServer.length; i++) {
                     r.push(requestSignatureFromOther(i))
@@ -549,7 +554,7 @@ router.post('/request-withdraw', [
         if (otherSignature.length > 0) {
             for (let i = 0; i < otherSignature.length; i++) {
                 if (otherSignature[i].r) {
-                    msgHash = otherSignature[i].msgHash
+                    msgHash = msgHash == "" ? otherSignature[i].msgHash : msgHash
                     r.push(otherSignature[i].r[0])
                     s.push(otherSignature[i].s[0])
                     v.push(otherSignature[i].v[0])

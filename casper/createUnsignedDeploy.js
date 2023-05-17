@@ -72,7 +72,7 @@ async function startSignForToken() {
                 new CLAccountHash(recipientAccountHashByte),
                 tx.amount,
                 mintid,
-                "6000000000",
+                token.paymentAmount ? token.paymentAmount : "400000000",
                 ttl
             );
             let deployJson = JSON.stringify(DeployUtil.deployToJson(deploy));
@@ -170,7 +170,7 @@ async function startSignForToken() {
                     new CLAccountHash(recipientAccountHashByte),
                     req.amount,
                     mintid,
-                    "6000000000",
+                    token.paymentAmount ? token.paymentAmount : "400000000",
                     ttl
                 );
                 let deployJson = JSON.stringify(DeployUtil.deployToJson(deploy));
