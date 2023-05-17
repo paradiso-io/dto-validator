@@ -71,7 +71,7 @@ async function main() {
                 new CLAccountHash(recipientAccountHashByte),
                 tx.amount,
                 mintid,
-                "400000000",
+                token.paymentAmount ? token.paymentAmount : "400000000",
                 ttl
             );
             let deployJson = JSON.stringify(DeployUtil.deployToJson(deploy));
@@ -169,7 +169,7 @@ async function main() {
                     new CLAccountHash(recipientAccountHashByte),
                     req.amount,
                     mintid,
-                    "400000000",
+                    token.paymentAmount ? token.paymentAmount : "400000000",
                     ttl
                 );
                 let deployJson = JSON.stringify(DeployUtil.deployToJson(deploy));
