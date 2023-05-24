@@ -435,7 +435,75 @@ const CasperHelper = {
         }
 
         return null
+    },
+    getAllWrapCep78ContractOnCasper: () => {
+        let casperConfig = CasperHelper.getNFTConfig()
+        let tokens = casperConfig.tokens
+        let array = []
+        for (var token of tokens) {
+            let wrapContract = token.contractHash.toLowerCase()
+            logger.info("wrap contract for networkId %s is %s ", token.originChainId, wrapContract)
+            array.push(wrapContract)
+        }
+        return array
+    },
+    getNftBridgePkgAddress: () => {
+        let casperConfig = CasperHelper.getNFTConfig()
+        let nftBridge = casperConfig.nftBridgePackageHash
+        return nftBridge
+    },
+    getBridgeRequestData: async (height, requestId) => {
+        let randomGoodRPC = await CasperHelper.getRandomGoodCasperRPCLink(height)
+        let casperConfig = CasperHelper.getNFTConfig()
+        const nftBridge = new NFTBridge(casperConfig.nftbridge, randomGoodRPC, casperConfig.chainName)
+        await nftBridge.init()
+        let requestData = await nftBridge.getIndexFromRequestId(requestId)
+        console.log('requestData', requestData)
+        //     requestData : {"nft_contract_hash":{"Hash":"hash-3a100016a814263b64223357b169ac94ff84d1fd5826efaf1935543287066fc1"},
+        //     "identifier_mode":0,
+        //     "request_id":"1ace6bf4d8345fb2b3a5b3c41cca59b5fa69911ac2ad02c7ecbfd7785eea28b5",
+        //     "to_chainid":"43113",
+        //     "request_index":"1",
+        //     "from":{"Account":"account-hash-55884917f4107a59e8c06557baee7fdada631af6d1c105984d196a84562854eb"},
+        //     "to":"0xbf26a30547a7dda6e86fc3C33396F28FFf6902c3",
+        //     "token_ids":[28],
+        //     "token_hashes":[]
+        // }
+        requestData = JSON.parse(requestData)
+
+        let tokenIds = requestData.token_ids // For identifier_mode == 0
+        let identifierMode = requestData.identifier_mode
+        if (identifierMode != 0) {
+            tokenIds = requestData.token_hashes // For identifier_mode != 0
+        }
+
+        console.log("Requesting tokenIds", tokenIds)
+
+        let index = requestData.request_index
+        if (parseInt(index) == 0) {
+            throw "RPC error";
+        }
+        console.log("requestData", requestData, requestData.nft_contract_hash.Hash)
+        return {
+            request_id: requestData.request_id,
+            request_index: requestData.request_index,
+            nft_contract: requestData.nft_contract_hash.Hash,
+            identifier_mode: requestData.identifier_mode,
+            from: requestData.from,
+            to: requestData.to,
+            token_ids: requestData.token_ids.map((e) => e.toString()),
+            to_chainid: requestData.to_chainid ? requestData.to_chainid : null,
+            from_chainid: requestData.from_chainid ? requestData.from_chainid : null
+        }
+    },
+    getHashFromKeyString: (k) => {
+        const prefixIndex = k.startsWith('Key::Account(') ? 'Key::Account('.length : 'Key::Hash('.length
+        return k.substring(prefixIndex, k.length - 1)
     }
+
+
+
+
 }
 
 module.exports = CasperHelper;

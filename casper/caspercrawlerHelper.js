@@ -9,6 +9,8 @@ const db = require("../models");
 const TokenHook = require('./casperTokenCrawlerHook')
 const NFTHook = require('./casperNFTCrawlerHook')
 const CasperERC20Hook = require('./casperERC20LockWithdrawalCrawlerHook')
+const { DTOBridgeEvent, DTOWrappedCep78Event, EventsCep47Parser } = require('../helpers/casperEventsIndexing')
+const { Contract } = require("casper-web3")
 const config = require('config')
 BigNumber.config({ EXPONENTIAL_AT: [-100, 100] });
 
@@ -158,19 +160,45 @@ async function crawl(from, to, lastBlockHeight, rpc) {
 
       //reading deploy hashes one by one
       for (const h of deploy_hashes) {
-        let deployResult = await client.getDeployInfo(h);
-        let deploy = deployResult.deploy;
-        if (deployResult.execution_results) {
-          let result = deployResult.execution_results[0];
-          if (result.result.Success) {
-            //analyzing deploy details
-            let session = deploy.session;
-            let approvals = deploy.approvals[0]
-            let signer = approvals.signer
-            if (session && session.StoredContractByHash) {
-              await TokenHook.process(block, deploy, session.StoredContractByHash, selectedRPC)
-              await NFTHook.process(block, deploy, session.StoredContractByHash, selectedRPC, signer)
-              await CasperERC20Hook.process(block, deployResult, session.StoredContractByHash, selectedRPC)
+        // For token 
+        {
+          let deployResult = await client.getDeployInfo(h);
+          let deploy = deployResult.deploy;
+          if (deployResult.execution_results) {
+            // First part for old EVENT PARSER WAY
+            {
+              let result = deployResult.execution_results[0];
+              if (result.result.Success) {
+                //analyzing deploy details
+                let session = deploy.session;
+                let approvals = deploy.approvals[0]
+                let signer = approvals.signer
+                if (session && session.StoredContractByHash) {
+                  await TokenHook.process(block, deploy, session.StoredContractByHash, selectedRPC)
+                  await NFTHook.process(block, deploy, session.StoredContractByHash, selectedRPC, signer)
+                  await CasperERC20Hook.process(block, deployResult, session.StoredContractByHash, selectedRPC)
+                }
+              }
+            }
+            // New EVENT PARSE WAY => for new contract with event
+
+            {
+              let result = {}
+              result.execution_result = deployResult.execution_results[0];
+
+              // TO-DO : get all wrap_cep78 contract and the nft_bridge contract
+              // So that we will parsed all events of these contracts
+
+              let nftBridgePkg = CasperHelper.getNftBridgePkgAddress()
+              const parsed = EventsCep47Parser({
+                contractPackageHash: nftBridgePkg,
+                eventNames: Object.keys(DTOBridgeEvent)
+              }, result)
+              console.log("parsed ", parsed)
+              if (parsed) {
+                console.log(h, block.block.header.height, parsed)
+                await NFTHook.processNFTBridgeEvent(h, block, parsed)
+              }
             }
           }
         }

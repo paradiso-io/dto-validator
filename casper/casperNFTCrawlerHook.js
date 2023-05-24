@@ -4,7 +4,8 @@ let findArgParsed = CasperHelper.findArgParsed;
 const logger = require("../helpers/logger");
 
 let db = require('../models');
-const { CLPublicKey } = require("casper-js-sdk");
+const { CLPublicKey, CLListBytesParser, CLListType, CLType, CLStringType } = require("casper-js-sdk");
+let casperConfig = CasperHelper.getConfigInfo()
 const HOOK = {
   updateMintOrUnlock: async (updateData) => {
     {
@@ -354,18 +355,19 @@ const HOOK = {
                 tokenIds
               }
             )
-          } else if (entryPoint == "request_bridge_nft") {
-            let request = await CasperHelper.parseRequestNFTFromCasper(deploy, height)
-            if (!request) {
-              return
-            }
-
-            request.timestamp = Date.parse(block.block.header.timestamp);
-            await HOOK.updateRequestBridge(
-              request
-            )
-            console.log("Sucessful saved request to DB")
           }
+          // } else if (entryPoint == "request_bridge_nft") {
+          //   let request = await CasperHelper.parseRequestNFTFromCasper(deploy, height)
+          //   if (!request) {
+          //     return
+          //   }
+
+          //   request.timestamp = Date.parse(block.block.header.timestamp);
+          //   await HOOK.updateRequestBridge(
+          //     request
+          //   )
+          //   console.log("Sucessful saved request to DB")
+          // }
         }
         break
       } catch (e) {
@@ -381,6 +383,147 @@ const HOOK = {
         console.error(e)
       }
     }
+  },
+  processNFTBridgeEvent: async (h, block, parsed) => {
+    let height = block.block.header.height
+
+    logger.info('storing events into db')
+    for (const e of parsed.data) {
+      const d = e.data
+      console.log("deploys : ", d)
+      const thisNftContract = CasperHelper.getHashFromKeyString(d.nft_contract)
+      let nftConfig = CasperHelper.getNFTConfig();
+      console.log("thisNftContract ", thisNftContract)
+      let tokenData = nftConfig.tokens.find(
+        (e) => e.contractHash == thisNftContract
+      )
+      console.log("token ", tokenData)
+      if (tokenData) {
+        if (['request_bridge_nft'].includes(d.event_type)) {
+          // d now is event data
+
+          let eventRequestId = d.request_id
+          console.log("d.request_id ", d.request_id)
+          // get request_id from Bridge contract
+          // To-do : need to verify data from contract and event data
+          let requestDataFromBridgeContract = await CasperHelper.getBridgeRequestData(height, d.request_id)
+          console.log("here 2")
+          let array = new CLListBytesParser().fromBytesWithRemainder(Uint8Array.from(Buffer.from(d.token_ids, "hex")), new CLListType(new CLStringType()))
+          let parsedTokenIds = []
+          for (var i = 0; i < array.result.val.data.length; i++) {
+            parsedTokenIds.push(array.result.val.data[i].data.toString())
+          }
+
+
+          console.log("compare ", requestDataFromBridgeContract.token_ids, parsedTokenIds)
+          console.log(requestDataFromBridgeContract.token_ids == parsedTokenIds)
+
+
+          // Compare 2 array of token_ids
+
+          let compared = false
+
+          if (requestDataFromBridgeContract.token_ids.length == parsedTokenIds.length
+            && requestDataFromBridgeContract.token_ids.every(function (u, i) {
+              return u === parsedTokenIds[i];
+            })
+          ) {
+            compared = false;
+          } else {
+            compared = true;
+          }
+          console.log("compared", compared)
+
+          if (requestDataFromBridgeContract.request_id != d.request_id
+            || requestDataFromBridgeContract.request_index != d.request_index
+            || requestDataFromBridgeContract.nft_contract.slice(5) != CasperHelper.getHashFromKeyString(d.nft_contract)
+            || requestDataFromBridgeContract.from.Account != d.from
+            || requestDataFromBridgeContract.to != d.to
+            || compared // compare 2 array of token_ids
+            || requestDataFromBridgeContract.to_chainid != d.to_chainid) {
+            throw ("conflict data from EVENT and CONTRACT")
+
+          }
+          let nftSymbolFromConfigFile = tokenData.originSymbol
+          let nftNameFromConfigFile = tokenData.originName
+          let nftContractHash = requestDataFromBridgeContract.nft_contract
+          console.log(nftContractHash)
+          let nftContract = {}
+          //if (!nftSymbol || !nftName) { // Do not confi
+          console.log("Before create instance")
+          let randomGoodRPC = await CasperHelper.getRandomGoodCasperRPCLink(height)
+
+          nftContract = await DTOWrappedNFT.createInstance(nftContractHash, randomGoodRPC, casperConfig.chainName)
+          // await nftContract.init()
+          console.log("After create instance")
+          let nftSymbol = await nftContract.collectionSymbol()
+          console.log(" ============")
+          console.log("nftSymbol: ", nftSymbol, nftSymbolFromConfigFile)
+          let nftName = await nftContract.collectionName()
+          console.log("nftName: ", nftName, nftNameFromConfigFile)
+          if (nftSymbolFromConfigFile != nftSymbol || nftNameFromConfigFile != nftName) {
+            throw "WRONG CONFIG nftSymbol OR nftName !!!!!";
+          }
+          let tokenIds = requestDataFromBridgeContract.token_ids
+          let tokenMetadatas = []
+
+          for (var i = 0; i < tokenIds.length; i++) {
+            let tokenId = tokenIds[i]
+            while (true) {
+              try {
+                //read metadata
+                let metadata = await nftContract.getTokenMetadata(tokenId)
+                console.log("metadata: ", metadata)
+                tokenMetadatas.push(metadata)
+                break
+              } catch (e) {
+                nftContract.nodeAddress = randomGoodRPC
+                console.error(e.toString())
+              }
+            }
+          }
+
+
+
+
+          let requestBridgeData =
+          {
+            index: requestDataFromBridgeContract.request_index,
+            fromChainId: casperConfig.networkId,
+            toChainId: requestDataFromBridgeContract.to_chainid,
+            originChainId: casperConfig.networkId,
+            originToken: CasperHelper.getHashFromKeyString(d.nft_contract),
+            deployHash: h, // deploy hash 
+            height: height,
+            receiverAddress: d.to,
+            txCreator: CasperHelper.getHashFromKeyString(d.from),
+            originSymbol: nftSymbol,
+            originName: nftName,
+            tokenIds: tokenIds,
+            identifierMode: requestDataFromBridgeContract.identifier_mode,
+            tokenMetadatas: tokenMetadatas
+          }
+
+          // let request = await CasperHelper.parseRequestNFTFromCasper(deploy, height)
+          // if (!request) {
+          //   return
+          // }
+
+          requestBridgeData.timestamp = Date.parse(block.block.header.timestamp);
+          await HOOK.updateRequestBridge(
+            requestBridgeData
+          )
+          console.log("Sucessful saved request to DB")
+
+        }
+      }
+      else {
+        logger.info("not supported NFT")
+        return
+      }
+
+    }
+
   },
 };
 
