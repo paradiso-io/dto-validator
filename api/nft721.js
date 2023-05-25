@@ -28,7 +28,7 @@ async function fetchTransactionFromEVMIfNot(fromChainId, requestHash) {
             let onChainTx = await web3.eth.getTransaction(requestHash)
             return onChainTx
         })
-        
+
         if (!onChainTx) {
             throw 'invalid transaction hash'
         }
@@ -497,7 +497,7 @@ router.post('/request-withdraw', [
                     const requestSignatureFromOther = async function (i) {
                         try {
                             console.log("requesting signature from ", config.signatureServer[i])
-                            let ret = await axios.post(config.signatureServer[i] + '/nft721/request-withdraw', body, { timeout: 30 * 1000 })
+                            let ret = await axios.post(config.signatureServer[i] + '/nft721/request-withdraw', body, { timeout: 60 * 1000 })
                             let recoveredAddress = Web3Utils.recoverSignerFromSignature(ret.data.msgHash, ret.data.r[0], ret.data.s[0], ret.data.v[0])
                             console.log("signature data ok ", config.signatureServer[i], recoveredAddress)
                             return ret
