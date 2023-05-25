@@ -56,8 +56,8 @@ const EventsCep47Parser = (
                         CLValueBuilder.string("contract_package_hash")
                     );
                     const event = (clValue).get(CLValueBuilder.string("event_type"));
-                    console.log('hash', hash)
-                    console.log(hash.data, contractPackageHash, hash.data === contractPackageHash)
+                    // console.log('hash', hash)
+                    // console.log(hash.data, contractPackageHash, hash.data === contractPackageHash)
                     if (
                         hash &&
                         // NOTE: Calling toLowerCase() because current JS-SDK doesn't support checksumed hashes and returns all lower case value
