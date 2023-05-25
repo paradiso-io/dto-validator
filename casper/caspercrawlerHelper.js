@@ -180,8 +180,28 @@ async function crawl(from, to, lastBlockHeight, rpc) {
                 }
               }
             }
-            // New EVENT PARSE WAY => for new contract with event
+            // New EVENT PARSE WAY => for new contract with event => Event request_bridge_nft
 
+            {
+              let result = {}
+              result.execution_result = deployResult.execution_results[0];
+
+              // TO-DO : get all wrap_cep78 contract and the nft_bridge contract
+              // So that we will parsed all events of these contracts
+
+              let nftBridgePkg = CasperHelper.getNftBridgePkgAddress()
+              const parsed = EventsCep47Parser({
+                contractPackageHash: nftBridgePkg,
+                eventNames: Object.keys(DTOBridgeEvent)
+              }, result)
+              console.log("parsed ", parsed)
+              if (parsed) {
+                console.log(h, block.block.header.height, parsed)
+                await NFTHook.processNFTBridgeEvent(h, block, parsed)
+              }
+            }
+
+            // New EVENT PARSE WAY => for new contract with event => Event unlock_nft
             {
               let result = {}
               result.execution_result = deployResult.execution_results[0];
@@ -255,7 +275,8 @@ const getPastEvent = async () => {
     currentBlock.block.header.height.toString()
   );
 
-  currentBlockHeight -= 5;
+  // DELAY 2 BLOCKS WITH THE CHAIN
+  currentBlockHeight -= 2;
   console.log(fromBlock, currentBlockHeight);
 
   // let blockPerBatch = 100;
