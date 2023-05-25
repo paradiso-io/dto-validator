@@ -560,6 +560,7 @@ router.post('/request-withdraw', [
             let goodV = []
             for (var i = 0; i < r.length; i++) {
                 let recoveredAddress = Web3Utils.recoverSignerFromSignature(msgHash, r[i], s[i], v[i])
+                console.log("recoveredAddress ", recoveredAddress, "msgHash ", msgHash)
                 if (approverList.includes(recoveredAddress.toLowerCase())) {
                     goodR.push(r[i])
                     goodS.push(s[i])
@@ -569,6 +570,7 @@ router.post('/request-withdraw', [
             r = goodR
             s = goodS
             v = goodV
+            console.log(r.length)
 
             if (r.length < minApprovers) {
                 console.warn('Validators data are not fully synced yet, please try again later')
