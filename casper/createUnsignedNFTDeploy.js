@@ -129,7 +129,7 @@ async function start() {
 
                             })
                         ),
-                        DeployUtil.standardPayment(22000000000)
+                        DeployUtil.standardPayment(32000000000)
                     );
 
 
@@ -434,7 +434,7 @@ async function start() {
 
                                 })
                             ),
-                            DeployUtil.standardPayment(22000000000)
+                            DeployUtil.standardPayment(32000000000)
                         );
 
 
