@@ -85,6 +85,47 @@ let Web3Util = {
     let web3 = new Web3()
     return web3.eth.accounts.recover(msgHash, v, r, s).toLowerCase();
   },
+  sortSignaturesBySigner: (msgHash, Rs, Ss, Vs) => {
+    const r = []
+    const s = []
+    const v = []
+    const signers = []
+    let web3 = new Web3()
+    for (var i = 0; i < Rs.length; i++) {
+      let signer = Web3Util.recoverSignerFromSignature(msgHash, Rs[i], Ss[i], Vs[i])
+      signer = web3.utils.toChecksumAddress(signer)
+      if (signers.length == 0) {
+        signers.push(signer)
+        r.push(Rs[i])
+        s.push(Ss[i])
+        v.push(Vs[i])
+      } else {
+        // find index
+        let found = -1
+        for(var j = 0; j < signers.length; j++) {
+          if (signer < signers[j]) {
+            found = j
+            break
+          }
+        }
+
+        if (found == -1) {
+          // insert at the end
+          signers.push(signer)
+          r.push(Rs[i])
+          s.push(Ss[i])
+          v.push(Vs[i])
+        } else {
+          signers.splice(found, 0, signer)
+          r.splice(found, 0, Rs[i])
+          s.splice(found, 0, Ss[i])
+          v.splice(found, 0, Vs[i])
+        }
+      }
+    }
+
+    return { r, s, v }
+  },
   readValidators: async (networkId) => {
     let minApprovers = 0
     let approverList = []

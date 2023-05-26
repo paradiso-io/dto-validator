@@ -628,6 +628,11 @@ router.post('/request-withdraw', [
         s = s.slice(0, minApprovers + 2)
         v = v.slice(0, minApprovers + 2)
 
+        const sorted = Web3Utils.sortSignaturesBySigner(msgHash, r, s, v)
+        r = sorted.r
+        s = sorted.s
+        v = sorted.v
+
         return res.json({ r: r, s: s, v: v, msgHash: msgHash, name: name, symbol: symbol, decimals: decimals })
     } else {
         let txHashToSign = transaction.requestHash.includes("0x") ? transaction.requestHash : ("0x" + transaction.requestHash)
