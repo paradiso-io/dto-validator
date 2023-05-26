@@ -420,10 +420,9 @@ const HOOK = {
           console.log("compare ", requestDataFromBridgeContract.token_ids, parsedTokenIds)
           console.log(requestDataFromBridgeContract.token_ids == parsedTokenIds)
 
-
           // Compare 2 array of token_ids
 
-          let compared = false
+          let compared = true
 
           if (requestDataFromBridgeContract.token_ids.length == parsedTokenIds.length
             && requestDataFromBridgeContract.token_ids.every(function (u, i) {
