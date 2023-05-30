@@ -118,7 +118,7 @@ async function start() {
                         DeployUtil.ExecutableDeployItem.newStoredVersionContractByHash(
                             Uint8Array.from(Buffer.from(casperNFTConfig.nftBridgePackageHash, "hex")),
                             null,
-                            "approve_to_unlock_nft",
+                            "approve_unlock_nft",
                             RuntimeArgs.fromMap({
                                 // "nft_contract_hash": contracthash,
                                 "target_key": ownerKey,
@@ -126,7 +126,7 @@ async function start() {
                                 "token_ids": token_ids,
                                 "from_chainid": fromChainId,
                                 "identifier_mode": identifierMode,
-                                "nft_contract_hash": nftContractHash,
+                                "nft_package_hash": nftContractHash,
 
                             })
                         ),
@@ -424,7 +424,7 @@ async function start() {
                             DeployUtil.ExecutableDeployItem.newStoredVersionContractByHash(
                                 Uint8Array.from(Buffer.from(casperNFTConfig.nftBridgePackageHash, "hex")),
                                 null,
-                                "approve_to_unlock_nft",
+                                "approve_unlock_nft",
                                 RuntimeArgs.fromMap({
                                     // "nft_contract_hash": contracthash,
                                     "target_key": ownerKey,
@@ -432,7 +432,7 @@ async function start() {
                                     "token_ids": token_ids,
                                     "from_chainid": fromChainId,
                                     "identifier_mode": identifierMode,
-                                    "nft_contract_hash": nftContractHash,
+                                    "nft_package_hash": nftContractHash,
 
                                 })
                             ),
