@@ -99,9 +99,8 @@ async function start() {
                     }
 
                     // 
-                    console.log("NFT contract hash - token.contractHash: ", token.contractHash)
-                    const contracthashbytearray = new CLByteArray(Uint8Array.from(Buffer.from(token.contractHash, 'hex')));
-                    const nftContractHash = new CLKey(contracthashbytearray);
+                    const contracthashbytearray = new CLByteArray(Uint8Array.from(Buffer.from(token.contractPackageHash, 'hex')));
+                    const nftPackageHash = new CLKey(contracthashbytearray);
 
 
                     console.log("Start create deploy for UNLOCK_NFT")
@@ -126,7 +125,7 @@ async function start() {
                                 "token_ids": token_ids,
                                 "from_chainid": fromChainId,
                                 "identifier_mode": identifierMode,
-                                "nft_package_hash": nftContractHash,
+                                "nft_package_hash": nftPackageHash,
 
                             })
                         ),
@@ -377,9 +376,8 @@ async function start() {
                         }
 
                         // 
-                        console.log("NFT contract hash - token.contractHash: ", token.contractHash)
-                        const contracthashbytearray = new CLByteArray(Uint8Array.from(Buffer.from(token.contractHash, 'hex')));
-                        const nftContractHash = new CLKey(contracthashbytearray);
+                        const contracthashbytearray = new CLByteArray(Uint8Array.from(Buffer.from(token.contractPackageHash, 'hex')));
+                        const nftPackageHash = new CLKey(contracthashbytearray);
 
 
                         let ttl = 300000
@@ -432,7 +430,7 @@ async function start() {
                                     "token_ids": token_ids,
                                     "from_chainid": fromChainId,
                                     "identifier_mode": identifierMode,
-                                    "nft_package_hash": nftContractHash,
+                                    "nft_package_hash": nftPackageHash,
 
                                 })
                             ),
