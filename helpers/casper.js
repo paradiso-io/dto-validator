@@ -4,6 +4,8 @@ const { ERC20Client } = require('casper-erc20-js-client')
 const BigNumber = require("bignumber.js");
 let { DTOWrappedNFT, NFTBridge } = require("casper-nft-utils")
 const logger = require("./logger");
+const CWeb3 = require('casper-web3')
+
 
 const CasperHelper = {
     /* Getting the config info from the config file. */
@@ -331,7 +333,7 @@ const CasperHelper = {
                     console.log("toChainId", toChainId)
                     let receiverAddress = CasperHelper.findArgParsed(args, "receiver_address");
                     console.log("receiverAddress: ", receiverAddress)
-                    let nftContractHash = CasperHelper.findArgParsed(args, "nft_contract_hash")
+                    let nftContractHash = CasperHelper.findArgParsed(args, "nft_package_hash")
                     if (nftContractHash.Hash) {
                         nftContractHash = nftContractHash.Hash.slice(5)
                     }
@@ -375,7 +377,9 @@ const CasperHelper = {
                     let nftContract = {}
                     //if (!nftSymbol || !nftName) { // Do not confi
                     console.log("Before create instance")
-                    nftContract = await DTOWrappedNFT.createInstance(nftContractHash, randomGoodRPC, casperConfig.chainName)
+                    const nftContractHashActive = await CWeb3.Contract.getActiveContractHash(nftContractHash.slice(5), casperConfig.chainName)
+
+                    nftContract = await DTOWrappedNFT.createInstance(nftContractHashActive, randomGoodRPC, casperConfig.chainName)
                     // await nftContract.init()
                     console.log("After create instance")
 
