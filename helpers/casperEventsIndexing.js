@@ -26,7 +26,9 @@ const DTOWrappedCep78Event = {
 
 const DTOBridgeEvent = {
     request_bridge_nft: ["contract_package_hash", "event_type", "nft_contract", "token_ids", "from", "to", "request_id", "request_index"],
-    unlock_nft: ["contract_package_hash", "event_type", "nft_contract", "token_ids", "from", "to", "unlock_id"]
+    approve_unlock_nft: ["contract_package_hash", "event_type", "nft_contract", "token_ids", "from", "to", "unlock_id"],
+    claim_unlock_nft: ["contract_package_hash", "event_type", "token_owner", "unlock_ids"]
+
 }
 
 const EventsCep47Parser = (

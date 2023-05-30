@@ -115,8 +115,9 @@ async function start() {
                             1,
                             defaultTtl,
                         ),
-                        DeployUtil.ExecutableDeployItem.newStoredContractByHash(
-                            Uint8Array.from(Buffer.from(casperNFTConfig.nftbridge, "hex")),
+                        DeployUtil.ExecutableDeployItem.newStoredVersionContractByHash(
+                            Uint8Array.from(Buffer.from(casperNFTConfig.nftBridgePackageHash, "hex")),
+                            null,
                             "approve_to_unlock_nft",
                             RuntimeArgs.fromMap({
                                 // "nft_contract_hash": contracthash,
@@ -420,8 +421,9 @@ async function start() {
                                 1,
                                 defaultTtl,
                             ),
-                            DeployUtil.ExecutableDeployItem.newStoredContractByHash(
-                                Uint8Array.from(Buffer.from(casperNFTConfig.nftbridge, "hex")),
+                            DeployUtil.ExecutableDeployItem.newStoredVersionContractByHash(
+                                Uint8Array.from(Buffer.from(casperNFTConfig.nftBridgePackageHash, "hex")),
+                                null,
                                 "approve_to_unlock_nft",
                                 RuntimeArgs.fromMap({
                                     // "nft_contract_hash": contracthash,

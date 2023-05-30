@@ -483,11 +483,11 @@ const CasperHelper = {
         if (parseInt(index) == 0) {
             throw "RPC error";
         }
-        console.log("requestData", requestData, requestData.nft_contract_hash.Hash)
+        console.log("requestData", requestData, requestData.nft_package_hash.Hash)
         return {
             request_id: requestData.request_id,
             request_index: requestData.request_index,
-            nft_contract: requestData.nft_contract_hash.Hash,
+            nft_contract: requestData.nft_package_hash.Hash,
             identifier_mode: requestData.identifier_mode,
             from: requestData.from,
             to: requestData.to,

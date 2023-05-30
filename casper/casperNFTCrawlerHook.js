@@ -2,6 +2,8 @@ let CasperHelper = require("../helpers/casper");
 let { DTOWrappedNFT, NFTBridge } = require("casper-nft-utils")
 let findArgParsed = CasperHelper.findArgParsed;
 const logger = require("../helpers/logger");
+const CWeb3 = require('casper-web3')
+
 
 let db = require('../models');
 const { CLPublicKey, CLListBytesParser, CLListType, CLType, CLStringType } = require("casper-js-sdk");
@@ -176,6 +178,7 @@ const HOOK = {
             try {
               randomGoodRPC = await CasperHelper.getRandomGoodCasperRPCLink(height, randomGoodRPC)
               console.log("Before Create Instance")
+
               let nftContract = await DTOWrappedNFT.createInstance(nftContractHash, randomGoodRPC, casperConfig.chainName)
               console.log("After Create Instance")
 
@@ -393,15 +396,16 @@ const HOOK = {
     for (const e of parsed.data) {
       const d = e.data
       console.log("deploys : ", d)
-      const thisNftContract = CasperHelper.getHashFromKeyString(d.nft_contract)
-      let nftConfig = CasperHelper.getNFTConfig();
-      console.log("thisNftContract ", thisNftContract)
-      let tokenData = nftConfig.tokens.find(
-        (e) => e.contractHash == thisNftContract
-      )
-      console.log("token ", tokenData)
-      if (tokenData) {
-        if (['request_bridge_nft'].includes(d.event_type)) {
+      if (['request_bridge_nft'].includes(d.event_type)) {
+        const thisNftContract = CasperHelper.getHashFromKeyString(d.nft_contract)
+        let nftConfig = CasperHelper.getNFTConfig();
+        console.log("thisNftContract ", thisNftContract)
+        let tokenData = nftConfig.tokens.find(
+          (e) => e.contractHash == thisNftContract
+        )
+        console.log("token ", tokenData)
+
+        if (tokenData) {
           // d now is event data
 
           let eventRequestId = d.request_id
@@ -448,14 +452,20 @@ const HOOK = {
           let nftSymbolFromConfigFile = tokenData.originSymbol
           let nftNameFromConfigFile = tokenData.originName
           let nftContractHash = requestDataFromBridgeContract.nft_contract
-          console.log(nftContractHash)
+          console.log("nftContractHash", nftContractHash)
           let nftContract = {}
           //if (!nftSymbol || !nftName) { // Do not confi
           console.log("Before create instance")
           let randomGoodRPC = await CasperHelper.getRandomGoodCasperRPCLink(height)
+          const nftContractHashActive = await CWeb3.Contract.getActiveContractHash(nftContractHash.slice(5), casperConfig.chainName)
+          // const contract = await CWeb3.Contract.createInstanceWithRemoteABI(nftContractHashActive, randomGoodRPC, casperConfig.chainName)
 
-          nftContract = await DTOWrappedNFT.createInstance(nftContractHash, randomGoodRPC, casperConfig.chainName)
-          // await nftContract.init()
+          // let nftSymbol = await contract.getter.collectionSymbol()
+          // let nftName = await contract.getter.collectionName()
+
+
+          // console.log("active nft", nftContractHashActive, nftSymbol1)
+          nftContract = await DTOWrappedNFT.createInstance(nftContractHashActive, randomGoodRPC, casperConfig.chainName)
           console.log("After create instance")
           let nftSymbol = await nftContract.collectionSymbol()
           console.log(" ============")
@@ -484,9 +494,6 @@ const HOOK = {
             }
           }
 
-
-
-
           let requestBridgeData =
           {
             index: requestDataFromBridgeContract.request_index,
@@ -497,7 +504,7 @@ const HOOK = {
             deployHash: h, // deploy hash 
             height: height,
             receiverAddress: d.to,
-            txCreator: CasperHelper.getHashFromKeyString(d.from),
+            txCreator: d.from,
             originSymbol: nftSymbol,
             originName: nftName,
             tokenIds: tokenIds,
@@ -516,74 +523,126 @@ const HOOK = {
           )
           console.log("Sucessful saved request to DB")
 
-        }
 
-        if (['unlock_nft'].includes(d.event_type)) {
-          // d now is event data
-
-          let event_unlockId = d.unlock_id
-          console.log("d.unlock_id ", d.unlock_id)
-
-          if (!event_unlockId) {
-            return
-          }
-          console.log("FIND UNLOCK TX TO UPDATE : ", event_unlockId)
-          let splits = event_unlockId.split("-")
-          if (splits.length != 6) {
-            return
-          }
-          console.log("splits: ", splits)
-          let [txHash, fromChainId, toChainId, index, originContractAddress, originChainId] = splits
-          console.log("GET SPLITS txHash: ", txHash)
-          console.log(" !!!!! originChainId: ", originChainId)
-          console.log(" !!!!!!!  nftConfig.networkId: ", casperConfig.networkId)
-          if (originChainId != casperConfig.networkId) {
-            console.log("NOT ORIGIN NFT FROM CASPER RETURN !!!!")
-            return
-
-          }
-
-          // Parsed token_ids array
-          console.log("d.token_ids", d.token_ids)
-          let array = new CLListBytesParser().fromBytesWithRemainder(Uint8Array.from(Buffer.from(d.token_ids, "hex")), new CLListType(new CLStringType()))
-          let parsedTokenIds = []
-          for (var i = 0; i < array.result.val.data.length; i++) {
-            parsedTokenIds.push(array.result.val.data[i].data.toString())
-          }
-
-          console.log("parsedTokenIds", parsedTokenIds)
-
-
-
-
-          await HOOK.updateMintOrUnlock(
-            {
-              index,
-              fromChainId,
-              toChainId,
-              originChainId,
-              originContractAddress,
-              txHash,
-              deployHash: h,
-              height: height,
-              claimId: event_unlockId,
-              tokenIds: parsedTokenIds
-            }
-          )
-
-
-          console.log("Sucessful saved request to DB")
-
+        } else {
+          logger.info("not supported NFT")
+          return
         }
       }
-      else {
-        logger.info("not supported NFT")
-        return
+      if (['approve_unlock_nft'].includes(d.event_type)) {
+        // d now is event data
+
+        let event_unlockId = d.unlock_id
+        console.log("d.unlock_id ", d.unlock_id)
+
+        if (!event_unlockId) {
+          return
+        }
+        console.log("FIND UNLOCK TX TO UPDATE : ", event_unlockId)
+        let splits = event_unlockId.split("-")
+        if (splits.length != 6) {
+          return
+        }
+        console.log("splits: ", splits)
+        let [txHash, fromChainId, toChainId, index, originContractAddress, originChainId] = splits
+        console.log("GET SPLITS txHash: ", txHash)
+        console.log(" !!!!! originChainId: ", originChainId)
+        console.log(" !!!!!!!  nftConfig.networkId: ", casperConfig.networkId)
+        if (originChainId != casperConfig.networkId) {
+          console.log("NOT ORIGIN NFT FROM CASPER RETURN !!!!")
+          return
+
+        }
+
+        // Parsed token_ids array
+        console.log("d.token_ids", d.token_ids)
+        let array = new CLListBytesParser().fromBytesWithRemainder(Uint8Array.from(Buffer.from(d.token_ids, "hex")), new CLListType(new CLStringType()))
+        let parsedTokenIds = []
+        for (var i = 0; i < array.result.val.data.length; i++) {
+          parsedTokenIds.push(array.result.val.data[i].data.toString())
+        }
+
+        console.log("parsedTokenIds", parsedTokenIds)
+
+        await HOOK.updateApproveToClaim(
+          {
+            index,
+            fromChainId,
+            toChainId,
+            originChainId,
+            originContractAddress,
+            txHash,
+            deployHash: h,
+            height: height,
+            claimId: event_unlockId,
+            tokenIds: parsedTokenIds,
+            isCasperApproveToClaim: true,
+          }
+        )
+
+
+        console.log("Sucessful saved request to DB")
+
+      }
+
+      if (['claim_unlock_nft'].includes(d.event_type)) {
+        // d now is event data
+
+        let claim_token_owner = d.token_owner
+        console.log("d.token_owner ", claim_token_owner)
+        claim_token_owner = CasperHelper.getHashFromKeyString(claim_token_owner)
+        console.log("claim_token_onwer", claim_token_owner)
+        claim_token_owner = "account-hash-" + claim_token_owner
+        console.log("claim_token_onwer_add", claim_token_owner)
+
+        // parse unlock_ids
+        let arrayUnlockIds = new CLListBytesParser().fromBytesWithRemainder(Uint8Array.from(Buffer.from(d.unlock_ids, "hex")), new CLListType(new CLStringType()))
+        let parsedUnlockIds = []
+        for (var i = 0; i < arrayUnlockIds.result.val.data.length; i++) {
+          parsedUnlockIds.push(arrayUnlockIds.result.val.data[i].data.toString())
+        }
+        console.log("Unlock ids parsed", parsedUnlockIds)
+
+        // Unlock_id = requestHash- from ChainId - toChainId - index - nftPkHash - originChainId
+
+        for (var i = 0; i < parsedUnlockIds.length; i++) {
+          let thisUnlockId = parsedUnlockIds[i]
+          let thisUnlockIdSplits = thisUnlockId.split("-");
+          let requestHash = thisUnlockIdSplits[0];
+          let fromChainId = parseInt(thisUnlockIdSplits[1]);
+          let toChainId = parseInt(thisUnlockIdSplits[2]);
+          let index = parseInt(thisUnlockIdSplits[3]);
+          let originContractAddress = thisUnlockIdSplits[4];
+          let originChainId = parseInt(thisUnlockIdSplits[5]);
+          console.log("sss", requestHash, originContractAddress)
+          await db.Nft721Transaction.updateOne(
+            {
+              // originChainId: casperConfig.networkId,
+              // account: claim_token_owner.toLowerCase(),
+              requestHash: requestHash,
+              fromChainId: fromChainId,
+              toChainId: toChainId,
+              originChainId: originChainId,
+              originToken: originContractAddress
+            },
+            {
+              $set: {
+                claimHash: CasperHelper.toNormalTxHash(h),
+                claimBlock: parseInt(height),
+                claimed: true,
+                isCasperApproveToClaim: false,
+              },
+            },
+            { upsert: true, new: true }
+          );
+        }
+        console.log("Sucessful saved request to DB")
+
       }
 
     }
 
-  },
+  }
 };
 
 module.exports = HOOK;
