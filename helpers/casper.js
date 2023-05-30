@@ -242,7 +242,7 @@ const CasperHelper = {
             let storedContractByHash = session.StoredContractByHash;
             let nftConfig = CasperHelper.getNFTConfig();
             let tokenData = nftConfig.tokens.find(
-                (e) => e.contractHash == storedContractByHash.hash
+                (e) => e.contractPackageHash == storedContractByHash.hash
             );
             let args = storedContractByHash.args;
             let entryPoint = storedContractByHash.entry_point;

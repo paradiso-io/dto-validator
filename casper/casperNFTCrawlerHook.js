@@ -164,7 +164,7 @@ const HOOK = {
         let nftConfig = CasperHelper.getNFTConfig();
         let casperConfig = CasperHelper.getConfigInfo()
         let tokenData = nftConfig.tokens.find(
-          (e) => e.contractHash == storedContractByHash.hash
+          (e) => e.contractPackageHash == storedContractByHash.hash
         );
 
         let args = storedContractByHash.args;
@@ -271,108 +271,6 @@ const HOOK = {
           console.log("Now check unlock_nft EntryPoint !!!")
           console.log("storedContractByHash.entryPoint", storedContractByHash.entryPoint)
           console.log("entryPoint", entryPoint)
-
-          //  REMOVE THIS PART BECAUSE WE CRAWL "REQUEST_BRIDGE_NFT" AND "UNLOCK_NFT" IN THE DIFFERENT WAY
-
-          // if (entryPoint == "unlock_nft") {
-          //   console.log("storedContractByHash.entryPoint", storedContractByHash.entryPoint)
-          //   console.log("OK !!! entryPoint= unlock_nft")
-          //   randomGoodRPC = await CasperHelper.getRandomGoodCasperRPCLink(height, randomGoodRPC)
-          //   //unlock_id = <txHash>-<fromChainId>-<toChainId>-<index>-<originContractAddress>-<originChainId>
-          //   let claimId = findArgParsed(args, "unlock_id");
-          //   if (!claimId) {
-          //     return
-          //   }
-          //   console.log("FIND NEW CLAIMID TO UPDATE !!!!: ", claimId)
-          //   let splits = claimId.split("-")
-          //   if (splits.length != 6) {
-          //     return
-          //   }
-          //   console.log("splits: ", splits)
-          //   let [txHash, fromChainId, toChainId, index, originContractAddress, originChainId] = splits
-          //   console.log("GET SPLITS txHash: ", txHash)
-          //   console.log(" !!!!! originChainId: ", originChainId)
-          //   console.log(" !!!!!!!  nftConfig.networkId: ", casperConfig.networkId)
-          //   if (originChainId != casperConfig.networkId) {
-          //     console.log("NOT ORIGIN NFT FROM CASPER RETURN !!!!")
-          //     return
-
-          //   }
-          //   // if (originContractAddress.length != 64 || toChainId != originChainId || parseInt(originChainId) != nftConfig.networkId) {
-          //   //   console.log("SITUATION 1 RETURN")
-          //   //   return
-          //   // }
-
-          //   if (originChainId != toChainId) {
-          //     console.log("SITUATION 2 RETURN")
-          //     return
-          //   }
-
-          //   let fromChainIdFromArgs = findArgParsed(args, "from_chainid")
-          //   console.log("fromChainIdFromArgs: ", fromChainIdFromArgs)
-          //   let nftContractHash = findArgParsed(args, "nft_contract_hash")
-          //   console.log("!!!! nftContractHash: ", nftContractHash)
-          //   if (nftContractHash.Hash) {
-          //     nftContractHash = nftContractHash.Hash.slice(5)
-          //   }
-          //   let recipient = findArgParsed(args, "target_key")
-          //   console.log("recipient", recipient)
-          //   if (!fromChainId || !nftContractHash || fromChainIdFromArgs != fromChainId || originContractAddress != nftContractHash) {
-          //     return
-          //   }
-
-          //   let identifierMode = findArgParsed(args, "identifier_mode")
-          //   console.log("identifierMode: ", identifierMode)
-          //   if (identifierMode == undefined) {
-          //     console.log("NO IDENTIFIER-MODE RETURN !!!! ")
-          //     return
-          //   }
-          //   let tokenIds = CasperHelper.getTokenIdsFromArgs(identifierMode, args)
-          //   if (recipient.Account) {
-          //     recipient = recipient.Account
-          //   }
-
-          //   logger.info("New event at block %s", block.block.header.height);
-          //   console.log("HOOK START TO UPDATE DATE !!!!", claimId)
-          //   console.log("PARAM updated !!!: ", index,
-          //     fromChainId,
-          //     toChainId,
-          //     originChainId,
-          //     originContractAddress,
-          //     txHash,
-          //     deploy.hash,
-          //     block.block.header.height,
-          //     claimId,
-          //     tokenIds)
-          //   console.log(" !!!! !!!!!!!!!!!!!!!!!!!!!!   1!!!!!!!!!")
-
-          //   await HOOK.updateMintOrUnlock(
-          //     {
-          //       index,
-          //       fromChainId,
-          //       toChainId,
-          //       originChainId,
-          //       originContractAddress,
-          //       txHash,
-          //       deployHash: deploy.hash,
-          //       height: block.block.header.height,
-          //       claimId,
-          //       tokenIds
-          //     }
-          //   )
-          // }
-          // } else if (entryPoint == "request_bridge_nft") {
-          //   let request = await CasperHelper.parseRequestNFTFromCasper(deploy, height)
-          //   if (!request) {
-          //     return
-          //   }
-
-          //   request.timestamp = Date.parse(block.block.header.timestamp);
-          //   await HOOK.updateRequestBridge(
-          //     request
-          //   )
-          //   console.log("Sucessful saved request to DB")
-          // }
         }
         break
       } catch (e) {
@@ -401,7 +299,7 @@ const HOOK = {
         let nftConfig = CasperHelper.getNFTConfig();
         console.log("thisNftContract ", thisNftContract)
         let tokenData = nftConfig.tokens.find(
-          (e) => e.contractHash == thisNftContract
+          (e) => e.contractPackageHash == thisNftContract
         )
         console.log("token ", tokenData)
 
