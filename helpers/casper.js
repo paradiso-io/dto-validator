@@ -333,14 +333,14 @@ const CasperHelper = {
                     console.log("toChainId", toChainId)
                     let receiverAddress = CasperHelper.findArgParsed(args, "receiver_address");
                     console.log("receiverAddress: ", receiverAddress)
-                    let nftContractHash = CasperHelper.findArgParsed(args, "nft_package_hash")
-                    if (nftContractHash.Hash) {
-                        nftContractHash = nftContractHash.Hash.slice(5)
+                    let nftPackageHash = CasperHelper.findArgParsed(args, "nft_package_hash")
+                    if (nftPackageHash.Hash) {
+                        nftPackageHash = nftPackageHash.Hash.slice(5)
                     }
-                    nftContractHash = nftContractHash.toLowerCase()
-                    console.log("nftContractHash: ", nftContractHash)
+                    nftPackageHash = nftPackageHash.toLowerCase()
+                    console.log("nftPackageHash: ", nftPackageHash)
                     let _tokenData = nftConfig.tokens.find(
-                        (e) => e.originContractAddress.toLowerCase() == nftContractHash
+                        (e) => e.originContractAddress.toLowerCase() == nftPackageHash
                     );
                     console.log("_tokenData: ", _tokenData)
                     // if (!_tokenData) {
@@ -348,8 +348,8 @@ const CasperHelper = {
                     //     return;
                     // }
 
-                    if (_tokenData.originChainId != casperConfig.networkId || _tokenData.originContractAddress != nftContractHash) {
-                        logger.warn("invalid or unsupported token hash %s to bridge.", nftContractHash)
+                    if (_tokenData.originChainId != casperConfig.networkId || _tokenData.originContractAddress != nftPackageHash) {
+                        logger.warn("invalid or unsupported token hash %s to bridge.", nftPackageHash)
                         return;
                     }
                     let requestId = CasperHelper.findArgParsed(args, "request_id");
@@ -375,12 +375,11 @@ const CasperHelper = {
                     let nftSymbolFromConfigFile = _tokenData.originSymbol
                     let nftNameFromConfigFile = _tokenData.originName
                     let nftContract = {}
-                    //if (!nftSymbol || !nftName) { // Do not confi
                     console.log("Before create instance")
-                    const nftContractHashActive = await CWeb3.Contract.getActiveContractHash(nftContractHash.slice(5), casperConfig.chainName)
+                    console.log("nftPackageHash", nftPackageHash)
+                    const nftContractHashActive = await CWeb3.Contract.getActiveContractHash(nftPackageHash, casperConfig.chainName)
 
                     nftContract = await DTOWrappedNFT.createInstance(nftContractHashActive, randomGoodRPC, casperConfig.chainName)
-                    // await nftContract.init()
                     console.log("After create instance")
 
                     let nftSymbol = await nftContract.collectionSymbol()
@@ -418,7 +417,7 @@ const CasperHelper = {
                         fromChainId: casperConfig.networkId,
                         toChainId,
                         originChainId: casperConfig.networkId,
-                        originToken: nftContractHash,
+                        originToken: nftPackageHash,
                         deployHash: deploy.hash,
                         height: height,
                         receiverAddress: receiverAddress,
