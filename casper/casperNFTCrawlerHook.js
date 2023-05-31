@@ -301,7 +301,7 @@ const HOOK = {
           break
         }
         const nftBridgePackageHash = CasperHelper.getNftBridgePkgAddress()
-        const parsedEventData = CWeb3.Contract.parseEvents(DTOBridgeEvent, result, CasperHelper.getNftBridgePkgAddress()) 
+        const parsedEventData = CWeb3.Contract.parseEvents(DTOBridgeEvent, result, CasperHelper.getNftBridgePkgAddress())
         if (parsedEventData && parsedEventData.data) {
           for (const e of parsedEventData.data) {
             const d = e.data
@@ -310,7 +310,7 @@ const HOOK = {
               const nftBridgeActiveContractHash = await CWeb3.Contract.getActiveContractHash(nftBridgePackageHash, casperConfig.chainName)
               const bridgeContactInstance = await CWeb3.Contract.createInstanceWithRemoteABI(nftBridgeActiveContractHash, randomGoodRPC, casperConfig.chainName)
               const rawRequestData = await bridgeContactInstance.getter.requestIds(d.request_index, true)
-              
+
               // desearlize it
               let ret = new CLKeyBytesParser().fromBytesWithRemainder(rawRequestData)
               let nftPackageHash = ret.result.val.value()
@@ -323,6 +323,7 @@ const HOOK = {
                 logger.warn("unsupported origin CEP78 NFT contract package hash %s", nftPackageHash)
                 return
               }
+
 
               ret = new CLU8BytesParser().fromBytesWithRemainder(ret.remainder)
               let identifierMode = parseInt(ret.result.val.value().toString())
@@ -337,21 +338,23 @@ const HOOK = {
               let from = ret.result.val.value()
               from = from.data ? Buffer.from(from.data).toString('hex') : ""
 
+
               if (deploy.deploy.approvals.length > 0) {
                 from = deploy.deploy.approvals[0].signer;
                 from = CasperHelper.fromCasperPubkeyToAccountHash(from);
               }
-
               ret = new CLStringBytesParser().fromBytesWithRemainder(ret.remainder)
+
               let to = ret.result.val.value()
 
               ret = new CLListBytesParser().fromBytesWithRemainder(ret.remainder, new CLListType(new CLStringType()))
+
               const tokenIds = ret.result.val.value().map(e => e.data)
-              if (tokenData) {      
+              if (tokenData) {
                 let nftSymbolFromConfigFile = tokenData.originSymbol
                 let nftNameFromConfigFile = tokenData.originName
                 const nftContractHashActive = await CWeb3.Contract.getActiveContractHash(nftPackageHash, casperConfig.chainName)
-      
+
                 const nftContract = await DTOWrappedNFT.createInstance(nftContractHashActive, randomGoodRPC, casperConfig.chainName)
                 let nftSymbol = await nftContract.collectionSymbol()
                 let nftName = await nftContract.collectionName()
@@ -359,7 +362,7 @@ const HOOK = {
                   throw "WRONG CONFIG nftSymbol OR nftName !!!!!";
                 }
                 let tokenMetadatas = []
-      
+
                 for (var i = 0; i < tokenIds.length; i++) {
                   let tokenId = tokenIds[i]
                   while (true) {
@@ -375,15 +378,15 @@ const HOOK = {
                     }
                   }
                 }
-      
+
                 let requestBridgeData =
                 {
                   index: requestIndex,
                   fromChainId: casperConfig.networkId,
                   toChainId: toChainId,
                   originChainId: casperConfig.networkId,
-                  originToken: nftBridgePackageHash,
-                  deployHash: CasperHelper.toNormalTxHash(deploy.deploy.hash),  
+                  originToken: nftPackageHash,
+                  deployHash: CasperHelper.toNormalTxHash(deploy.deploy.hash),
                   height: height,
                   receiverAddress: to,
                   txCreator: from,
@@ -393,7 +396,7 @@ const HOOK = {
                   identifierMode: identifierMode,
                   tokenMetadatas: tokenMetadatas
                 }
-      
+
                 requestBridgeData.timestamp = Date.parse(block.block.header.timestamp);
                 await HOOK.updateRequestBridge(
                   requestBridgeData
@@ -404,9 +407,9 @@ const HOOK = {
                 logger.info("not supported NFT")
                 return
               }
-            } else if (['approve_unlock_nft'].includes(d.event_type)) {      
+            } else if (['approve_unlock_nft'].includes(d.event_type)) {
               let eventUnlockId = d.unlock_id
-      
+
               if (!eventUnlockId) {
                 return
               }
@@ -419,9 +422,9 @@ const HOOK = {
               if (originChainId != casperConfig.networkId) {
                 logger.warn("NOT ORIGIN NFT FROM CASPER RETURN !!!!")
                 return
-      
+
               }
-          
+
               await HOOK.updateApproveToClaim(
                 {
                   index,
@@ -436,17 +439,17 @@ const HOOK = {
                   isCasperApproveToClaim: true,
                 }
               )
-      
+
               logger.info("Sucessful saved request to DB")
-      
-            } else if (['claim_unlock_nft'].includes(d.event_type)) {    
-              const unlockIdsRawHex = d.unlock_ids  
+
+            } else if (['claim_unlock_nft'].includes(d.event_type)) {
+              const unlockIdsRawHex = d.unlock_ids
               const unlockIdsRaw = Uint8Array.from(Buffer.from(unlockIdsRawHex, "hex"))
               const ret = new CLListBytesParser().fromBytesWithRemainder(unlockIdsRaw, new CLListType(new CLStringType()))
               const parsedUnlockIds = ret.result.val.value().map(e => e.data)
-      
+
               logger.info("Unlock ids parsed %s", parsedUnlockIds)
-      
+
               // Unlock_id = requestHash- from ChainId - toChainId - index - nftPkHash - originChainId
               for (var i = 0; i < parsedUnlockIds.length; i++) {
                 let thisUnlockId = parsedUnlockIds[i]
@@ -480,7 +483,7 @@ const HOOK = {
               }
               logger.info("Sucessful saved request to DB")
             }
-      
+
           }
         }
         break
