@@ -15,7 +15,7 @@ const GeneralHelper = require('../helpers/general')
 const { default: BigNumber } = require('bignumber.js')
 const preSignNFT = require('../helpers/preSignNFT')
 const { getPastEventForBatch } = require('../requestNFT721Helper')
-const { fetchTransactionFromCasperIfNot } = require('../casper/caspercrawlerHelper')
+const { fetchNFTTransactionFromCasperIfNot, fetchTransactionFromCasperIfNot } = require('../casper/caspercrawlerHelper')
 
 async function fetchTransactionFromEVMIfNot(fromChainId, requestHash) {
     // dont re-index if this is a proxy as the proxy node already index all events in requestEvent and requestNFT721
@@ -266,7 +266,7 @@ router.get('/verify-transaction/:requestHash/:fromChainId/:index', [
             if (!CasperHelper.isDeploySuccess(deployResult)) {
                 return res.json({ success: false })
             }
-            let eventData = await CasperHelper.parseRequestNFTFromCasper(deployResult.deploy, transaction.requestBlock)
+            let eventData = await CasperHelper.parseRequestNFTFromCasper(deployResult.deploy, transaction.requestBlock, transaction.index)
             if (eventData.receiverAddress.toLowerCase() != transaction.account.toLowerCase()
                 || eventData.originToken.toLowerCase() != transaction.originToken.toLowerCase()
                 || eventData.amount != transaction.amount
@@ -302,7 +302,7 @@ router.post('/request-withdraw', [
         let transaction = {}
 
         if (fromChainId == casperConfig.networkId) {
-            await fetchTransactionFromCasperIfNot(requestHash)
+            await fetchNFTTransactionFromCasperIfNot(requestHash)
         }
 
         if (!config.checkTxOnChain || fromChainId == casperConfig.networkId) {
@@ -399,7 +399,7 @@ router.post('/request-withdraw', [
                 if (!CasperHelper.isDeploySuccess(deployResult)) {
                     return res.status(400).json({ errors: 'request transaction failed' })
                 }
-                let eventData = await CasperHelper.parseRequestNFTFromCasper(deployResult.deploy, transaction.requestBlock)
+                let eventData = await CasperHelper.parseRequestNFTFromCasper(deployResult.deploy, transaction.requestBlock, transaction.index)
                 if (eventData.receiverAddress.toLowerCase() != transaction.account.toLowerCase()
                     || eventData.originToken.toLowerCase() != transaction.originToken.toLowerCase()
                     || eventData.fromChainId != transaction.fromChainId

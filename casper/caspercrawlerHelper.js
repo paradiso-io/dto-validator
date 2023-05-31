@@ -321,8 +321,22 @@ const fetchTransactionFromCasperIfNot = async (deployHash) => {
   await crawl(blockHeight, blockHeight + 1, blockHeight + 1, selectedRPC)
   console.log('done crawl casper')
 }
+const fetchNFTTransactionFromCasperIfNot = async (deployHash) => {
+  const casperConfig = CasperHelper.getConfigInfo();
+  const transaction = await db.Nft721Transaction.findOne({ requestHash: CasperHelper.toNormalTxHash(deployHash), fromChainId: casperConfig.networkId })
+  if (transaction) {
+    logger.info('transaction already crawled, moved on without re-indexing')
+    return
+  }
+  deployHash = CasperHelper.toCasperDeployHash(deployHash)
+  const { height: blockHeight, selectedRPC } = await getBlockHeightFromDeployHash(deployHash)
+  console.log('blockHeight', blockHeight, deployHash)
+  await crawl(blockHeight, blockHeight + 1, blockHeight + 1, selectedRPC)
+  console.log('done crawl casper')
+}
 
 module.exports = {
   watch,
-  fetchTransactionFromCasperIfNot
+  fetchTransactionFromCasperIfNot,
+  fetchNFTTransactionFromCasperIfNot
 }
