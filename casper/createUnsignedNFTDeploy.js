@@ -24,7 +24,6 @@ async function start() {
         try {
             let casperConfig = CasperHelper.getConfigInfo()
             let casperNFTConfig = CasperHelper.getNFTConfig()
-            console.log("NFT bidge contract: ", casperNFTConfig.nftbridge)
             let casperChainId = casperConfig.networkId
             let mpcPubkey = CasperHelper.getMPCPubkey()
 

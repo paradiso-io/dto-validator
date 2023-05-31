@@ -160,7 +160,6 @@ async function crawl(from, to, lastBlockHeight, rpc) {
 
       //reading deploy hashes one by one
       for (const h of deploy_hashes) {
-        // For token 
         {
           let deployResult = await client.getDeployInfo(h);
           let deploy = deployResult.deploy;
@@ -175,49 +174,13 @@ async function crawl(from, to, lastBlockHeight, rpc) {
                 let signer = approvals.signer
                 if (session && session.StoredContractByHash) {
                   await TokenHook.process(block, deploy, session.StoredContractByHash, selectedRPC)
-                  await NFTHook.process(block, deploy, session.StoredContractByHash, selectedRPC, signer)
-                  await CasperERC20Hook.process(block, deployResult, session.StoredContractByHash, selectedRPC)
                 }
-              }
-            }
-            // New EVENT PARSE WAY => for new contract with event => Event request_bridge_nft
 
-            {
-              let result = {}
-              result.execution_result = deployResult.execution_results[0];
-
-              // TO-DO : get all wrap_cep78 contract and the nft_bridge contract
-              // So that we will parsed all events of these contracts
-
-              let nftBridgePkg = CasperHelper.getNftBridgePkgAddress()
-              const parsed = EventsCep47Parser({
-                contractPackageHash: nftBridgePkg,
-                eventNames: Object.keys(DTOBridgeEvent)
-              }, result)
-              console.log("parsed ", parsed)
-              if (parsed) {
-                console.log(h, block.block.header.height, parsed)
-                await NFTHook.processNFTBridgeEvent(h, block, parsed)
-              }
-            }
-
-            // New EVENT PARSE WAY => for new contract with event => Event unlock_nft
-            {
-              let result = {}
-              result.execution_result = deployResult.execution_results[0];
-
-              // TO-DO : get all wrap_cep78 contract and the nft_bridge contract
-              // So that we will parsed all events of these contracts
-
-              let nftBridgePkg = CasperHelper.getNftBridgePkgAddress()
-              const parsed = EventsCep47Parser({
-                contractPackageHash: nftBridgePkg,
-                eventNames: Object.keys(DTOBridgeEvent)
-              }, result)
-              console.log("parsed ", parsed)
-              if (parsed) {
-                console.log(h, block.block.header.height, parsed)
-                await NFTHook.processNFTBridgeEvent(h, block, parsed)
+                // parse all events related to nft bridge to/from casper
+                // await NFTHook.process(block, deploy, selectedRPC, signer)
+                await NFTHook.processNFTBridgeEvent(block, deployResult, selectedRPC)
+                // parse all events related to erc20 tokens issued on casper bridging to/from casper
+                await CasperERC20Hook.process(block, deployResult, selectedRPC)
               }
             }
           }

@@ -98,7 +98,7 @@ const HOOK = {
     );
 
   },
-  process: async (block, deploy, storedContractByHash, selectedRPC) => {
+  process: async (block, deploy, selectedRPC) => {
     let trial = 20
     let randomGoodRPC = selectedRPC
     let height = parseInt(block.block.header.height)

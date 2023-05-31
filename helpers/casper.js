@@ -455,23 +455,14 @@ const CasperHelper = {
         let nftBridge = casperConfig.nftBridgePackageHash
         return nftBridge
     },
-    getBridgeRequestData: async (height, requestId) => {
-        let randomGoodRPC = await CasperHelper.getRandomGoodCasperRPCLink(height)
+    getBridgeRequestData: async (height, requestId, randomGoodRPC) => {
+        randomGoodRPC = await CasperHelper.getRandomGoodCasperRPCLink(height, randomGoodRPC)
         let casperConfig = CasperHelper.getNFTConfig()
         const nftBridge = new NFTBridge(casperConfig.nftbridge, randomGoodRPC, casperConfig.chainName)
         await nftBridge.init()
         let requestData = await nftBridge.getIndexFromRequestId(requestId)
         console.log('requestData', requestData)
-        //     requestData : {"nft_contract_hash":{"Hash":"hash-3a100016a814263b64223357b169ac94ff84d1fd5826efaf1935543287066fc1"},
-        //     "identifier_mode":0,
-        //     "request_id":"1ace6bf4d8345fb2b3a5b3c41cca59b5fa69911ac2ad02c7ecbfd7785eea28b5",
-        //     "to_chainid":"43113",
-        //     "request_index":"1",
-        //     "from":{"Account":"account-hash-55884917f4107a59e8c06557baee7fdada631af6d1c105984d196a84562854eb"},
-        //     "to":"0xbf26a30547a7dda6e86fc3C33396F28FFf6902c3",
-        //     "token_ids":[28],
-        //     "token_hashes":[]
-        // }
+        
         requestData = JSON.parse(requestData)
 
         let tokenIds = requestData.token_ids // For identifier_mode == 0
