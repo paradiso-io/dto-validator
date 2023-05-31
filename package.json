@@ -19,6 +19,7 @@
     "casper-js-client-helper": "github:dotoracle/casper-js-client-helper",
     "casper-nft-utils": "github:dotoracle/dotoracle-casper-contracts",
     "casper-web3": "https://github.com/DegaLabs/casper-web3.git",
+    "casper-js-sdk": "^2.13.0",
     "config": "^3.3.7",
     "cors": "^2.8.5",
     "esm": "^3.2.25",
