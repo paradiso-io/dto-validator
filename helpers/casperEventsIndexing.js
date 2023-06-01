@@ -19,9 +19,9 @@ const blake = require("blakejs");
 const DEFAULT_TTL = 1800000;
 
 const DTOWrappedCep78Event = {
-    approve_to_claim: ["contract_package_hash", "event_type", "nft_contract", "token_id", "offeror", "minimum_offer", "is_active"],
-    claim: ["contract_package_hash", "event_type", "nft_contract", "token_id", "offeror", "minimum_offer", "is_active"],
-    request_bridge_back: ["contract_package_hash", "event_type", "nft_contract", "token_id", "offeror", "buyer", "value"],
+    approve_to_claim: ["contract_package_hash", "event_type", "mint_id"],
+    claim: ["contract_package_hash", "event_type", "mint_ids"],
+    request_bridge_back: ["contract_package_hash", "event_type", "request_index"],
 }
 
 const DTOBridgeEvent = {

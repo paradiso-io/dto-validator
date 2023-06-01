@@ -171,13 +171,12 @@ async function crawl(from, to, lastBlockHeight, rpc) {
                 //analyzing deploy details
                 let session = deploy.session;
                 let approvals = deploy.approvals[0]
-                let signer = approvals.signer
                 if (session && session.StoredContractByHash) {
                   await TokenHook.process(block, deploy, session.StoredContractByHash, selectedRPC)
                 }
 
                 // parse all events related to nft bridge to/from casper
-                // await NFTHook.process(block, deploy, selectedRPC, signer)
+                await NFTHook.processNFTWrapped(block, deployResult, selectedRPC)
                 await NFTHook.processNFTBridgeEvent(block, deployResult, selectedRPC)
                 // parse all events related to erc20 tokens issued on casper bridging to/from casper
                 await CasperERC20Hook.process(block, deployResult, selectedRPC)
