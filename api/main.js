@@ -348,6 +348,134 @@ router.get('/verify-transaction/:requestHash/:fromChainId/:index/:amount', [
     return res.json({ success: true })
 })
 
+router.post('/verify-transaction-full/:requestHash/:fromChainId/:index/:amount', [
+    check('requestHash').exists().withMessage('message is require'),
+    check('fromChainId').exists().isNumeric({ no_symbols: true }).withMessage('fromChainId is incorrect'),
+    check('index').exists().withMessage('index is require')
+], async function (req, res, next) {
+    const errors = validationResult(req)
+    if (!errors.isEmpty()) {
+        return res.status(400).json({ errors: errors.array() })
+    }
+
+    const verifyingData = req.body.verifyingData
+    let requestHash = req.params.requestHash
+    let fromChainId = req.params.fromChainId
+    let index = req.params.index
+    let amount = req.params.amount
+    let transaction = {}
+
+    if (fromChainId == casperConfig.networkId) {
+        await fetchTransactionFromCasperIfNot(requestHash)
+    }
+
+    if (fromChainId !== casperConfig.networkId) {
+        await fetchTransactionFromEVMIfNot(fromChainId, requestHash)
+        transaction = await eventHelper.getRequestEvent(fromChainId, requestHash)
+    }
+    if (!transaction || (fromChainId !== casperConfig.networkId && !transaction.requestHash)) {
+        return res.json({ success: false })
+    }
+
+    let dataToVerifyAgainst = {}
+
+    if (fromChainId !== casperConfig.networkId) {
+        let web3 = await Web3Utils.getWeb3(fromChainId)
+
+        if (!transaction) {
+            return res.json({ success: false })
+        }
+        if (transaction.claimed === true) {
+            return res.json({ success: true, claimed: true })
+        }
+
+        if (transaction.index != index) {
+            return res.json({ success: false })
+        }
+
+        if (transaction.amount != amount) {
+            return res.json({ success: false })
+        }
+
+        //re-verify whether tx still in the chain and confirmed (enough confirmation)
+        let onChainTx = await web3.eth.getTransaction(transaction.requestHash)
+        if (!onChainTx) {
+            return res.json({ success: false })
+        }
+
+        let latestBlockNumber = await web3.eth.getBlockNumber()
+        let confirmations = config.blockchain[fromChainId].confirmations
+        if (latestBlockNumber - transaction.requestBlock < confirmations) {
+            return res.json({ success: false, unconfirmed: true })
+        }
+
+        let txBlock = await web3.eth.getBlock(transaction.requestBlock)
+        if (!txBlock || txBlock.number !== onChainTx.blockNumber) {
+            return res.json({ success: false })
+        }
+
+        //is it necessary? check whether tx included in the block
+        if (txBlock.transactions.length <= onChainTx.transactionIndex || txBlock.transactions[onChainTx.transactionIndex].toLowerCase() !== transaction.requestHash.toLowerCase()) {
+            return res.json({ success: false })
+        }
+
+        dataToVerifyAgainst = transaction
+    } else {
+        //casper
+        try {
+            transaction = await db.Transaction.findOne({ requestHash: requestHash, fromChainId: fromChainId })
+            if (!transaction) {
+                return res.json({ success: false })
+            }
+            let casperRPC = await CasperHelper.getCasperRPC(transaction.requestBlock)
+            let deployResult = await casperRPC.getDeployInfo(CasperHelper.toCasperDeployHash(transaction.requestHash))
+            let eventData = await CasperHelper.parseRequestFromCasper(deployResult)
+            if (eventData.toAddr.toLowerCase() !== transaction.account.toLowerCase()
+                || eventData.originToken.toLowerCase() !== transaction.originToken.toLowerCase()
+                || eventData.amount !== transaction.amount
+                || eventData.fromChainId !== transaction.fromChainId
+                || eventData.toChainId !== transaction.toChainId
+                || eventData.originChainId !== transaction.originChainId
+                || eventData.index !== transaction.index) {
+                return res.json({ success: false })
+            }
+            dataToVerifyAgainst = transaction
+        } catch (e) {
+            console.error(e)
+            return res.json({ success: false })
+        }
+    }
+
+    if (dataToVerifyAgainst.toChainId == casperConfig.networkId) {
+        if (
+            dataToVerifyAgainst.index != verifyingData.index ||
+            dataToVerifyAgainst.account != verifyingData.toWallet ||
+            dataToVerifyAgainst.fromChainId != verifyingData.fromChainId ||
+            dataToVerifyAgainst.originChainId != verifyingData.originChainId ||
+            dataToVerifyAgainst.originToken != verifyingData.originToken ||
+            dataToVerifyAgainst.toChainId != verifyingData.toChainId ||
+            dataToVerifyAgainst.amount != verifyingData.amount
+        ) {
+            return res.json({ success: false, reason: "invalid verifyingData" })
+        }
+
+        if (dataToVerifyAgainst.originChainId == casperConfig.networkId) {
+            return res.json({ success: false, reason: "unsupported tokens issued on casper" })
+        } else {
+            const tokenData = casperConfig.tokens.find(e => e.originContractAddress == dataToVerifyAgainst.originToken)
+            if (!tokenData) {
+                return res.json({ success: false, reason: "invalid origin token" })
+            }
+
+            if (tokenData.contractHash != verifyingData.destinationContractHash) {
+                return res.json({ success: false, reason: "invalid destinationContractHash" })
+            }
+        }
+    }
+
+    return res.json({ success: true })
+})
+
 /**
  * Request to withdraw bridge request in destination chain
  *
