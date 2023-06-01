@@ -4,7 +4,6 @@ const CasperHelper = require('../helpers/casper')
 const { sha256 } = require("ethereum-cryptography/sha256");
 const logger = require("../helpers/logger");
 const { Contract } = require('casper-web3');
-const tex = require("./nx.json")
 const {
     DeployUtil,
     RuntimeArgs,
@@ -78,7 +77,6 @@ async function start() {
 
                     console.log("mintId: ", mintid)
                     let unlockId = mintid
-                    let unlockIdToCasper = new CLString(unlockId)
 
 
                     // identifierMode
@@ -323,7 +321,6 @@ async function start() {
                         )
 
                         const ownerKey = createRecipientAddress(new CLAccountHash(ownerAccountHashByte)) // Unlock To_address 
-                        //console.log("token_owner_to_casper:  ", ownerKey)
 
                         // umlock_id 
                         //unlock_id = <txHash>-<fromChainId>-<toChainId>-<index>-<originContractAddress>-<originChainId>
@@ -334,46 +331,29 @@ async function start() {
                             continue
                         }
 
-                        console.log("tx.index: ", req.index)
                         let mintid = `${req.requestHash.toLowerCase()}-${req.fromChainId}-${req.toChainId}-${req.index}-${req.originToken.toLowerCase()}-${req.originChainId}`
 
-                        console.log("mintId: ", mintid)
                         let unlockId = mintid
-                        let unlockIdToCasper = new CLString(unlockId)
-
 
                         // identifierMode
                         console.log("req.identifierMode: ", req.identifierMode)
                         let identifierMode = new CLValueBuilder.u8((req.identifierMode))
                         console.log("identifierMode: ", identifierMode)
-                        // toChainId
-                        // fromChainId
-                        let fromChainId = new CLValueBuilder.u256(req.fromChainId)
-
-
-                        // token metadata
-                        let tokenmetadatas = req.tokenMetadatas.map((e) => CLValueBuilder.string(e))
-                        // token_ids
                         let tokenIds = null
-                        let token_ids = null
                         if (identifierMode == 1) {
-                            tokenIds = req.tokenIds.map((e) => CLValueBuilder.string(e.toString()))
-                            token_ids = CLValueBuilder.list(tokenIds)
+                            tokenIds = req.tokenIds.map((e) => e.toString())
                         }
                         else {
-                            tokenIds = req.tokenIds.map((e) => CLValueBuilder.u64(e))
-                            token_ids = CLValueBuilder.list(tokenIds)
+                            tokenIds = req.tokenIds.map((e) => parseInt(e))
                         }
 
                         // 
                         const contracthashbytearray = new CLByteArray(Uint8Array.from(Buffer.from(token.contractPackageHash, 'hex')));
-                        const nftPackageHash = new CLKey(contracthashbytearray);
 
 
                         let ttl = 300000
 
                         console.log("Start create deploy for UNLOCK_NFT")
-                        // token_owner
 
                         let token_owner1 = req.toWallet
 
@@ -392,9 +372,6 @@ async function start() {
                         const accounthash2 = new CLAccountHash(
                             recipientAccountHashByte
                         );
-                        const token_owner_to_casper = new CLKey(accounthash2);
-                        console.log("token_owner_to_casper:  ", token_owner_to_casper)
-
                         //TODO: check whether mintid executed => this is to avoid failed transactions as mintid cant be executed more than one time
                         ttl = 300000
 
@@ -406,7 +383,7 @@ async function start() {
                         let deploy = await contractInstance.contractCalls.approveUnlockNft.makeUnsignedDeploy({
                             publicKey: mpcPubkey,
                             args: {
-                                targetKey: new CLAccountHash(ownerAccountHashByte),
+                                targetKey: new CLAccountHash(recipientAccountHashByte),
                                 unlockId: unlockId,
                                 tokenIds: tokenIds,
                                 fromChainid: tx.fromChainId,
