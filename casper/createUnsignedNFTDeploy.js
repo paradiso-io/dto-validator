@@ -3,6 +3,8 @@ const generalHelper = require('../helpers/general')
 const CasperHelper = require('../helpers/casper')
 const { sha256 } = require("ethereum-cryptography/sha256");
 const logger = require("../helpers/logger");
+const { Contract } = require('casper-web3');
+const tex = require("./nx.json")
 const {
     DeployUtil,
     RuntimeArgs,
@@ -11,6 +13,9 @@ const {
     CLKey,
     CLAccountHash,
     CLValueBuilder,
+    makeDeploy,
+    DeployParams,
+    ExecutableDeployItem,
 } = require("casper-js-sdk");
 
 const {
@@ -26,6 +31,8 @@ async function start() {
             let casperNFTConfig = CasperHelper.getNFTConfig()
             let casperChainId = casperConfig.networkId
             let mpcPubkey = CasperHelper.getMPCPubkey()
+            let selectedGoodRPC = await CasperHelper.getRandomGoodCasperRPCLink(1)
+
 
             //scan for tx without casperDeployCreated
             let pendingTxes = await db.Nft721Transaction.find(
@@ -89,12 +96,12 @@ async function start() {
                     let tokenIds = null
                     let token_ids = null
                     if (identifierMode == 1) {
-                        tokenIds = tx.tokenIds.map((e) => CLValueBuilder.string(e.toString()))
-                        token_ids = CLValueBuilder.list(tokenIds)
+                        tokenIds = tx.tokenIds.map((e) => e.toString())
+                        // token_ids = CLValueBuilder.list(tokenIds)
                     }
                     else {
-                        tokenIds = tx.tokenIds.map((e) => CLValueBuilder.u64(e))
-                        token_ids = CLValueBuilder.list(tokenIds)
+                        tokenIds = tx.tokenIds.map((e) => parseInt(e))
+                        // token_ids = CLValueBuilder.list(tokenIds)
                     }
 
                     // 
@@ -103,49 +110,34 @@ async function start() {
 
 
                     console.log("Start create deploy for UNLOCK_NFT")
-
                     // ARG: token_ids - token_hashes - from_chainid - identifier_mode - nft_contract_hash - target_key - unlock_id
 
-                    let deploy = DeployUtil.makeDeploy(
-                        new DeployUtil.DeployParams(
-                            mpcPubkey,
-                            casperConfig.chainName,
-                            1,
-                            defaultTtl,
-                        ),
-                        DeployUtil.ExecutableDeployItem.newStoredContractByHash(
-                            Uint8Array.from(Buffer.from(casperNFTConfig.nftbridge, "hex")),
-                            "approve_unlock_nft",
-                            RuntimeArgs.fromMap({
-                                // "nft_contract_hash": contracthash,
-                                "target_key": ownerKey,
-                                "unlock_id": unlockIdToCasper,
-                                "token_ids": token_ids,
-                                "from_chainid": fromChainId,
-                                "identifier_mode": identifierMode,
-                                "nft_package_hash": nftPackageHash,
-
-                            })
-                        ),
-                        DeployUtil.standardPayment(15000000000)
-                    );
-
-
-                    //deploy = client.signDeploy(deploy, pairKeyView);
-                    console.log("DEPLOY: ", deploy)
-
-                    console.log("after deploy")
-
-
-                    let deployJson = JSON.stringify(DeployUtil.deployToJson(deploy));
+                    const contractInstance = await Contract.createInstanceWithRemoteABI(casperNFTConfig.nftbridge, selectedGoodRPC, casperConfig.chainName)
+                    let deploy = await contractInstance.contractCalls.approveUnlockNft.makeUnsignedDeploy({
+                        publicKey: mpcPubkey,
+                        args: {
+                            targetKey: new CLAccountHash(ownerAccountHashByte),
+                            unlockId: unlockId,
+                            tokenIds: tokenIds,
+                            fromChainid: tx.fromChainId,
+                            identifierMode: tx.identifierMode,
+                            nftPackageHash: contracthashbytearray,
+                        },
+                        paymentAmount: 10000000000,
+                        ttl: defaultTtl
+                    })
+                    let deployJson = JSON.stringify(Contract.deployToJson(deploy));
+                    deploy = JSON.parse(deployJson).deploy
                     let hashToSign = sha256(Buffer.from(deploy.hash)).toString("hex")
                     let deployHash = Buffer.from(deploy.hash).toString('hex')
-                    //console.log("deployHash2: ", deployHash)
+                    console.log("deployHash2: ", deployHash)
 
                     logger.info(
                         "new transactions to casper %s",
                         sha256(Buffer.from(deploy.hash)).toString("hex")
                     );
+                    console.log(new Date(deploy.header.timestamp).valueOf())
+                    console.log(Date.now())
 
                     await db.Nft721RequestToCasper.updateOne(
                         {
@@ -163,9 +155,9 @@ async function start() {
                                 originChainId: tx.originChainId,
                                 originToken: tx.originToken.toLowerCase(),
                                 //destinationContractHash: token.contractHash,
-                                timestamp: Math.floor(deploy.header.timestamp / 1000),
-                                ttl: Math.floor(deploy.header.ttl / 1000),
-                                deadline: Math.floor((deploy.header.timestamp + deploy.header.ttl) / 1000),
+                                timestamp: Math.floor(new Date(deploy.header.timestamp) / 1000),  //Math.floor(deploy.header.timestamp / 1000),
+                                ttl: Math.floor(defaultTtl / 1000),
+                                deadline: Math.floor((new Date(deploy.header.timestamp).valueOf() + defaultTtl) / 1000),
                                 isProcessed: false,
                                 deployJsonString: deployJson,
                                 amount: tx.amount,
@@ -410,40 +402,28 @@ async function start() {
 
                         // ARG: token_ids - token_hashes - from_chainid - identifier_mode - nft_contract_hash - target_key - unlock_id
 
-                        let deploy = DeployUtil.makeDeploy(
-                            new DeployUtil.DeployParams(
-                                mpcPubkey,
-                                casperConfig.chainName,
-                                1,
-                                defaultTtl,
-                            ),
-                            DeployUtil.ExecutableDeployItem.newStoredContractByHash(
-                                Uint8Array.from(Buffer.from(casperNFTConfig.nftbridge, "hex")),
-                                "approve_unlock_nft",
-                                RuntimeArgs.fromMap({
-                                    // "nft_contract_hash": contracthash,
-                                    "target_key": ownerKey,
-                                    "unlock_id": unlockIdToCasper,
-                                    "token_ids": token_ids,
-                                    "from_chainid": fromChainId,
-                                    "identifier_mode": identifierMode,
-                                    "nft_package_hash": nftPackageHash,
-
-                                })
-                            ),
-                            DeployUtil.standardPayment(32000000000)
-                        );
-
+                        const contractInstance = await Contract.createInstanceWithRemoteABI(casperNFTConfig.nftbridge, selectedGoodRPC, casperConfig.chainName)
+                        let deploy = await contractInstance.contractCalls.approveUnlockNft.makeUnsignedDeploy({
+                            publicKey: mpcPubkey,
+                            args: {
+                                targetKey: new CLAccountHash(ownerAccountHashByte),
+                                unlockId: unlockId,
+                                tokenIds: tokenIds,
+                                fromChainid: tx.fromChainId,
+                                identifierMode: tx.identifierMode,
+                                nftPackageHash: contracthashbytearray,
+                            },
+                            paymentAmount: 10000000000,
+                            ttl: defaultTtl
+                        })
+                        let deployJson = JSON.stringify(Contract.deployToJson(deploy));
+                        deploy = JSON.parse(deployJson).deploy
 
                         //deploy = client.signDeploy(deploy, pairKeyView);
                         console.log("DEPLOY: ", deploy)
 
                         console.log("after deploy")
 
-
-                        //deploy = client.signDeploy(deploy, pairKeyView);
-                        console.log(deploy.approvals)
-                        let deployJson = JSON.stringify(DeployUtil.deployToJson(deploy));
                         let hashToSign = sha256(Buffer.from(deploy.hash)).toString("hex")
                         let deployHash = Buffer.from(deploy.hash).toString('hex')
                         logger.info(
@@ -466,10 +446,9 @@ async function start() {
                                     toChainId: req.toChainId,
                                     originChainId: req.originChainId,
                                     originToken: req.originToken.toLowerCase(),
-                                    //destinationContractHash: token.contractHash,
-                                    timestamp: Math.floor(deploy.header.timestamp / 1000),
-                                    ttl: Math.floor(deploy.header.ttl / 1000),
-                                    deadline: Math.floor((deploy.header.timestamp + deploy.header.ttl) / 1000),
+                                    timestamp: Math.floor(new Date(deploy.header.timestamp) / 1000),  //Math.floor(deploy.header.timestamp / 1000),
+                                    ttl: Math.floor(defaultTtl / 1000),
+                                    deadline: Math.floor((new Date(deploy.header.timestamp).valueOf() + defaultTtl) / 1000),
                                     isProcessed: false,
                                     deployJsonString: deployJson,
                                     amount: req.amount,
