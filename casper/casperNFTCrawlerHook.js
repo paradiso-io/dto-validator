@@ -8,7 +8,7 @@ const Web3Utils = require('../helpers/web3')
 const config = require('config')
 const ERC721 = require('../contracts/ERC721.json')
 let db = require('../models');
-const { CLPublicKey, CLListBytesParser, CLListType, CLType, CLStringType, CLU8BytesParser, CLStringBytesParser, CLKeyBytesParser, CLU256BytesParser } = require("casper-js-sdk");
+const { CLListBytesParser, CLListType, CLStringType, CLU8BytesParser, CLStringBytesParser, CLKeyBytesParser, CLU256BytesParser, CasperServiceByJsonRPC } = require("casper-js-sdk");
 const HOOK = {
   updateMintOrUnlock: async (updateData) => {
     {
@@ -153,12 +153,31 @@ const HOOK = {
       { upsert: true, new: true }
     )
   },
+  parseRequestFromTransaction: async (deploy, blockNumber, requestIndex) => {
+    let randomGoodRPC = await CasperHelper.getRandomGoodCasperRPCLink(blockNumber, null)
+    const client = new CasperServiceByJsonRPC(
+      randomGoodRPC
+    );
+  
+    const blockHash = deploy.deploy.execution_results[0].block_hash
+    const block = await client.getBlockInfoByHeight(blockNumber)
+    let requests = await HOOK.processNFTWrapped(block, deploy, randomGoodRPC)
+    let requestWithIndex = requests.find(e => e.index == parseInt(requestIndex))
+    if (requestWithIndex) {
+      return requestWithIndex
+    } else {
+      requests = await HOOK.processNFTBridgeEvent(block, deploy, randomGoodRPC)
+      requestWithIndex = requests.find(e => e.index == parseInt(requestIndex))
+      return requestIndex
+    }
+  },
   processNFTWrapped: async (block, deploy, selectedRPC) => {
     let trial = 20
     let randomGoodRPC = selectedRPC
     let height = parseInt(block.block.header.height)
     const casperConfig = CasperHelper.getConfigInfo()
     const nftConfig = CasperHelper.getNFTConfig()
+    const requestList = []
     while (trial > 0) {
       try {
         const result = {}
@@ -242,23 +261,25 @@ const HOOK = {
                   await HOOK.updateRequestBridge(
                     requestBridgeData
                   )
+
+                  requestList.push(requestBridgeData)
   
                   logger.info("Sucessful saved request to DB")
                 } else if (['approve_to_claim'].includes(d.event_type)) {
                   let eventMintId = d.mint_id
     
                   if (!eventMintId) {
-                    return
+                    continue
                   }
                   logger.info("FIND Mint ID TX TO UPDATE : %s", eventMintId)
                   let splits = eventMintId.split("-")
                   if (splits.length != 6) {
-                    return
+                    continue
                   }
                   let [txHash, fromChainId, toChainId, index, originContractAddress, originChainId] = splits
                   if (originChainId == casperConfig.networkId) {
                     logger.warn("Original Chain must not be the casper chain")
-                    return
+                    continue
                   }
     
                   await HOOK.updateApproveToClaim(
@@ -332,6 +353,8 @@ const HOOK = {
         logger.error(e.toString())
       }
     }
+
+    return requestList
   },
   // this function is used for parsing all events related to bridge CEP78 NFTs natively issued on Casper
   processNFTBridgeEvent: async (block, deploy, selectedRPC) => {
@@ -340,6 +363,7 @@ const HOOK = {
     let height = parseInt(block.block.header.height)
     const casperConfig = CasperHelper.getConfigInfo()
     const nftConfig = CasperHelper.getNFTConfig()
+    const requestList = []
     while (trial > 0) {
       try {
         const result = {}
@@ -369,9 +393,8 @@ const HOOK = {
 
               if (!tokenData) {
                 logger.warn("unsupported origin CEP78 NFT contract package hash %s", nftPackageHash)
-                return
+                continue
               }
-
 
               ret = new CLU8BytesParser().fromBytesWithRemainder(ret.remainder)
               let identifierMode = parseInt(ret.result.val.value().toString())
@@ -449,28 +472,27 @@ const HOOK = {
                 await HOOK.updateRequestBridge(
                   requestBridgeData
                 )
-
+                requestList.push(requestBridgeData)
                 logger.info("Sucessful saved request to DB")
               } else {
                 logger.info("not supported NFT")
-                return
+                continue
               }
             } else if (['approve_unlock_nft'].includes(d.event_type)) {
               let eventUnlockId = d.unlock_id
 
               if (!eventUnlockId) {
-                return
+                continue
               }
               logger.info("FIND UNLOCK TX TO UPDATE : %s", eventUnlockId)
               let splits = eventUnlockId.split("-")
               if (splits.length != 6) {
-                return
+                continue
               }
               let [txHash, fromChainId, toChainId, index, originContractAddress, originChainId] = splits
               if (originChainId != casperConfig.networkId) {
                 logger.warn("NOT ORIGIN NFT FROM CASPER RETURN !!!!")
-                return
-
+                continue
               }
 
               await HOOK.updateApproveToClaim(
@@ -544,6 +566,7 @@ const HOOK = {
         logger.error(e.toString())
       }
     }
+    return requestList
   }
 };
 

@@ -16,7 +16,8 @@ const { default: BigNumber } = require('bignumber.js')
 const preSignNFT = require('../helpers/preSignNFT')
 const { getPastEventForBatch } = require('../requestNFT721Helper')
 const { fetchNFTTransactionFromCasperIfNot, fetchTransactionFromCasperIfNot } = require('../casper/caspercrawlerHelper')
-
+const CasperNFTCrawlerHook = require('../casper/casperNFTCrawlerHook')
+const CWeb = require('casper-web3')
 async function fetchTransactionFromEVMIfNot(fromChainId, requestHash) {
     // dont re-index if this is a proxy as the proxy node already index all events in requestEvent and requestNFT721
     if (config.proxy) return
@@ -266,10 +267,10 @@ router.get('/verify-transaction/:requestHash/:fromChainId/:index', [
             if (!CasperHelper.isDeploySuccess(deployResult)) {
                 return res.json({ success: false })
             }
-            let eventData = await CasperHelper.parseRequestNFTFromCasper(deployResult.deploy, transaction.requestBlock, transaction.index)
+            let eventData = await CasperNFTCrawlerHook.parseRequestFromTransaction(deployResult, transaction.requestBlock, transaction.index) 
             if (eventData.receiverAddress.toLowerCase() != transaction.account.toLowerCase()
                 || eventData.originToken.toLowerCase() != transaction.originToken.toLowerCase()
-                || eventData.amount != transaction.amount
+                || eventData.tokenIds != transaction.tokenIds
                 || eventData.fromChainId != transaction.fromChainId
                 || eventData.toChainId != transaction.toChainId
                 || eventData.originChainId != transaction.originChainId
@@ -281,6 +282,142 @@ router.get('/verify-transaction/:requestHash/:fromChainId/:index', [
             return res.json({ success: false })
         }
     }
+    return res.json({ success: true })
+})
+
+router.post('/verify-transaction-full/:requestHash/:fromChainId/:index', [
+    check('requestHash').exists().withMessage('message is require'),
+    check('fromChainId').exists().isNumeric({ no_symbols: true }).withMessage('fromChainId is incorrect'),
+    check('index').exists().withMessage('index is require')
+], async function (req, res, next) {
+    const errors = validationResult(req)
+    if (!errors.isEmpty()) {
+        return res.status(400).json({ errors: errors.array() })
+    }
+
+    const requestHash = req.params.requestHash
+    const fromChainId = req.params.fromChainId
+    const index = req.params.index
+    const verifyingData = req.body.verifyingData
+    let transaction = {}
+    logger.info('verify-transaction-full fromChainId = %s', fromChainId)
+
+    if (fromChainId == casperConfig.networkId) {
+        await fetchTransactionFromCasperIfNot(requestHash)
+    }
+
+    if (fromChainId != casperConfig.networkId) {
+        await fetchTransactionFromEVMIfNot(fromChainId, requestHash)
+        transaction = await eventHelper.getRequestNft721Event(fromChainId, requestHash, index)
+    }
+    if (!transaction || (fromChainId != casperConfig.networkId && !transaction.requestHash)) {
+        return res.json({ success: false })
+    }
+
+    let dataToVerifyAgainst = {}
+
+    if (fromChainId != casperConfig.networkId) {
+        let inDBTx = await db.Nft721Transaction.findOne({ requestHash: requestHash, fromChainId: fromChainId })
+
+        if (!inDBTx) {
+            return res.json({ success: false })
+        }
+        console.log("reading transaction")
+        let web3 = await Web3Utils.getWeb3(fromChainId)
+
+        if (!transaction) {
+            return res.json({ success: false })
+        }
+        if (transaction.claimed === true) {
+            return res.json({ success: true, claimed: true })
+        }
+
+        //re-verify whether tx still in the chain and confirmed (enough confirmation)
+        let onChainTx = await web3.eth.getTransaction(transaction.requestHash)
+        if (!onChainTx) {
+            return res.json({ success: false })
+        }
+
+        let latestBlockNumber = await web3.eth.getBlockNumber()
+        let confirmations = config.blockchain[fromChainId].confirmations
+        if (latestBlockNumber - transaction.requestBlock < confirmations) {
+            return res.json({ success: false, unconfirmed: true })
+        }
+
+        let txBlock = await web3.eth.getBlock(transaction.requestBlock)
+        if (!txBlock || txBlock.number !== onChainTx.blockNumber) {
+            return res.json({ success: false })
+        }
+
+        //is it necessary? check whether tx included in the block
+        if (txBlock.transactions.length <= onChainTx.transactionIndex || txBlock.transactions[onChainTx.transactionIndex].toLowerCase() !== transaction.requestHash.toLowerCase()) {
+            return res.json({ success: false })
+        }
+
+        dataToVerifyAgainst = inDBTx
+    } else {
+        //casper
+        try {
+            transaction = await db.Nft721Transaction.findOne({ requestHash: requestHash, fromChainId: fromChainId })
+            if (!transaction) {
+                return res.json({ success: false })
+            }
+            let casperRPC = await CasperHelper.getCasperRPC(transaction.requestBlock)
+            let deployResult = await casperRPC.getDeployInfo(CasperHelper.toCasperDeployHash(transaction.requestHash))
+            if (!CasperHelper.isDeploySuccess(deployResult)) {
+                return res.json({ success: false })
+            }
+            let eventData = await CasperNFTCrawlerHook.parseRequestFromTransaction(deployResult, transaction.requestBlock, transaction.index) 
+            if (eventData.receiverAddress.toLowerCase() != transaction.account.toLowerCase()
+                || eventData.originToken.toLowerCase() != transaction.originToken.toLowerCase()
+                || eventData.tokenIds != transaction.tokenIds
+                || eventData.fromChainId != transaction.fromChainId
+                || eventData.toChainId != transaction.toChainId
+                || eventData.originChainId != transaction.originChainId
+                || eventData.index != transaction.index) {
+                return res.json({ success: false })
+            }
+            dataToVerifyAgainst = transaction
+        } catch (e) {
+            console.error(e)
+            return res.json({ success: false })
+        }
+    }
+
+    if (
+        dataToVerifyAgainst.fromChainId != verifyingData.fromChainId ||
+        dataToVerifyAgainst.account != verifyingData.toWallet ||
+        dataToVerifyAgainst.toChainId != verifyingData.toChainId ||
+        dataToVerifyAgainst.index != verifyingData.index ||
+        dataToVerifyAgainst.originToken != verifyingData.originToken ||
+        dataToVerifyAgainst.originChainId != verifyingData.originChainId 
+    ) {
+        return res.json({ success: false, reason: "invalid verifyingData" })
+    }
+
+    if (dataToVerifyAgainst.toChainId == casperConfig.networkId) {
+        if (dataToVerifyAgainst.originChainId == casperConfig.networkId) {
+            // destination contract hash must be active contract hash of nft bridge custodian contract
+            const nftConfig = CasperHelper.getNFTConfig()
+            const nftBridgePackageHash = nftConfig.nftBridgePackageHash
+            const activeContractHash = await CWeb.Contract.getActiveContractHash(nftBridgePackageHash, casperConfig.chainName)
+            if (verifyingData.destinationContractHash != activeContractHash) {
+                return res.json({ success: false, reason: "invalid destinationContractHash" })
+            }
+        } else {
+            const nftConfig = CasperHelper.getNFTConfig()
+            const tokenData = nftConfig.tokens.find(e => e.originContractAddress == dataToVerifyAgainst.originToken)
+            if (!tokenData) {
+                return res.json({ success: false, reason: "invalid originToken" })
+            }
+            const nftPackageHash = tokenData.contractPackageHash
+            const activeContractHash = await CWeb.Contract.getActiveContractHash(nftPackageHash, casperConfig.chainName)
+            if (verifyingData.destinationContractHash != activeContractHash) {
+                return res.json({ success: false, reason: "invalid destinationContractHash" })
+            }
+        }
+    }
+
     return res.json({ success: true })
 })
 
@@ -399,7 +536,7 @@ router.post('/request-withdraw', [
                 if (!CasperHelper.isDeploySuccess(deployResult)) {
                     return res.status(400).json({ errors: 'request transaction failed' })
                 }
-                let eventData = await CasperHelper.parseRequestNFTFromCasper(deployResult.deploy, transaction.requestBlock, transaction.index)
+                let eventData = await CasperNFTCrawlerHook.parseRequestFromTransaction(deployResult, transaction.requestBlock, transaction.index) 
                 if (eventData.receiverAddress.toLowerCase() != transaction.account.toLowerCase()
                     || eventData.originToken.toLowerCase() != transaction.originToken.toLowerCase()
                     || eventData.fromChainId != transaction.fromChainId
