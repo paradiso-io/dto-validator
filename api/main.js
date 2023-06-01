@@ -266,7 +266,7 @@ router.get('/history', [
  * @param index index of transaction
  * @returns status of transaction: success or not
  */
-router.get('/verify-transaction/:requestHash/:fromChainId/:index', [
+router.get('/verify-transaction/:requestHash/:fromChainId/:index/:amount', [
     check('requestHash').exists().withMessage('message is require'),
     check('fromChainId').exists().isNumeric({ no_symbols: true }).withMessage('fromChainId is incorrect'),
     check('index').exists().withMessage('index is require')
@@ -278,6 +278,8 @@ router.get('/verify-transaction/:requestHash/:fromChainId/:index', [
 
     let requestHash = req.params.requestHash
     let fromChainId = req.params.fromChainId
+    let index = req.params.index
+    let amount = req.params.amount
     let transaction = {}
 
     if (fromChainId == casperConfig.networkId) {
@@ -305,7 +307,7 @@ router.get('/verify-transaction/:requestHash/:fromChainId/:index', [
             return res.json({ success: true, claimed: true })
         }
 
-        if (transaction.index != parseInt(req.params.index)) {
+        if (transaction.amount != amount) {
             return res.json({ success: false })
         }
 
@@ -344,19 +346,10 @@ router.get('/verify-transaction/:requestHash/:fromChainId/:index', [
             if (transaction.index != parseInt(req.params.index)) {
                 return res.json({ success: false })
             }
-            // redundant checks
-            // let casperRPC = await CasperHelper.getCasperRPC(transaction.requestBlock)
-            // let deployResult = await casperRPC.getDeployInfo(CasperHelper.toCasperDeployHash(transaction.requestHash))
-            // let eventData = await CasperHelper.parseRequestFromCasper(deployResult)
-            // if (eventData.toAddr.toLowerCase() !== transaction.account.toLowerCase()
-            //     || eventData.originToken.toLowerCase() !== transaction.originToken.toLowerCase()
-            //     || eventData.amount !== transaction.amount
-            //     || eventData.fromChainId !== transaction.fromChainId
-            //     || eventData.toChainId !== transaction.toChainId
-            //     || eventData.originChainId !== transaction.originChainId
-            //     || eventData.index !== transaction.index) {
-            //     return res.json({ success: false })
-            // }
+
+            if (transaction.amount != amount) {
+                return res.json({ success: false })
+            }
         } catch (e) {
             console.error(e)
             return res.json({ success: false })
@@ -561,16 +554,21 @@ router.post('/request-withdraw', [
                 }
                 let r = []
                 const requestSignatureFromOther = async function (i) {
-                    try {
-                        console.log("requesting signature from ", config.signatureServer[i])
-                        let ret = await axios.post(config.signatureServer[i] + '/request-withdraw', body, { timeout: 20 * 1000 })
-                        let recoveredAddress = Web3Utils.recoverSignerFromSignature(ret.data.msgHash, ret.data.r[0], ret.data.s[0], ret.data.v[0])
-                        console.log("signature data ok ", config.signatureServer[i], recoveredAddress)
-                        return ret
-                    } catch (e) {
-                        console.log("failed to get signature from ", config.signatureServer[i], e.toString())
-                        return { data: {} }
-                    }
+                    let trial = 5;
+                while (trial > 0) {
+                        try {
+                            console.log("requesting signature from ", config.signatureServer[i])
+                            let ret = await axios.post(config.signatureServer[i] + '/request-withdraw', body, { timeout: 20 * 1000 })
+                            let recoveredAddress = Web3Utils.recoverSignerFromSignature(ret.data.msgHash, ret.data.r[0], ret.data.s[0], ret.data.v[0])
+                            console.log("signature data ok ", config.signatureServer[i], recoveredAddress, ret.data.msgHash)
+                            return ret
+                        } catch (e) {
+                            // console.log("failed to get signature from ", config.signatureServer[i], e.toString())
+                            trial--
+                        }
+                }
+               console.log("failed to get signature from ", config.signatureServer[i])
+               return { data: {} }
                 }
                 for (let i = 0; i < config.signatureServer.length; i++) {
                     r.push(requestSignatureFromOther(i))
@@ -591,7 +589,7 @@ router.post('/request-withdraw', [
         if (otherSignature.length > 0) {
             for (let i = 0; i < otherSignature.length; i++) {
                 if (otherSignature[i].r) {
-                    msgHash = otherSignature[i].msgHash
+                    msgHash = msgHash == "" ? otherSignature[i].msgHash : msgHash
                     r.push(otherSignature[i].r[0])
                     s.push(otherSignature[i].s[0])
                     v.push(otherSignature[i].v[0])
