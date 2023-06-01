@@ -445,8 +445,8 @@ router.post('/verify-transaction-full/:requestHash/:fromChainId/:index/:amount',
             return res.json({ success: false })
         }
     }
-
-    if (dataToVerifyAgainst.toChainId == casperConfig.networkId) {
+    console.log(dataToVerifyAgainst)
+    if (parseInt(dataToVerifyAgainst.toChainId) == parseInt(casperConfig.networkId)) {
         if (
             dataToVerifyAgainst.index != verifyingData.index ||
             dataToVerifyAgainst.account != verifyingData.toWallet ||
