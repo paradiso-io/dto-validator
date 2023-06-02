@@ -98,10 +98,11 @@ async function start() {
 
 
                     console.log("Start create deploy for UNLOCK_NFT")
+                    let deploy
                     // ARG: token_ids - token_hashes - from_chainid - identifier_mode - nft_contract_hash - target_key - unlock_id
 
                     const contractInstance = await Contract.createInstanceWithRemoteABI(casperNFTConfig.nftbridge, selectedGoodRPC, casperConfig.chainName)
-                    let deploy = await contractInstance.contractCalls.approveUnlockNft.makeUnsignedDeploy({
+                    deploy = await contractInstance.contractCalls.approveUnlockNft.makeUnsignedDeploy({
                         publicKey: mpcPubkey,
                         args: {
                             targetKey: new CLAccountHash(ownerAccountHashByte),
@@ -114,11 +115,12 @@ async function start() {
                         paymentAmount: 10000000000,
                         ttl: defaultTtl
                     })
+                    console.log()
                     let deployJson = JSON.stringify(Contract.deployToJson(deploy));
-                    deploy = JSON.parse(deployJson).deploy
-                    deployJson = JSON.stringify(deploy)
+                    // deploy = JSON.parse(deployJson).deploy
+                    // deployJson = JSON.stringify(deploy)
                     let hashToSign = sha256(Buffer.from(deploy.hash)).toString("hex")
-                    let deployHash = sha256(Buffer.from(deploy.hash)).toString('hex')
+                    let deployHash = Buffer.from(deploy.hash).toString('hex')
                     console.log("deployHash2: ", deployHash)
 
                     logger.info(
@@ -366,11 +368,12 @@ async function start() {
                         ttl = 300000
 
                         console.log("Start RENEWAL deploy for UNLOCK_NFT")
+                        let deploy
 
                         // ARG: token_ids - token_hashes - from_chainid - identifier_mode - nft_contract_hash - target_key - unlock_id
 
                         const contractInstance = await Contract.createInstanceWithRemoteABI(casperNFTConfig.nftbridge, selectedGoodRPC, casperConfig.chainName)
-                        let deploy = await contractInstance.contractCalls.approveUnlockNft.makeUnsignedDeploy({
+                        deploy = await contractInstance.contractCalls.approveUnlockNft.makeUnsignedDeploy({
                             publicKey: mpcPubkey,
                             args: {
                                 targetKey: new CLAccountHash(recipientAccountHashByte),
@@ -384,8 +387,8 @@ async function start() {
                             ttl: defaultTtl
                         })
                         let deployJson = JSON.stringify(Contract.deployToJson(deploy));
-                        deploy = JSON.parse(deployJson).deploy
-                        deployJson = JSON.stringify(deploy)
+                        // deploy = JSON.parse(deployJson).deploy
+                        // deployJson = JSON.stringify(deploy)
 
                         //deploy = client.signDeploy(deploy, pairKeyView);
                         console.log("DEPLOY: ", deploy)
@@ -393,7 +396,7 @@ async function start() {
                         console.log("after deploy")
 
                         let hashToSign = sha256(Buffer.from(deploy.hash)).toString("hex")
-                        let deployHash = sha256(Buffer.from(deploy.hash)).toString('hex')
+                        let deployHash = Buffer.from(deploy.hash).toString('hex')
                         logger.info(
                             "new transactions to casper %s",
                             sha256(Buffer.from(deploy.hash)).toString("hex")
