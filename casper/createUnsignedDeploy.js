@@ -85,13 +85,14 @@ async function startSignForToken() {
             } else {
                 // await erc20.setContractHash(token.contractHash)
                 const contractInstance = await Contract.createInstanceWithRemoteABI(token.contractHash, selectedGoodRPC, casperConfig.chainName)
+                const swapFee = await contractInstance.getter.swapFee()
                 deploy = await contractInstance.contractCalls.mint.makeUnsignedDeploy({
                     publicKey: mpcPubkey,
                     args: {
                         recipient: new CLAccountHash(recipientAccountHashByte),
                         amount: tx.amount,
                         mintid: mintid,
-                        swapFee: '0'
+                        swapFee: swapFee
                     },
                     paymentAmount: '6000000000',
                     ttl
