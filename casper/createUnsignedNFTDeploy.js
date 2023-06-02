@@ -83,23 +83,13 @@ async function start() {
                     console.log("tx.identifierMode: ", tx.identifierMode)
                     let identifierMode = new CLValueBuilder.u8((tx.identifierMode))
                     console.log("identifierMode: ", identifierMode)
-                    // toChainId
-                    // fromChainId
-                    let fromChainId = new CLValueBuilder.u256(tx.fromChainId)
 
-
-                    // token metadata
-                    let tokenmetadatas = tx.tokenMetadatas.map((e) => CLValueBuilder.string(e))
-                    // token_ids
                     let tokenIds = null
-                    let token_ids = null
                     if (identifierMode == 1) {
                         tokenIds = tx.tokenIds.map((e) => e.toString())
-                        // token_ids = CLValueBuilder.list(tokenIds)
                     }
                     else {
                         tokenIds = tx.tokenIds.map((e) => parseInt(e))
-                        // token_ids = CLValueBuilder.list(tokenIds)
                     }
 
                     // 
@@ -126,8 +116,9 @@ async function start() {
                     })
                     let deployJson = JSON.stringify(Contract.deployToJson(deploy));
                     deploy = JSON.parse(deployJson).deploy
+                    deployJson = JSON.stringify(deploy)
                     let hashToSign = sha256(Buffer.from(deploy.hash)).toString("hex")
-                    let deployHash = Buffer.from(deploy.hash).toString('hex')
+                    let deployHash = sha256(Buffer.from(deploy.hash)).toString('hex')
                     console.log("deployHash2: ", deployHash)
 
                     logger.info(
@@ -315,7 +306,6 @@ async function start() {
                         );
                         let toAddress = req.toWallet // NFT account owner
                         console.log("toAddress: ", toAddress)
-                        // To address account => target_key
                         let ownerAccountHashByte = Uint8Array.from(
                             Buffer.from(toAddress.slice(13), 'hex'),
                         )
@@ -395,6 +385,7 @@ async function start() {
                         })
                         let deployJson = JSON.stringify(Contract.deployToJson(deploy));
                         deploy = JSON.parse(deployJson).deploy
+                        deployJson = JSON.stringify(deploy)
 
                         //deploy = client.signDeploy(deploy, pairKeyView);
                         console.log("DEPLOY: ", deploy)
@@ -402,7 +393,7 @@ async function start() {
                         console.log("after deploy")
 
                         let hashToSign = sha256(Buffer.from(deploy.hash)).toString("hex")
-                        let deployHash = Buffer.from(deploy.hash).toString('hex')
+                        let deployHash = sha256(Buffer.from(deploy.hash)).toString('hex')
                         logger.info(
                             "new transactions to casper %s",
                             sha256(Buffer.from(deploy.hash)).toString("hex")
