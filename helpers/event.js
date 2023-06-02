@@ -42,7 +42,7 @@ const EventHelper = {
           let amount = decoded.amount
           let originChainId = parseInt(decoded.originChainId)
           let fromChainId = parseInt(decoded.fromChainId)
-          let toChainId = parseInt(decoded.fromChainId)
+          let toChainId = parseInt(decoded.toChainId)
           let index = parseInt(decoded.index)
 
           return result = {
@@ -105,7 +105,7 @@ const EventHelper = {
           let account = toAddrBytes.toLowerCase()
           let originChainId = parseInt(decoded.originChainId)
           let fromChainId = parseInt(decoded.fromChainId)
-          let toChainId = parseInt(decoded.fromChainId)
+          let toChainId = parseInt(decoded.toChainId)
           let index = parseInt(decoded.index)
           console.log('index', index, txIndex)
 
