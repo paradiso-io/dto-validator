@@ -462,7 +462,7 @@ router.post('/verify-transaction-full/:requestHash/:fromChainId/:index/:amount',
         if (dataToVerifyAgainst.originChainId == casperConfig.networkId) {
             return res.json({ success: false, reason: "unsupported tokens issued on casper" })
         } else {
-            const tokenData = casperConfig.tokens.find(e => e.originContractAddress == dataToVerifyAgainst.originToken)
+            const tokenData = CasperHelper.getCasperTokenInfoFromOriginToken(dataToVerifyAgainst.originToken, dataToVerifyAgainst.originChainId)
             if (!tokenData) {
                 return res.json({ success: false, reason: "invalid origin token" })
             }
