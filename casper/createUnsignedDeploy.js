@@ -2,7 +2,6 @@ const db = require('../models')
 const config = require('config')
 const generalHelper = require('../helpers/general')
 const CasperHelper = require('../helpers/casper')
-const { ERC20Client } = require("casper-erc20-js-client");
 const { sha256 } = require("ethereum-cryptography/sha256");
 const logger = require("../helpers/logger");
 const { CLAccountHash, DeployUtil, CLByteArray } = require("casper-js-sdk");
@@ -19,11 +18,6 @@ async function startSignForToken() {
         let casperChainId = casperConfig.networkId
         let mpcPubkey = CasperHelper.getMPCPubkey()
         let selectedGoodRPC = await CasperHelper.getRandomGoodCasperRPCLink(1)
-        const erc20 = new ERC20Client(
-            selectedGoodRPC,
-            casperConfig.chainName,
-            casperConfig.eventStream
-        );
         //scan for tx without casperDeployCreated
         let pendingTxes = await db.Transaction.find(
             {
@@ -60,7 +54,7 @@ async function startSignForToken() {
                 );
                 continue
             }
-            
+
             //mintid = <txHash>-<fromChainId>-<toChainId>-<index>-<originContractAddress>-<originChainId>
             let mintid = `${tx.requestHash}-${tx.fromChainId}-${tx.toChainId}-${tx.index}-${tx.originToken}-${tx.originChainId}`
 
@@ -74,7 +68,7 @@ async function startSignForToken() {
                 const custodianContractPackageHash = casperConfig.pairedTokensToEthereum.custodianContractPackageHash
                 const custodialContractHash = await Contract.getActiveContractHash(custodianContractPackageHash, casperConfig.chainName)
                 const contractInstance = await Contract.createInstanceWithRemoteABI(custodialContractHash, selectedGoodRPC, casperConfig.chainName)
-                console.log('creating deploy for casper issued erc20')
+                logger.info('creating deploy for casper issued erc20')
                 deploy = await contractInstance.contractCalls.unlockErc20.makeUnsignedDeploy({
                     publicKey: mpcPubkey,
                     args: {
@@ -89,16 +83,21 @@ async function startSignForToken() {
                 deployJson = JSON.stringify(Contract.deployToJson(deploy));
                 console.log(deployJson)
             } else {
-                await erc20.setContractHash(token.contractHash)
-                deploy = await erc20.createUnsignedMint(
-                    mpcPubkey,
-                    new CLAccountHash(recipientAccountHashByte),
-                    tx.amount,
-                    mintid,
-                    "6000000000",
+                // await erc20.setContractHash(token.contractHash)
+                const contractInstance = await Contract.createInstanceWithRemoteABI(token.contractHash, selectedGoodRPC, casperConfig.chainName)
+                deploy = await contractInstance.contractCalls.mint.makeUnsignedDeploy({
+                    publicKey: mpcPubkey,
+                    args: {
+                        recipient: new CLAccountHash(recipientAccountHashByte),
+                        amount: tx.amount,
+                        mintid: mintid,
+                        swapFee: '0'
+                    },
+                    paymentAmount: '6000000000',
                     ttl
-                );
-                deployJson = JSON.stringify(DeployUtil.deployToJson(deploy));
+                })
+                logger.info('deploy %s', deploy)
+                deployJson = JSON.stringify(Contract.deployToJson(deploy));
             }
             let hashToSign = sha256(Buffer.from(deploy.hash)).toString("hex")
             let deployHash = Buffer.from(deploy.hash).toString('hex')
@@ -207,16 +206,20 @@ async function startSignForToken() {
                     })
                     deployJson = JSON.stringify(DeployUtil.deployToJson(deploy));
                 } else {
-                    await erc20.setContractHash(token.contractHash)
-                    deploy = await erc20.createUnsignedMint(
-                        mpcPubkey,
-                        new CLAccountHash(recipientAccountHashByte),
-                        req.amount,
-                        mintid,
-                        "6000000000",
+                    const contractInstance = await Contract.createInstanceWithRemoteABI(token.contractHash, selectedGoodRPC, casperConfig.chainName)
+                    deploy = await contractInstance.contractCalls.mint.makeUnsignedDeploy({
+                        publicKey: mpcPubkey,
+                        args: {
+                            recipient: new CLAccountHash(recipientAccountHashByte),
+                            amount: req.amount,
+                            mintid: mintid,
+                            swapFee: '0'
+                        },
+                        paymentAmount: '6000000000',
                         ttl
-                    );
-                    deployJson = JSON.stringify(DeployUtil.deployToJson(deploy));
+                    })
+
+                    deployJson = JSON.stringify(Contract.deployToJson(deploy));
                 }
                 let hashToSign = sha256(Buffer.from(deploy.hash)).toString("hex")
                 let deployHash = Buffer.from(deploy.hash).toString('hex')
