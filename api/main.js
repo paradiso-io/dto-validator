@@ -647,7 +647,7 @@ router.post('/request-withdraw', [
                 }
                 let r = []
                 const requestSignatureFromOther = async function (i) {
-                    let trial = 5;
+                    let trial = 2;
                     while (trial > 0) {
                         try {
                             logger.info("requesting signature from %s", config.signatureServer[i])
