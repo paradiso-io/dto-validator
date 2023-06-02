@@ -601,7 +601,7 @@ router.post('/request-withdraw', [
     } else {
         logger.info('0.2')
         let token = await db.Token.findOne({ hash: transaction.originToken, networkId: transaction.originChainId })
-        
+
         {
             let web3Origin = await Web3Utils.getWeb3(transaction.originChainId)
             let originTokenContract = await new web3Origin.eth.Contract(IERC20ABI, transaction.originToken)
@@ -611,7 +611,7 @@ router.post('/request-withdraw', [
             await db.Token.updateOne({ hash: transaction.originToken, networkId: transaction.originChainId }, {
                 $set: { name, symbol, decimals }
             }, { upsert: true, new: true })
-        } 
+        }
         if (token) {
             if (token.name != name || token.symbol != symbol || token.decimals != decimals) {
                 return res.status(400).json({ errors: 'Chain state of token ' + token.hash + ' and local database mismatch, dont sign!' })
@@ -648,20 +648,20 @@ router.post('/request-withdraw', [
                 let r = []
                 const requestSignatureFromOther = async function (i) {
                     let trial = 5;
-                while (trial > 0) {
+                    while (trial > 0) {
                         try {
-                            console.log("requesting signature from ", config.signatureServer[i])
+                            logger.info("requesting signature from %s", config.signatureServer[i])
                             let ret = await axios.post(config.signatureServer[i] + '/request-withdraw', body, { timeout: 20 * 1000 })
                             let recoveredAddress = Web3Utils.recoverSignerFromSignature(ret.data.msgHash, ret.data.r[0], ret.data.s[0], ret.data.v[0])
-                            console.log("signature data ok ", config.signatureServer[i], recoveredAddress, ret.data.msgHash)
+                            logger.info("signature data ok signatureServer=%s, recoveredAddress=%s, msgHash=%s", config.signatureServer[i], recoveredAddress, ret.data.msgHash)
                             return ret
                         } catch (e) {
                             // console.log("failed to get signature from ", config.signatureServer[i], e.toString())
                             trial--
                         }
-                }
-               console.log("failed to get signature from ", config.signatureServer[i])
-               return { data: {} }
+                    }
+                    logger.warn("failed to get signature from %s", config.signatureServer[i])
+                    return { data: {} }
                 }
                 for (let i = 0; i < config.signatureServer.length; i++) {
                     r.push(requestSignatureFromOther(i))
@@ -674,7 +674,7 @@ router.post('/request-withdraw', [
                 }
 
             } catch (e) {
-                console.log(e)
+                logger.error(e)
             }
         }
 
@@ -690,10 +690,12 @@ router.post('/request-withdraw', [
             }
         }
 
+        logger.info("msgHash = %s ", msgHash)
         //reading required number of signature
         let approver = await Web3Utils.getApprovers(transaction.toChainId)
         let minApprovers = approver.number
         let approverList = approver.list
+        logger.info('approverList = %s', approverList)
 
         let goodR = []
         let goodS = []
@@ -709,7 +711,7 @@ router.post('/request-withdraw', [
         r = goodR
         s = goodS
         v = goodV
-
+        logger.info('r.length = %s', r.length)
         if (r.length < minApprovers) {
             console.warn('Validators data are not fully synced yet, please try again later')
             return res.status(400).json({ errors: 'Validators data are not fully synced yet, please try again later' })
