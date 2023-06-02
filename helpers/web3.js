@@ -169,7 +169,7 @@ let Web3Util = {
 
           return {number: parseInt(minApprovers), list: approverList}
         } catch(e) {
-          console.log("error in reading approver")
+          console.log("error in reading approver", e.toString())
           await GeneralHelper.sleep(5 * 1000)
         }
         retry--
