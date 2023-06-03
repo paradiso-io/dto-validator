@@ -159,7 +159,6 @@ const HOOK = {
       randomGoodRPC
     );
   
-    const blockHash = deploy.deploy.execution_results[0].block_hash
     const block = await client.getBlockInfoByHeight(blockNumber)
     let requests = await HOOK.processNFTWrapped(block, deploy, randomGoodRPC)
     let requestWithIndex = requests.find(e => e.index == parseInt(requestIndex))
@@ -168,7 +167,7 @@ const HOOK = {
     } else {
       requests = await HOOK.processNFTBridgeEvent(block, deploy, randomGoodRPC)
       requestWithIndex = requests.find(e => e.index == parseInt(requestIndex))
-      return requestIndex
+      return requestWithIndex
     }
   },
   processNFTWrapped: async (block, deploy, selectedRPC) => {
