@@ -129,7 +129,6 @@ async function start() {
                                 toChainId: tx.toChainId,
                                 originChainId: tx.originChainId,
                                 originToken: tx.originToken.toLowerCase(),
-                                //destinationContractHash: token.contractHash,
                                 timestamp: Math.floor(new Date(deploy.header.timestamp).valueOf() / 1000),  //Math.floor(deploy.header.timestamp / 1000),
                                 ttl: Math.floor(defaultTtl / 1000),
                                 deadline: Math.floor((new Date(deploy.header.timestamp).valueOf() + defaultTtl) / 1000),
@@ -183,7 +182,8 @@ async function start() {
                     // token metadata
                     let tokenIds = tx.tokenIds.map((e) => parseInt(e))
                     let deploy
-                    const contractInstance = await Contract.createInstanceWithRemoteABI(token.contractHash, selectedGoodRPC, casperConfig.chainName)
+                    const tokenContractHash = await Contract.getActiveContractHash(token.contractPackageHash, casperConfig.chainName)
+                    const contractInstance = await Contract.createInstanceWithRemoteABI(tokenContractHash, selectedGoodRPC, casperConfig.chainName)
                     deploy = await contractInstance.contractCalls.approveToClaim.makeUnsignedDeploy({
                         publicKey: mpcPubkey,
                         args: {
@@ -219,7 +219,6 @@ async function start() {
                                 toChainId: tx.toChainId,
                                 originChainId: tx.originChainId,
                                 originToken: tx.originToken.toLowerCase(),
-                                //destinationContractHash: token.contractHash,
                                 timestamp: Math.floor(new Date(deploy.header.timestamp).valueOf() / 1000),  //Math.floor(deploy.header.timestamp / 1000),
                                 ttl: Math.floor(defaultTtl / 1000),
                                 deadline: Math.floor((new Date(deploy.header.timestamp).valueOf() + defaultTtl) / 1000),
@@ -410,9 +409,9 @@ async function start() {
                             continue
                         }
 
-                        //TODO: check whether mintid executed => this is to avoid failed transactions as mintid cant be executed more than one time
                         let deploy
-                        const contractInstance = await Contract.createInstanceWithRemoteABI(token.contractHash, selectedGoodRPC, casperConfig.chainName)
+                        const tokenContractHash = await Contract.getActiveContractHash(token.contractPackageHash, casperConfig.chainName)
+                        const contractInstance = await Contract.createInstanceWithRemoteABI(tokenContractHash, selectedGoodRPC, casperConfig.chainName)
                         deploy = await contractInstance.contractCalls.approveToClaim.makeUnsignedDeploy({
                             publicKey: mpcPubkey,
                             args: {
@@ -449,7 +448,6 @@ async function start() {
                                     toChainId: req.toChainId,
                                     originChainId: req.originChainId,
                                     originToken: req.originToken.toLowerCase(),
-                                    //destinationContractHash: token.contractHash,
                                     timestamp: Math.floor(new Date(deploy.header.timestamp).valueOf() / 1000),  //Math.floor(deploy.header.timestamp / 1000),
                                     ttl: Math.floor(defaultTtl / 1000),
                                     deadline: Math.floor((new Date(deploy.header.timestamp).valueOf() + defaultTtl) / 1000),

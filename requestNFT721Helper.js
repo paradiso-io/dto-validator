@@ -23,10 +23,10 @@ function decodeOriginToken(tokenHex, originChainId) {
   } else {
     try {
       let decoded = web3.eth.abi.decodeParameters(
-        [{ type: "string", name: "contractHash" }],
+        [{ type: "string", name: "contractPackageHash" }],
         tokenHex
       );
-      return decoded.contractHash
+      return decoded.contractPackageHash
     } catch (e) {
       logger.error(e.toString())
     }
