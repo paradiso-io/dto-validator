@@ -148,7 +148,7 @@ async function processRequestEventForWrapNonEVM(
   //reading transaction creator
   let transactionHash = event.transactionHash
   let onChainTx = await web3.eth.getTransaction(transactionHash)
-  console.log('onchain tx', onChainTx, event.returnValues)
+  logger.info('onchain tx = %s, event = %s', onChainTx, event.returnValues)
   if (!onChainTx) return;
   let txCreator = onChainTx.from.toLowerCase()
   await db.Transaction.updateOne(
@@ -232,7 +232,7 @@ async function processClaimEventForWrapNonEVM(event, networkId) {
 
   // tokenAddress is contract package hash on casper
   const originToken = decoded.decodedAddress
-  console.log('originToken', originToken, event.returnValues)
+  logger.info('originToken = %s, event = %s', originToken, event.returnValues)
   // event ClaimToken(address indexed _token, address indexed _addr, uint256 _amount, uint256 _originChainId, uint256 _fromChainId, uint256 _toChainId, uint256 _index, bytes32 _claimId);
   let requestTx = db.Transaction.findOne({
     index: parseInt(event.returnValues._index),
@@ -345,7 +345,6 @@ async function getPastEventForBatch(networkId, bridgeAddress, step, from, to) {
         }
       }
 
-      // console.log('sleep 2 seconds and wait to continue')
       await sleep(1000);
 
       lastCrawl = toBlock;
@@ -403,7 +402,7 @@ async function getPastEvent(networkId, bridgeAddress, step) {
 
     await updateBlock(networkId, lastBlock)
   } catch (e) {
-    console.log(e);
+    logger.warn(e);
   }
 }
 
@@ -457,7 +456,6 @@ async function getPastEventForBatchForWrapNonEVM(networkId, eventHookAddress, st
         }
       }
 
-      // console.log('sleep 2 seconds and wait to continue')
       await sleep(1000);
 
       lastCrawl = toBlock;
@@ -516,7 +514,7 @@ async function getPastEventForWrapNonEVM(networkId, eventHookAddress, step) {
     // await updateBlock(networkId, lastBlock)
     return lastBlock
   } catch (e) {
-    console.log(e);
+    logger.warn(e);
   }
   return 0
 }
@@ -527,7 +525,7 @@ async function getPastEventForWrapNonEVM(networkId, eventHookAddress, step) {
  * @param bridgeAddress contract address of bridge in this network
  */
 async function watch(networkId, bridgeAddress, eventHookAddress) {
-  console.log("network", networkId, config.blockchain[networkId].notEVM);
+  logger.info("network %s", networkId);
   if (config.blockchain[networkId].notEVM) return;
   let step = 1000;
   if (eventHookAddress && eventHookAddress !== "") {

@@ -28,7 +28,7 @@ function decodeOriginToken(tokenHex, originChainId) {
       );
       return decoded.contractHash
     } catch (e) {
-      console.error(e.toString())
+      logger.error(e.toString())
     }
   }
   return null
@@ -45,9 +45,7 @@ async function processEvent(event, networkId) {
   let web3 = await Web3Utils.getWeb3(networkId)
 
   let originChainId = event.returnValues._originChainId;
-  console.log("originChainId", originChainId)
   let tokenAddress = event.returnValues._token.toLowerCase()
-  console.log("tokenAddress", tokenAddress)
   tokenAddress = decodeOriginToken(tokenAddress, originChainId)
   if (!tokenAddress) {
     logger.error("cannot decode contract hash tx %s, from chain %s", event.transactionHash, event.returnValues._fromChainId);
@@ -63,9 +61,9 @@ async function processEvent(event, networkId) {
   )
   let tokenIdsString = tokenIds
   let tokenMetadatas = []
-  console.log("config.blockchain[event.returnValues._originChainId]: ", config.blockchain[event.returnValues._originChainId])
+  logger.info("config.blockchain[event.returnValues._originChainId]: %s", config.blockchain[event.returnValues._originChainId])
 
-  console.log("config.blockchain[event.returnValues._originChainId].notEVM: ", config.blockchain[event.returnValues._originChainId].notEVM)
+  logger.info("config.blockchain[event.returnValues._originChainId].notEVM: %s", config.blockchain[event.returnValues._originChainId].notEVM)
 
   if (config.blockchain[event.returnValues._originChainId].notEVM) {
 
@@ -95,12 +93,12 @@ async function processEvent(event, networkId) {
           const nftContractHashActive = await CWeb3.Contract.getActiveContractHash(tokenAddress, CasperConfig.chainName)
           nftContract = await DTOWrappedNFT.createInstance(nftContractHashActive, randomGoodRPC, CasperConfig.chainName)
           let metadata = await nftContract.getTokenMetadata(tokenId)
-          console.log("metadata 11: ", metadata)
+          logger.info("metadata: %s", metadata)
           tokenMetadatas.push(metadata)
           break
         } catch (e) {
           trial--
-          console.error(e.toString())
+          logger.error(e.toString())
           randomGoodRPC = await CasperHelper.getRandomGoodCasperRPCLink(1)
         }
       }
@@ -125,7 +123,7 @@ async function processEvent(event, networkId) {
     }
 
   }
-  console.log('metadata', tokenMetadatas, tokenName)
+  logger.info('metadata %s, tokenName %s', tokenMetadatas, tokenName)
 
   let identifierMode = null
   // get identifierMode
@@ -134,7 +132,7 @@ async function processEvent(event, networkId) {
     const nftContractHashActive = await CWeb3.Contract.getActiveContractHash(tokenAddress, CasperConfig.chainName)
     nftContract = await DTOWrappedNFT.createInstance(nftContractHashActive, randomGoodRPC, CasperConfig.chainName)
     identifierMode = await nftContract.identifierMode()
-    console.log("identifierMode: ", identifierMode)
+    logger.info("identifierMode: %s", identifierMode)
   }
 
   let block = await web3.eth.getBlock(event.blockNumber)
@@ -234,7 +232,7 @@ async function processClaimEvent(event, networkId) {
 }
 
 async function updateBlock(networkId, lastBlock) {
-  console.log('updating last block for ', networkId, lastBlock)
+  logger.info('updating last block for network %s, lastBlock %s', networkId, lastBlock)
   if (lastBlock) {
     let setting = await db.Setting.findOne({ networkId: networkId })
     if (!setting) {
@@ -296,7 +294,6 @@ async function getPastEventForBatch(networkId, bridgeAddress, step, from, to) {
           } to ${toBlock}`
         )
       }
-      console.log("!!!! AAAAA")
       {
         let evts = allEvents.filter(e => e.event == "RequestMultiNFT721Bridge")
 
@@ -308,7 +305,6 @@ async function getPastEventForBatch(networkId, bridgeAddress, step, from, to) {
           );
         }
       }
-      console.log("!!!! BBBBB")
       {
         //claim events
         let evts = allEvents.filter(e => e.event == "ClaimMultiNFT721")
@@ -321,8 +317,6 @@ async function getPastEventForBatch(networkId, bridgeAddress, step, from, to) {
           );
         }
       }
-      console.log("!!!! CCCCC")
-      // console.log('sleep 2 seconds and wait to continue')
       await sleep(1000)
 
       lastCrawl = toBlock;
@@ -370,8 +364,7 @@ async function getPastEvent(networkId, bridgeAddress, step) {
 
     await updateBlock(networkId, lastBlock)
   } catch (e) {
-    console.log(e)
-    //await sleep(10000)
+    logger.warn(e)
   }
 }
 
