@@ -12,10 +12,8 @@ const { CLListBytesParser, CLListType, CLStringType, CLU8BytesParser, CLStringBy
 const HOOK = {
   updateMintOrUnlock: async (updateData) => {
     {
-      console.log("!!!! START UPDATE MINT OR UNLOCK !!!!")
-      console.log('updateData', updateData.deployHash)
-      console.log("updateData.isCasperApproveToClaim : ", updateData.isCasperApproveToClaim)
-      console.log("updateData.isCasperApproveToClaim : ", updateData.isCasperClaimed)
+      logger.info("!!!! START UPDATE MINT OR UNLOCK !!!!")
+      logger.info('updateData for deploy %s', updateData.deployHash)
 
       // event ClaimToken(address indexed _token, address indexed _addr, uint256 _amount, uint256 _originChainId, uint256 _fromChainId, uint256 _toChainId, uint256 _index, bytes32 _claimId);
       await db.Nft721Transaction.updateOne(
@@ -39,8 +37,7 @@ const HOOK = {
         },
         { upsert: true, new: true }
       );
-      logger.info("claimId %s", updateData.claimId);
-      console.log("START UPDATE REQUESTOCASPER claimId: ", updateData.claimId)
+      logger.info("START UPDATE REQUESTOCASPER claimId %s", updateData.claimId);
       await db.Nft721RequestToCasper.updateOne(
         {
           mintid: updateData.claimId
@@ -52,7 +49,7 @@ const HOOK = {
         },
         { upsert: true, new: true }
       );
-      console.log("FINISH UPDATE REQUESTTOCASPER claimId: ", updateData.claimId)
+      logger.info("FINISH UPDATE REQUESTTOCASPER claimId: %s", updateData.claimId)
     }
   },
   updateApproveToClaim: async (updateData) => {
@@ -85,8 +82,7 @@ const HOOK = {
         },
         { upsert: true, new: true }
       );
-      logger.info("claimId %s", updateData.claimId);
-      console.log("START UPDATE REQUESTOCASPER claimId: ", updateData.claimId)
+      logger.info("START UPDATE REQUESTOCASPER claimId %s", updateData.claimId);
       await db.Nft721RequestToCasper.updateOne(
         {
           mintid: updateData.claimId
@@ -98,14 +94,12 @@ const HOOK = {
         },
         { upsert: true, new: true }
       );
-      console.log("FINISH UPDATE REQUESTTOCASPER claimId: ", updateData.claimId)
+      logger.info("FINISH UPDATE REQUESTTOCASPER claimId: %s", updateData.claimId)
     }
   },
   updateClaimOnCasper: async (updateData) => {
     {
-      console.log("updateData.isCasperApproveToClaim : ", updateData.isCasperClaimed)
-      console.log("toChainId", parseInt(updateData.casperChainId))
-      console.log("account:", updateData.account.toLowerCase())
+      logger.info("updateClaimOnCasper toChainId = %s, account = %s ", updateData.casperChainId, updateData.account.toLowerCase())
       // event ClaimToken(address indexed _token, address indexed _addr, uint256 _amount, uint256 _originChainId, uint256 _fromChainId, uint256 _toChainId, uint256 _index, bytes32 _claimId);
       await db.Nft721Transaction.updateOne(
         {
@@ -124,7 +118,7 @@ const HOOK = {
         },
         { upsert: true, new: true }
       );
-      console.log("User Claim !!! : ", updateData.account, updateData.deployHash)
+      logger.info("User Claim !!! user = %s, deploy = %s", updateData.account, updateData.deployHash)
     }
   },
   updateRequestBridge: async (updateData) => {

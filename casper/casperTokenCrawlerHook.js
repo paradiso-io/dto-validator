@@ -93,7 +93,7 @@ const HOOK = {
     let height = parseInt(block.block.header.height)
     while (trial > 0) {
       try {
-        console.log("checking deploy", deploy.hash)
+        logger.info("checking deploy %s", deploy.hash)
         let casperConfig = CasperHelper.getConfigInfo();
         let networkId = casperConfig.networkId;
         let contractHashes = casperConfig.tokens.map((e) => e.contractHash);
@@ -134,7 +134,6 @@ const HOOK = {
               eventData
             );
           } else if (storedContractByHash.entry_point == "transfer") {
-            console.log("transfer");
           } else if (storedContractByHash.entry_point == "request_bridge_back") {
             let txCreator = "";
             if (deploy.approvals.length > 0) {
@@ -200,7 +199,7 @@ const HOOK = {
           throw e
         }
         randomGoodRPC = await CasperHelper.getRandomGoodCasperRPCLink(height)
-        console.error(e)
+        logger.error(e)
       }
     }
   }

@@ -1,30 +1,15 @@
-const ClientHelper = require("casper-js-client-helper").CasperContractClient;
 
 const BigNumber = require("bignumber.js");
 
-const configInfo = require("config");
 const CasperHelper = require("./helpers/casper");
-const tokenHelper = require("./helpers/token");
 
-const logger = require("./helpers/logger");
-const db = require("./models");
-const { CLPublicKey, CLAccountHash, DeployUtil } = require("casper-js-sdk");
+const { CLPublicKey, DeployUtil } = require("casper-js-sdk");
 
 const { ERC20Client } = require("casper-erc20-js-client");
 
 BigNumber.config({ EXPONENTIAL_AT: [-100, 100] });
 
-function toToken(n, decimals) {
-  return new BigNumber(n.toString())
-    .dividedBy(new BigNumber(10).pow(new BigNumber(decimals.toString())))
-    .toString();
-}
 
-function toContractUnit(n, decimals) {
-  return new BigNumber(n.toString())
-    .multipliedBy(new BigNumber(10).pow(new BigNumber(decimals.toString())))
-    .toFixed(0);
-}
 
 let minterHex =
   "020385f8afc8a61ab948e3602cab3a74157010e5e766622f5a3304dda836148cefba";
@@ -39,7 +24,6 @@ let deploy = DeployUtil.deployFromJson(JSON.parse(deployJson)).val;
 const test = async () => {
   let casperConfig = CasperHelper.getConfigInfo();
   let tokens = casperConfig.tokens;
-  let contractHash = tokens[0].contractHash;
   const erc20 = new ERC20Client(
     casperConfig.rpc,
     casperConfig.chainName,

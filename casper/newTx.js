@@ -1,6 +1,7 @@
 const db = require('../models')
 const crypto = require('crypto')
 const generalHelper = require('../helpers/general')
+const logger = require('../helpers/logger')
 let i = 1
 /**
  * It creates a random request to casper and saves it to the database
@@ -34,9 +35,7 @@ async function main() {
 
         await requestToCasper.save()
         i = i + 1
-        console.log(requestToCasper.requestHash)
-
-        console.log('sleep 30 seconds before create an other tx')
+        logger.info('sleep 30 seconds before create an other tx')
         await generalHelper.sleep(30000)
     }
 

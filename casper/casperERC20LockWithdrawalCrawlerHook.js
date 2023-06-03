@@ -119,7 +119,6 @@ const HOOK = {
         for (const parsedEvent of parsedEventData.data) {
           // let args = storedContractByHash.args;
           if (parsedEvent.name == "unlock_erc20") {
-            console.log('got here')
             // unlockId = <txHash>-<fromChainId>-<toChainId>-<index>-<originContractAddress>-<originChainId>
             const mintidStr = parsedEvent.data['unlock_id']
             const mintidSplits = mintidStr.split("-");
@@ -135,7 +134,7 @@ const HOOK = {
             const activeCustodianContractHash = await CWeb3.Contract.getActiveContractHash(pairedTokensToEthereum.custodianContractPackageHash, casperConfig.chainName)
             const contract = await CWeb3.Contract.createInstanceWithRemoteABI(activeCustodianContractHash, randomGoodRPC, casperConfig.chainName)
             const unlock = await contract.getter.unlockIds(unlockIdKey, true)
-            console.log('unlockIdKey', unlockIdKey, mintidStr, unlock)
+            logger.log('unlockIdKey = %s, mintidStr = %s, unlock = %s', unlockIdKey, mintidStr, unlock)
             if (!unlock) {
               logger.warn('the event not happen in the custodian contract')
               return
@@ -232,7 +231,7 @@ const HOOK = {
           throw e
         }
         randomGoodRPC = await CasperHelper.getRandomGoodCasperRPCLink(height)
-        console.error(e)
+        logger.error(e)
       }
     }
   }

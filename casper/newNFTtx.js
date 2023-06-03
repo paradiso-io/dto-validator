@@ -1,6 +1,7 @@
 const db = require('../models')
 const crypto = require('crypto')
 const generalHelper = require('../helpers/general')
+const logger = require('../helpers/logger')
 let i = 1
 async function main() {
     let name = ['cam1', 'cam2', 'cam3', 'cam4', 'cam5', 'cam6']
@@ -47,9 +48,8 @@ async function main() {
 
         await newtx.save()
         i = i + 1
-        console.log("new tx tokenIds: ", newtx.tokenIds)
 
-        console.log('sleep 5 seconds before create an other tx')
+        logger.info('sleep 5 seconds before create an other tx')
         await generalHelper.sleep(5000)
     }
 

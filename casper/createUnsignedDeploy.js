@@ -81,7 +81,6 @@ async function startSignForToken() {
                     ttl: ttl
                 })
                 deployJson = JSON.stringify(Contract.deployToJson(deploy));
-                console.log(deployJson)
             } else {
                 // await erc20.setContractHash(token.contractHash)
                 const contractInstance = await Contract.createInstanceWithRemoteABI(token.contractHash, selectedGoodRPC, casperConfig.chainName)
@@ -157,7 +156,7 @@ async function startSignForToken() {
 
         //scan for RequestToCasper not confirmed yet: refresh
         {
-            console.log('Start scanning for unconfirmed requests but ttl over')
+            logger.info('Start scanning for unconfirmed requests but ttl over')
             let currentTime = generalHelper.now()
             let reqs = await db.RequestToCasper.find(
                 {
@@ -167,7 +166,6 @@ async function startSignForToken() {
                     ]
                 }
             )
-            console.log(reqs)
             for (const req of reqs) {
                 //verify format of  account address must be account hash
                 let toAddress = req.toWallet
@@ -275,7 +273,7 @@ async function startSignForToken() {
             }
         }
 
-        console.log('sleep 10 seconds before create an other tx')
+        logger.info('sleep 10 seconds before create an other tx')
         await generalHelper.sleep(10000)
     }
 }

@@ -155,7 +155,7 @@ async function crawl(from, to, lastBlockHeight, rpc) {
   while (fromBlock < toBlock) {
     try {
       let block = await client.getBlockInfoByHeight(fromBlock);
-      console.log("readding block", block.block.header.height);
+      logger.info("readding block %s", block.block.header.height);
       let deploy_hashes = block.block.body.deploy_hashes;
 
       //reading deploy hashes one by one
@@ -209,12 +209,11 @@ const getPastEvent = async () => {
     selectedRPC
   );
   let fromBlock = parseInt(casperConfig.fromBlock);
-  console.log('fromBlock 11', fromBlock)
   let setting = await db.Setting.findOne({ networkId: networkId });
   if (setting && setting.lastBlockRequest) {
     fromBlock = setting.lastBlockRequest > fromBlock ? setting.lastBlockRequest : fromBlock;
   }
-
+  logger.info('fromBlock %s', fromBlock)
   let currentBlock = null
   trial = 20
   while (trial > 0) {
@@ -239,7 +238,6 @@ const getPastEvent = async () => {
 
   // DELAY 2 BLOCKS WITH THE CHAIN
   currentBlockHeight -= 2;
-  console.log(fromBlock, currentBlockHeight);
 
   // let blockPerBatch = 100;
   // let numBatch =
@@ -251,11 +249,9 @@ const getPastEvent = async () => {
     if (to > currentBlockHeight) {
       to = currentBlockHeight;
     }
-    // tasks.push(crawl(from, to, currentBlockHeight, selectedRPC));
-    // console.log("Craw : ", from, to, currentBlockHeight, selectedRPC)
-    console.log("crawl: ", from)
+    logger.info("crawling block: %s", from)
     await crawl(from, to, to)
-    console.log("finished crawl: ", from, selectedRPC)
+    logger.info("finished crawl: %s, with RPC = %s", from, selectedRPC)
 
     let blockNumber = from;
     setting = await db.Setting.findOne({ networkId: networkId });
@@ -273,7 +269,7 @@ const getPastEvent = async () => {
         setting.lastBlockRequest = blockNumber;
         setting.lastBlockClaim = blockNumber;
         await setting.save();
-        console.log("finished save setting: ", blockNumber)
+        logger.info("finished save setting: %s", blockNumber)
       }
     }
   }
@@ -287,7 +283,7 @@ let watch = async () => {
   if (config.proxy) {
     while (true) {
       await getPastEvent();
-      console.log('waiting')
+      logger.info('waiting')
       await generalHelper.sleep(10 * 1000);
     }
   } else {
@@ -316,9 +312,9 @@ const fetchTransactionFromCasperIfNot = async (deployHash) => {
   }
   deployHash = CasperHelper.toCasperDeployHash(deployHash)
   const { height: blockHeight, selectedRPC } = await getBlockHeightFromDeployHash(deployHash)
-  console.log('blockHeight', blockHeight, deployHash)
+  logger.info('blockHeight = %s, deploy = %s', blockHeight, deployHash)
   await crawl(blockHeight, blockHeight + 1, blockHeight + 1, selectedRPC)
-  console.log('done crawl casper')
+  logger.info('done crawl casper')
 }
 const fetchNFTTransactionFromCasperIfNot = async (deployHash) => {
   const casperConfig = CasperHelper.getConfigInfo();
@@ -329,9 +325,9 @@ const fetchNFTTransactionFromCasperIfNot = async (deployHash) => {
   }
   deployHash = CasperHelper.toCasperDeployHash(deployHash)
   const { height: blockHeight, selectedRPC } = await getBlockHeightFromDeployHash(deployHash)
-  console.log('blockHeight', blockHeight, deployHash)
+  logger.info('blockHeight = %s, deploy = %s', blockHeight, deployHash)
   await crawl(blockHeight, blockHeight + 1, blockHeight + 1, selectedRPC)
-  console.log('done crawl casper')
+  logger.info('done crawl casper')
 }
 
 module.exports = {

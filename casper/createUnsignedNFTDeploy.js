@@ -45,9 +45,8 @@ async function start() {
             for (const tx of pendingTxes) {
                 if (tx.originChainId == casperChainId) { // nft bridge from Casper to EVM => now bridge back => unlock 
                     //verify format of  account address must be account hash
-                    console.log("NEW REQUEST UNSIGNED TO UNLOCK ")
                     let toAddress = tx.account // NFT account owner 
-                    console.log("toAddress: ", toAddress)
+                    logger.info("NEW REQUEST UNSIGNED TO UNLOCK toAddress = %s", toAddress)
                     let splits = toAddress.split("-")
                     var re = /[0-9A-Fa-f]{6}/g;
                     if (splits.length != 3 || splits[0] != "account" || splits[1] != "hash" || !re.test(splits[2])) {
@@ -66,23 +65,14 @@ async function start() {
                     let ownerAccountHashByte = Uint8Array.from(
                         Buffer.from(toAddress.slice(13), 'hex'),
                     )
-
-                    const ownerKey = createRecipientAddress(new CLAccountHash(ownerAccountHashByte))
-                    //console.log("token_owner_to_casper:  ", ownerKey)
-
                     // umlock_id 
                     //unlock_id = <txHash>-<fromChainId>-<toChainId>-<index>-<originContractAddress>-<originChainId>
-                    console.log("tx.index: ", tx.index)
                     let mintid = `${tx.requestHash.toLowerCase()}-${tx.fromChainId}-${tx.toChainId}-${tx.index}-${tx.originToken.toLowerCase()}-${tx.originChainId}`
-
-                    console.log("mintId: ", mintid)
                     let unlockId = mintid
 
 
                     // identifierMode
-                    console.log("tx.identifierMode: ", tx.identifierMode)
                     let identifierMode = new CLValueBuilder.u8((tx.identifierMode))
-                    console.log("identifierMode: ", identifierMode)
 
                     let tokenIds = null
                     if (identifierMode == 1) {
@@ -97,10 +87,8 @@ async function start() {
                     const nftPackageHash = new CLKey(contracthashbytearray);
 
 
-                    console.log("Start create deploy for UNLOCK_NFT")
+                    logger.info("Start create deploy for UNLOCK_NFT")
                     let deploy
-                    // ARG: token_ids - token_hashes - from_chainid - identifier_mode - nft_contract_hash - target_key - unlock_id
-
                     const contractInstance = await Contract.createInstanceWithRemoteABI(casperNFTConfig.nftbridge, selectedGoodRPC, casperConfig.chainName)
                     deploy = await contractInstance.contractCalls.approveUnlockNft.makeUnsignedDeploy({
                         publicKey: mpcPubkey,
@@ -115,20 +103,16 @@ async function start() {
                         paymentAmount: 10000000000,
                         ttl: defaultTtl
                     })
-                    console.log()
                     let deployJson = JSON.stringify(Contract.deployToJson(deploy));
                     // deploy = JSON.parse(deployJson).deploy
                     // deployJson = JSON.stringify(deploy)
                     let hashToSign = sha256(Buffer.from(deploy.hash)).toString("hex")
                     let deployHash = Buffer.from(deploy.hash).toString('hex')
-                    console.log("deployHash2: ", deployHash)
 
                     logger.info(
                         "new transactions to casper %s",
                         sha256(Buffer.from(deploy.hash)).toString("hex")
                     );
-                    console.log(new Date(deploy.header.timestamp).valueOf())
-                    console.log(Date.now())
 
                     await db.Nft721RequestToCasper.updateOne(
                         {
@@ -168,7 +152,7 @@ async function start() {
 
                     tx.casperDeployCreated = true
                     await tx.save()
-                    console.log("Unlock success. Save to DB success")
+                    logger.info("Unlock success. Save to DB success")
                 } else {
                     //verify format of  account address must be account hash
                     //verify format of  account address must be account hash
@@ -193,15 +177,11 @@ async function start() {
                     )
 
                     const ownerKey = createRecipientAddress(new CLAccountHash(ownerAccountHashByte))
-                    console.log("token_owner_to_casper:  ", ownerKey)
 
                     let mintid = `${tx.requestHash.toLowerCase()}-${tx.fromChainId}-${tx.toChainId}-${tx.index}-${tx.originToken.toLowerCase()}-${tx.originChainId}`
 
                     // token metadata
                     let tokenIds = tx.tokenIds.map((e) => parseInt(e))
-
-
-                    console.log("before deploy")
                     let deploy
                     const contractInstance = await Contract.createInstanceWithRemoteABI(token.contractHash, selectedGoodRPC, casperConfig.chainName)
                     deploy = await contractInstance.contractCalls.approveToClaim.makeUnsignedDeploy({
@@ -215,10 +195,6 @@ async function start() {
                         paymentAmount: 10000000000,
                         ttl: defaultTtl
                     })
-                    console.log("DEPLOY: ", deploy)
-
-                    console.log("after deploy")
-
 
                     let deployJson = JSON.stringify(Contract.deployToJson(deploy));
                     let hashToSign = sha256(Buffer.from(deploy.hash)).toString("hex")
@@ -265,13 +241,13 @@ async function start() {
                     tx.casperDeployCreated = true
                     await tx.save()
                 }
-                console.log('sleep 60 seconds before create an other tx')
+                logger.info('sleep 60 seconds before create an other tx')
                 await generalHelper.sleep(60000)
             }
 
             //scan for RequestToCasper not confirmed yet: refresh
             {
-                console.log('Start scanning for unconfirmed requests but ttl over')
+                logger.info('Start scanning for unconfirmed requests but ttl over')
                 let currentTime = generalHelper.now()
                 let reqs = await db.Nft721RequestToCasper.find(
                     {
@@ -281,21 +257,16 @@ async function start() {
                         ]
                     }
                 )
-                //console.log(reqs)
                 for (const req of reqs) {
                     if (req.originChainId == casperChainId) { // nft bridge from Casper to EVM => now bridge back => unlock
-                        //verify format of  account address must be account hash
                         logger.info(
                             "RENEWAL for UNLOCK_NFT: Origin MINTID %s",
                             req.mintid
                         );
                         let toAddress = req.toWallet // NFT account owner
-                        console.log("toAddress: ", toAddress)
                         let ownerAccountHashByte = Uint8Array.from(
                             Buffer.from(toAddress.slice(13), 'hex'),
                         )
-
-                        const ownerKey = createRecipientAddress(new CLAccountHash(ownerAccountHashByte)) // Unlock To_address 
 
                         // umlock_id 
                         //unlock_id = <txHash>-<fromChainId>-<toChainId>-<index>-<originContractAddress>-<originChainId>
@@ -311,9 +282,7 @@ async function start() {
                         let unlockId = mintid
 
                         // identifierMode
-                        console.log("req.identifierMode: ", req.identifierMode)
                         let identifierMode = new CLValueBuilder.u8((req.identifierMode))
-                        console.log("identifierMode: ", identifierMode)
                         let tokenIds = null
                         if (identifierMode == 1) {
                             tokenIds = req.tokenIds.map((e) => e.toString())
@@ -328,7 +297,7 @@ async function start() {
 
                         let ttl = 300000
 
-                        console.log("Start create deploy for UNLOCK_NFT")
+                        logger.info("Start create deploy for UNLOCK_NFT")
 
                         let token_owner1 = req.toWallet
 
@@ -340,17 +309,15 @@ async function start() {
                             continue
                         }
 
-                        console.log("token_owner:  ", splits[2])
                         let recipientAccountHashByte = Uint8Array.from(
                             Buffer.from(token_owner1.slice(13), 'hex'),
                         )
                         const accounthash2 = new CLAccountHash(
                             recipientAccountHashByte
                         );
-                        //TODO: check whether mintid executed => this is to avoid failed transactions as mintid cant be executed more than one time
                         ttl = 300000
 
-                        console.log("Start RENEWAL deploy for UNLOCK_NFT")
+                        logger.info("Start RENEWAL deploy for UNLOCK_NFT")
                         let deploy
 
                         // ARG: token_ids - token_hashes - from_chainid - identifier_mode - nft_contract_hash - target_key - unlock_id
@@ -367,16 +334,9 @@ async function start() {
                                 nftPackageHash: contracthashbytearray,
                             },
                             paymentAmount: 10000000000,
-                            ttl: defaultTtl
+                            ttl: ttl
                         })
                         let deployJson = JSON.stringify(Contract.deployToJson(deploy));
-                        // deploy = JSON.parse(deployJson).deploy
-                        // deployJson = JSON.stringify(deploy)
-
-                        //deploy = client.signDeploy(deploy, pairKeyView);
-                        console.log("DEPLOY: ", deploy)
-
-                        console.log("after deploy")
 
                         let hashToSign = sha256(Buffer.from(deploy.hash)).toString("hex")
                         let deployHash = Buffer.from(deploy.hash).toString('hex')
@@ -441,7 +401,6 @@ async function start() {
                             continue
                         }
 
-                        console.log("token_owner:  ", splits[2])
                         let recipientAccountHashByte = Uint8Array.from(
                             Buffer.from(token_owner1.slice(13), 'hex'),
                         )
@@ -465,10 +424,6 @@ async function start() {
                             paymentAmount: 10000000000,
                             ttl: defaultTtl
                         })
-                        console.log("DEPLOY: ", deploy)
-
-                        console.log("after deploy")
-
 
                         let deployJson = JSON.stringify(Contract.deployToJson(deploy));
 
@@ -514,15 +469,15 @@ async function start() {
                         );
 
                     }
-                    console.log('sleep 60 seconds before create an other tx')
+                    logger.info('sleep 60 seconds before create an other tx')
                     await generalHelper.sleep(60000)
                 }
             }
 
-            console.log('sleep 60 seconds before create an other tx')
+            logger.info('sleep 60 seconds before create an other tx')
             await generalHelper.sleep(60000)
         } catch (e) {
-            console.error(e)
+            logger.error(e)
         }
     }
 }

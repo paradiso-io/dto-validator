@@ -52,12 +52,12 @@ const { sleep } = require('../helpers/general')
 
         // Listen on libp2p for `peer:connect` and log the provided connection.remotePeer.toB58String() peer id string.
         libp2p.connectionManager.on('peer:connect', (connection) => {
-            console.info(`Connected to ${connection.remotePeer.toB58String()}!`)
+            logger.info(`Connected to ${connection.remotePeer.toB58String()}!`)
         })
 
         // Start libp2p
         await libp2p.start()
-        console.log('ID  node NFT PRODUCER : ', libp2p.peerId.toB58String())
+        logger.info('ID  node NFT PRODUCER : %s', libp2p.peerId.toB58String())
 
         //Create our PubsubChat client 
         const pubsubChat = new PubsubChat(libp2p, PubsubChat.TOPIC, async ({ from, message }) => {
@@ -66,7 +66,7 @@ const { sleep } = require('../helpers/general')
             if (pubsubChat.userHandles.has(from)) {
                 user = pubsubChat.userHandles.get(from)
             }
-            console.info(`${fromMe ? PubsubChat.CLEARLINE : ''}${user}(${new Date(message.created).toLocaleTimeString()}): ${message.data}`)
+            logger.info(`${fromMe ? PubsubChat.CLEARLINE : ''}${user}(${new Date(message.created).toLocaleTimeString()}): ${message.data}`)
         })
         while (true) {
             // let tx = await db.RequestToCasper.find({isProcessed: false}).sort({ timestamp: 1 }).limit(1)
@@ -81,18 +81,18 @@ const { sleep } = require('../helpers/general')
                     if (pubsubChat.userHandles.has(from)) {
                         user = pubsubChat.userHandles.get(from)
                     }
-                    console.info(`${fromMe ? PubsubChat.CLEARLINE : ''}${user}(${new Date(message.created).toLocaleTimeString()}): ${message.data}`)
+                    logger.info(`${fromMe ? PubsubChat.CLEARLINE : ''}${user}(${new Date(message.created).toLocaleTimeString()}): ${message.data}`)
 
                 })
                 try {
                     await pubsubChat.send(JSON.stringify(tx))
-                    console.log("send sucessed")
+                    logger.info("send sucessed")
                 } catch (err) {
-                    console.error('Could not publish chat', err)
+                    logger.error('Could not publish chat %s', err)
                 }
                 tx.isProcessed = true
                 await tx.save()
-                console.log('sleep 60 seconds before continue')
+                logger.info('sleep 60 seconds before continue')
                 await sleep(60000)
             }
 
