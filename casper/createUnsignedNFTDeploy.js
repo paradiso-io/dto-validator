@@ -146,7 +146,7 @@ async function start() {
                                 originChainId: tx.originChainId,
                                 originToken: tx.originToken.toLowerCase(),
                                 //destinationContractHash: token.contractHash,
-                                timestamp: Math.floor(new Date(deploy.header.timestamp) / 1000),  //Math.floor(deploy.header.timestamp / 1000),
+                                timestamp: Math.floor(new Date(deploy.header.timestamp).valueOf() / 1000),  //Math.floor(deploy.header.timestamp / 1000),
                                 ttl: Math.floor(defaultTtl / 1000),
                                 deadline: Math.floor((new Date(deploy.header.timestamp).valueOf() + defaultTtl) / 1000),
                                 isProcessed: false,
@@ -196,50 +196,33 @@ async function start() {
                     console.log("token_owner_to_casper:  ", ownerKey)
 
                     let mintid = `${tx.requestHash.toLowerCase()}-${tx.fromChainId}-${tx.toChainId}-${tx.index}-${tx.originToken.toLowerCase()}-${tx.originChainId}`
-                    let minidToCasper = new CLString(mintid)
 
                     // token metadata
-                    let tokenmetadatas = tx.tokenMetadatas.map((e) => CLValueBuilder.string(e))
-                    let token_metadatas = CLValueBuilder.list(tokenmetadatas)
-                    let tokenIds = tx.tokenIds.map((e) => CLValueBuilder.string(e.toString()))
-                    let token_ids = CLValueBuilder.list(tokenIds)
+                    let tokenIds = tx.tokenIds.map((e) => parseInt(e))
 
 
                     console.log("before deploy")
-
-                    let deploy = DeployUtil.makeDeploy(
-                        new DeployUtil.DeployParams(
-                            mpcPubkey,
-                            casperConfig.chainName,
-                            1,
-                            defaultTtl,
-                        ),
-                        DeployUtil.ExecutableDeployItem.newStoredContractByHash(
-                            Uint8Array.from(Buffer.from(token.contractHash, "hex")),
-                            "approve_to_claim",
-                            RuntimeArgs.fromMap({
-                                // "nft_contract_hash": contracthash,
-                                "token_owner": ownerKey,
-                                "mint_id": minidToCasper,
-                                "token_hashes": token_ids,
-                                "token_meta_datas": token_metadatas
-                            })
-                        ),
-                        DeployUtil.standardPayment(10000000000)
-                    );
-
-
-                    //deploy = client.signDeploy(deploy, pairKeyView);
+                    let deploy
+                    const contractInstance = await Contract.createInstanceWithRemoteABI(token.contractHash, selectedGoodRPC, casperConfig.chainName)
+                    deploy = await contractInstance.contractCalls.approveToClaim.makeUnsignedDeploy({
+                        publicKey: mpcPubkey,
+                        args: {
+                            tokenOwner: new CLAccountHash(ownerAccountHashByte),
+                            mintId: mintid,
+                            tokenIds: tokenIds,
+                            tokenMetaDatas: tx.tokenMetadatas,
+                        },
+                        paymentAmount: 10000000000,
+                        ttl: defaultTtl
+                    })
                     console.log("DEPLOY: ", deploy)
 
                     console.log("after deploy")
 
 
-                    let deployJson = JSON.stringify(DeployUtil.deployToJson(deploy));
+                    let deployJson = JSON.stringify(Contract.deployToJson(deploy));
                     let hashToSign = sha256(Buffer.from(deploy.hash)).toString("hex")
                     let deployHash = Buffer.from(deploy.hash).toString('hex')
-                    //console.log("deployHash2: ", deployHash)
-
                     logger.info(
                         "new transactions to casper %s",
                         sha256(Buffer.from(deploy.hash)).toString("hex")
@@ -261,9 +244,9 @@ async function start() {
                                 originChainId: tx.originChainId,
                                 originToken: tx.originToken.toLowerCase(),
                                 //destinationContractHash: token.contractHash,
-                                timestamp: Math.floor(deploy.header.timestamp / 1000),
-                                ttl: Math.floor(deploy.header.ttl / 1000),
-                                deadline: Math.floor((deploy.header.timestamp + deploy.header.ttl) / 1000),
+                                timestamp: Math.floor(new Date(deploy.header.timestamp).valueOf() / 1000),  //Math.floor(deploy.header.timestamp / 1000),
+                                ttl: Math.floor(defaultTtl / 1000),
+                                deadline: Math.floor((new Date(deploy.header.timestamp).valueOf() + defaultTtl) / 1000),
                                 isProcessed: false,
                                 deployJsonString: deployJson,
                                 amount: tx.amount,
@@ -443,21 +426,10 @@ async function start() {
                             req.mintid
                         );
                         let dto_mint_id = req.mintid
-                        let dto_mint_id_tocasper = new CLString(dto_mint_id)
 
-                        // token metadata => Change to Casper type to fit deploy parameters
+                        let tokenIds1 = req.tokenIds.map((e) => parseInt(e))
 
-                        // token metadata
-                        let tokenmetadatas1 = req.tokenMetadatas.map((e) => CLValueBuilder.string(e))
-                        let token_metadatas1 = CLValueBuilder.list(tokenmetadatas1)
-                        let tokenIds1 = req.tokenIds.map((e) => CLValueBuilder.string(e))
-                        let token_ids1 = CLValueBuilder.list(tokenIds1)
 
-                        // let token_metadata1 = new CLString(JSON.stringify(req.tokenMetadatas))
-                        // let token_ids = new CLValueBuilder.list(tx.token_ids)
-                        // let token_hashs = new CLValueBuilder.list(tx.token_hashs)
-
-                        // token_owner
 
                         let token_owner1 = req.toWallet
 
@@ -473,12 +445,6 @@ async function start() {
                         let recipientAccountHashByte = Uint8Array.from(
                             Buffer.from(token_owner1.slice(13), 'hex'),
                         )
-                        const accounthash2 = new CLAccountHash(
-                            recipientAccountHashByte
-                        );
-                        const token_owner_to_casper = new CLKey(accounthash2);
-                        console.log("token_owner_to_casper:  ", token_owner_to_casper)
-
                         let token = CasperHelper.getCasperNFTTokenInfoFromOriginToken(req.originToken, req.originChainId)
                         if (!token) {
                             logger.warn("token %s on chain %s not supported", req.originToken, req.originChainId)
@@ -486,31 +452,26 @@ async function start() {
                         }
 
                         //TODO: check whether mintid executed => this is to avoid failed transactions as mintid cant be executed more than one time
+                        let deploy
+                        const contractInstance = await Contract.createInstanceWithRemoteABI(token.contractHash, selectedGoodRPC, casperConfig.chainName)
+                        deploy = await contractInstance.contractCalls.approveToClaim.makeUnsignedDeploy({
+                            publicKey: mpcPubkey,
+                            args: {
+                                tokenOwner: new CLAccountHash(recipientAccountHashByte),
+                                mintId: req.mintid,
+                                tokenIds: tokenIds1,
+                                tokenMetaDatas: req.tokenMetadatas,
+                            },
+                            paymentAmount: 10000000000,
+                            ttl: defaultTtl
+                        })
+                        console.log("DEPLOY: ", deploy)
 
-                        let deploy = DeployUtil.makeDeploy(
-                            new DeployUtil.DeployParams(
-                                //pairKeyView.publicKey, // MPC public key
-                                mpcPubkey,
-                                casperConfig.chainName,
-                                1,
-                                defaultTtl,
-                            ),
-                            DeployUtil.ExecutableDeployItem.newStoredContractByHash(
-                                Uint8Array.from(Buffer.from(token.contractHash, 'hex')),
-                                "approve_to_claim",
-                                RuntimeArgs.fromMap({
-                                    "token_owner": token_owner_to_casper,
-                                    "mint_id": dto_mint_id_tocasper, // change to Casper string type
-                                    "token_hashes": token_ids1,
-                                    "token_meta_datas": token_metadatas1 // fit Casper type
-                                })
-                            ),
-                            DeployUtil.standardPayment(22000000000)
-                        );
+                        console.log("after deploy")
 
-                        //deploy = client.signDeploy(deploy, pairKeyView);
-                        console.log(deploy.approvals)
-                        let deployJson = JSON.stringify(DeployUtil.deployToJson(deploy));
+
+                        let deployJson = JSON.stringify(Contract.deployToJson(deploy));
+
                         let hashToSign = sha256(Buffer.from(deploy.hash)).toString("hex")
                         let deployHash = Buffer.from(deploy.hash).toString('hex')
                         logger.info(
@@ -534,9 +495,9 @@ async function start() {
                                     originChainId: req.originChainId,
                                     originToken: req.originToken.toLowerCase(),
                                     //destinationContractHash: token.contractHash,
-                                    timestamp: Math.floor(deploy.header.timestamp / 1000),
-                                    ttl: Math.floor(deploy.header.ttl / 1000),
-                                    deadline: Math.floor((deploy.header.timestamp + deploy.header.ttl) / 1000),
+                                    timestamp: Math.floor(new Date(deploy.header.timestamp).valueOf() / 1000),  //Math.floor(deploy.header.timestamp / 1000),
+                                    ttl: Math.floor(defaultTtl / 1000),
+                                    deadline: Math.floor((new Date(deploy.header.timestamp).valueOf() + defaultTtl) / 1000),
                                     isProcessed: false,
                                     deployJsonString: deployJson,
                                     amount: req.amount,
