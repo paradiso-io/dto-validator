@@ -69,15 +69,8 @@ const HOOK = {
         },
         {
           $set: {
-            // claimHash: CasperHelper.toNormalTxHash(updateData.deployHash),
-            // claimBlock: parseInt(updateData.height),
-            // claimed: true, // Should change
             claimId: updateData.claimId,
-            tokenIds: updateData.tokenIds,
-            tokenMetadatas: updateData.tokenMetadatas,
-            isCasperApproveToClaim: updateData.isCasperApproveToClaim ? updateData.isCasperApproveToClaim : false,
-            isCasperClaimed: updateData.isCasperClaimed ? updateData.isCasperClaimed : false,
-
+            isCasperApproveToClaim: updateData.isCasperApproveToClaim ? updateData.isCasperApproveToClaim : false
           },
         },
         { upsert: true, new: true }
@@ -100,7 +93,6 @@ const HOOK = {
   updateClaimOnCasper: async (updateData) => {
     {
       logger.info("updateClaimOnCasper toChainId = %s, account = %s ", updateData.casperChainId, updateData.account.toLowerCase())
-      // event ClaimToken(address indexed _token, address indexed _addr, uint256 _amount, uint256 _originChainId, uint256 _fromChainId, uint256 _toChainId, uint256 _index, bytes32 _claimId);
       await db.Nft721Transaction.updateOne(
         {
           toChainId: parseInt(updateData.casperChainId),
@@ -110,10 +102,8 @@ const HOOK = {
           $set: {
             claimHash: CasperHelper.toNormalTxHash(updateData.deployHash),
             claimBlock: parseInt(updateData.height),
-            claimed: true, // Should change
-            isCasperApproveToClaim: false,
-            isCasperClaimed: updateData.isCasperClaimed,
-
+            claimed: true, 
+            isCasperClaimed: updateData.isCasperClaimed
           },
         },
         { upsert: true, new: true }
@@ -537,8 +527,7 @@ const HOOK = {
                     $set: {
                       claimHash: CasperHelper.toNormalTxHash(deploy.deploy.hash),
                       claimBlock: parseInt(height),
-                      claimed: true,
-                      isCasperApproveToClaim: false,
+                      claimed: true
                     },
                   },
                   { upsert: true, new: true }

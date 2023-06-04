@@ -133,6 +133,9 @@ async function processEvent(event, networkId) {
     nftContract = await DTOWrappedNFT.createInstance(nftContractHashActive, randomGoodRPC, CasperConfig.chainName)
     identifierMode = await nftContract.identifierMode()
     logger.info("identifierMode: %s", identifierMode)
+  } else {
+    // NFT originally issued on EVM chains is always mapped to CEP78 with ordinal mode
+    identifierMode = 0
   }
 
   let block = await web3.eth.getBlock(event.blockNumber)
