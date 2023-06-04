@@ -203,7 +203,7 @@ async function startSignForToken() {
                         paymentAmount: 10000000000,
                         ttl: ttl
                     })
-                    deployJson = JSON.stringify(DeployUtil.deployToJson(deploy));
+                    deployJson = JSON.stringify(Contract.deployToJson(deploy));
                 } else {
                     const contractInstance = await Contract.createInstanceWithRemoteABI(token.contractHash, selectedGoodRPC, casperConfig.chainName)
                     deploy = await contractInstance.contractCalls.mint.makeUnsignedDeploy({
