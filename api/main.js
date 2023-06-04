@@ -151,7 +151,7 @@ router.get('/transaction-status/:requestHash/:fromChainId', [
     if (!errors.isEmpty()) {
         return res.status(400).json({ errors: errors.array() })
     }
-    console.log('req', req.params)
+    logger.info('processing reqquest %s', req.params)
     let requestHash = req.params.requestHash
     let fromChainId = req.params.fromChainId
     let index = req.query.index ? req.query.index : 0
@@ -183,17 +183,17 @@ router.get('/transaction-status/:requestHash/:fromChainId', [
     let myself = `http://localhost:${config.server.port}/${requestData}`
     let verifyRet = await axios.get(myself)
     let myNodeResult = verifyRet.data
-    console.log('myNodeResult', myNodeResult)
+    logger.info('myNodeResult %s', myNodeResult)
     const readStatus = async (i) => {
         try {
-            console.log('reading from', config.signatureServer[i])
+            logger.info('reading from %s', config.signatureServer[i])
             let ret = await axios.get(config.signatureServer[i] + `/${requestData}`, { timeout: 10 * 1000 })
             ret = ret.data
-            console.log('reading from ret ', ret)
+            logger.info('reading from ret %s', ret)
             ret = ret.success ? ret.success : false
             return { index: i, success: ret }
         } catch (e) {
-            console.log('e', e.toString())
+            logger.error(e.toString())
         }
         return { index: i, success: false }
     }
@@ -209,7 +209,7 @@ router.get('/transaction-status/:requestHash/:fromChainId', [
             responses = await Promise.all(r)
 
         } catch (e) {
-            console.log(e)
+            logger.error(e.toString())
         }
     }
 
@@ -303,7 +303,9 @@ router.get('/verify-transaction/:requestHash/:fromChainId/:index/:amount', [
         if (!transaction) {
             return res.json({ success: false })
         }
-        if (transaction.claimed === true) {
+        const indbTransaction = await db.Transaction.findOne({ requestHash: requestHash, fromChainId: fromChainId })
+
+        if (indbTransaction.claimed === true) {
             return res.json({ success: true, claimed: true })
         }
 
@@ -351,7 +353,7 @@ router.get('/verify-transaction/:requestHash/:fromChainId/:index/:amount', [
                 return res.json({ success: false })
             }
         } catch (e) {
-            console.error(e)
+            logger.error(e.toString())
             return res.json({ success: false })
         }
     }
@@ -451,11 +453,11 @@ router.post('/verify-transaction-full/:requestHash/:fromChainId/:index/:amount',
             }
             dataToVerifyAgainst = transaction
         } catch (e) {
-            console.error(e)
+            logger.error(e.toString())
             return res.json({ success: false })
         }
     }
-    console.log(dataToVerifyAgainst)
+    logger.info("data to verify %s", dataToVerifyAgainst)
     if (parseInt(dataToVerifyAgainst.toChainId) == parseInt(casperConfig.networkId)) {
         if (
             dataToVerifyAgainst.index != verifyingData.index ||
@@ -526,14 +528,16 @@ router.post('/request-withdraw', [
         transaction = await eventHelper.getRequestEvent(fromChainId, requestHash)
     }
 
-    console.log('tx', transaction, fromChainId, casperConfig.networkId)
+    logger.info('tx', transaction, fromChainId, casperConfig.networkId)
     if (parseInt(fromChainId) !== casperConfig.networkId) {
         let web3 = await Web3Utils.getWeb3(fromChainId)
 
         if (!transaction) {
             return res.status(400).json({ errors: 'Transaction does not exist' })
         }
-        if (transaction.claimed === true) {
+        const indbTransaction = await db.Transaction.findOne({ requestHash: requestHash, fromChainId: fromChainId })
+
+        if (indbTransaction.claimed === true) {
             return res.status(400).json({ errors: 'Transaction claimed' })
         }
 
@@ -568,45 +572,8 @@ router.post('/request-withdraw', [
                     return res.json({ success: false })
                 }
             }
-            // remove this code as it should never get executed
-            // if (!transaction) {
-            //     let casperRPC = await CasperHelper.getCasperRPC(transaction.requestBlock)
-            //     let deployResult = await casperRPC.getDeployInfo(CasperHelper.toCasperDeployHash(transaction.requestHash))
-            //     eventData = await CasperHelper.parseRequestFromCasper(deployResult)
-
-            //     transaction = {
-            //         account: eventData.toAddr.toLowerCase(),
-            //         originToken: eventData.originToken.toLowerCase(),
-            //         amount: eventData.amount,
-            //         fromChainId: eventData.fromChainId,
-            //         toChainId: eventData.toChainId,
-            //         originChainId: eventData.originChainId,
-            //         index: eventData.index,
-            //     }
-            // }
-            // redundant checks
-            // if (eventData === null) {
-            //     let casperRPC = await CasperHelper.getCasperRPC(transaction.requestBlock)
-            //     let deployResult = await casperRPC.getDeployInfo(CasperHelper.toCasperDeployHash(transaction.requestHash))
-            //     eventData = await CasperHelper.parseRequestFromCasper(deployResult)
-            //     if (eventData == null) {
-            //         // just force it to re-update transaction
-            //         await fetchTransactionFromCasperIfNot(transaction.requestHash, true)
-            //     }
-            // }
-            // logger.warn("eventData : %s , requestHash : %s", eventData, requestHash)
-
-            // if (eventData && (eventData.toAddr.toLowerCase() !== transaction.account.toLowerCase()
-            //     || eventData.originToken.toLowerCase() !== transaction.originToken.toLowerCase()
-            //     || eventData.amount !== transaction.amount
-            //     || eventData.fromChainId !== transaction.fromChainId
-            //     || eventData.toChainId !== transaction.toChainId
-            //     || eventData.originChainId !== transaction.originChainId
-            //     || eventData.index !== transaction.index)) {
-            //     return res.status(400).json({ errors: 'conflict transaction data between local database and on-chain data ' + transaction.requestHash })
-            // }
         } catch (e) {
-            console.error(e)
+            logger.error(e.toString())
             return res.status(400).json({ errors: 'failed to get on-chain casper transction for ' + transaction.requestHash })
         }
     }
@@ -614,7 +581,6 @@ router.post('/request-withdraw', [
     logger.info('0')
     const nativeAddress = config.get('nativeAddress')
     let name, decimals, symbol
-    console.log("compare", transaction.originToken.toLowerCase(), nativeAddress)
     if (transaction.originToken.toLowerCase() === nativeAddress.toLowerCase()) {
         logger.info('0.1')
         name = config.blockchain[transaction.originChainId].nativeName
@@ -691,7 +657,6 @@ router.post('/request-withdraw', [
                             logger.info("signature data ok signatureServer=%s, recoveredAddress=%s, msgHash=%s", config.signatureServer[i], recoveredAddress, ret.data.msgHash)
                             return ret
                         } catch (e) {
-                            // console.log("failed to get signature from ", config.signatureServer[i], e.toString())
                             trial--
                         }
                     }
@@ -748,7 +713,7 @@ router.post('/request-withdraw', [
         v = goodV
         logger.info('r.length = %s', r.length)
         if (r.length < minApprovers) {
-            console.warn('Validators data are not fully synced yet, please try again later')
+            logger.warn('Validators data are not fully synced yet, please try again later')
             return res.status(400).json({ errors: 'Validators data are not fully synced yet, please try again later' })
         }
 

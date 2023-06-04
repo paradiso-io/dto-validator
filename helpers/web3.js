@@ -5,7 +5,8 @@ const Nft721BridgeABI = require('../contracts/NFT721Bridge.json')
 const PrivateKeyProvider = require("truffle-privatekey-provider");
 const DTOBridgeNFT721ABI = require('../contracts/DTOBridgeNFT721.json')
 const GeneralHelper = require('./general')
-const db = require('../models')
+const db = require('../models');
+const logger = require('./logger');
 
 let Web3Util = {
   getWeb3: async (networkId) => {
@@ -45,7 +46,7 @@ let Web3Util = {
     let len = list.length
     let random = Math.floor(Math.random() * len)
     let rpc = list[random]
-    console.log("RPC: ", rpc)
+    logger.info("RPC: %s", rpc)
     return rpc
   },
   getWeb3Socket: async (networkId) => {
@@ -130,7 +131,7 @@ let Web3Util = {
     let minApprovers = 0
     let approverList = []
     let retry = 10
-    console.log("reading minApprovers", minApprovers)
+    logger.info("reading minApprovers %s", minApprovers)
     while (retry > 0) {
       try {
         let bridgeContract = await Web3Util.getNft721BridgeContract(networkId)
@@ -139,8 +140,7 @@ let Web3Util = {
         minApprovers = parseInt(minApprovers)
         break
       } catch (e) {
-        console.log(e)
-        console.log("error in reading approver", minApprovers)
+        logger.error("error in reading approver: %s", e.toString())
         await GeneralHelper.sleep(5 * 1000)
       }
       retry--
@@ -169,7 +169,7 @@ let Web3Util = {
 
           return {number: parseInt(minApprovers), list: approverList}
         } catch(e) {
-          console.log("error in reading approver", e.toString())
+          logger.log("error in reading approver: %s", e.toString())
           await GeneralHelper.sleep(5 * 1000)
         }
         retry--

@@ -74,7 +74,7 @@ const CasperHelper = {
                     currentBlock.block.header.height.toString()
                 );
                 if (currentBlockHeight >= minLastBlockHeight) {
-                    console.warn("selecting RPC", rpc)
+                    logger.warn("selecting RPC %s", rpc)
                     return rpc
                 }
             } catch (e) {
@@ -132,7 +132,7 @@ const CasperHelper = {
     },
     findArgParsed: function (args, argName) {
         let arg = CasperHelper.findArg(args, argName)
-        console.log("arg: ", args, argName, arg)
+        logger.log("args: %s, argName: %s, arg: %s", args, argName, arg)
         return arg[1].parsed
     },
     getCasperRPC: async (height = 1) => {
@@ -217,7 +217,6 @@ const CasperHelper = {
             tokenIds = tokenIds.map(e => e.toString())
         } else {
             tokenIds = CasperHelper.findArgParsed(args, "token_hashes")
-            console.log('token_hashes', tokenIds)
             tokenIds = tokenIds.map(e => e.toString())
         }
         return tokenIds
@@ -235,188 +234,6 @@ const CasperHelper = {
             return false
         }
     },
-    parseRequestNFTFromCasper: async (deploy, height, indexOfRequestBridge) => {
-        //analyzing deploy details
-        let casperConfig = CasperHelper.getConfigInfo()
-        let session = deploy.session;
-        if (session && session.StoredContractByHash) {
-            let storedContractByHash = session.StoredContractByHash;
-            let nftConfig = CasperHelper.getNFTConfig();
-            let tokenData = nftConfig.tokens.find(
-                (e) => e.contractPackageHash == storedContractByHash.hash
-            );
-            let args = storedContractByHash.args;
-            let entryPoint = storedContractByHash.entry_point;
-
-            if (tokenData) {
-                if (entryPoint == "request_bridge_back") {
-                    let randomGoodRPC = await CasperHelper.getRandomGoodCasperRPCLink(height)
-                    let nftContractHash = storedContractByHash.hash
-                    let txCreator = "";
-                    if (deploy.approvals.length > 0) {
-                        txCreator = deploy.approvals[0].signer;
-                        txCreator = CasperHelper.fromCasperPubkeyToAccountHash(txCreator);
-                    }
-
-                    let nftContract = await DTOWrappedNFT.createInstance(nftContractHash, randomGoodRPC, casperConfig.chainName)
-                    let identifierMode = await nftContract.identifierMode()
-                    let tokenIds = CasperHelper.getTokenIdsFromArgs(identifierMode, args)
-                    let tokenHashes = []
-                    if (identifierMode == 1) {
-                        tokenHashes = CasperHelper.getTokenHashesFromArgs(args)
-                    }
-                    let tokenMetadatas = []
-                    for (var i = 0; i < tokenIds.length; i++) {
-                        let tokenId = identifierMode == 0 ? tokenIds[i] : tokenHashes[i]
-                        while (true) {
-                            try {
-                                //read metadata
-                                let metadata = await nftContract.getTokenMetadata(tokenId)
-                                tokenMetadatas.push(metadata)
-                                break
-                            } catch (e) {
-                                randomGoodRPC = await CasperHelper.getRandomGoodCasperRPCLink(height)
-                                nftContract.nodeAddress = randomGoodRPC
-                                console.error(e.toString())
-                            }
-                        }
-                    }
-
-                    let toChainId = CasperHelper.findArgParsed(args, "to_chainid");
-                    let receiverAddress = CasperHelper.findArgParsed(args, "receiver_address");
-                    let requestId = CasperHelper.findArgParsed(args, "request_id");
-                    let index = await nftContract.getIndexFromRequestId(requestId)
-
-                    if (parseInt(index) == 0) {
-                        throw "RPC error";
-                    }
-
-                    logger.info("Casper Network Request: %s", deploy.hash);
-                    if (!tokenData.originChainId) {
-                        throw "Missconfigued for token " + tokenData.originContractAddress
-                    }
-                    if (!tokenData.originSymbol) {
-                        throw "Missconfigued for token symbol " + tokenData.originContractAddress
-                    }
-                    if (!tokenData.originName) {
-                        throw "Missconfigued for token name " + tokenData.originContractAddress
-                    }
-                    let ret =
-                    {
-                        index,
-                        fromChainId: casperConfig.networkId,
-                        toChainId,
-                        originChainId: tokenData.originChainId,
-                        originToken: tokenData.originContractAddress,
-                        deployHash: deploy.hash,
-                        height: height,
-                        receiverAddress: receiverAddress,
-                        txCreator,
-                        originSymbol: tokenData.originSymbol,
-                        originName: tokenData.originName,
-                        tokenIds,
-                        identifierMode,
-                        tokenMetadatas
-                    }
-                    return ret
-                }
-            } else if (storedContractByHash.hash == nftConfig.nftbridge) {
-                if (entryPoint == "request_bridge_nft") {
-                    let randomGoodRPC = await CasperHelper.getRandomGoodCasperRPCLink(height)
-
-                    const bridgeContactInstance = await CWeb3.Contract.createInstanceWithRemoteABI(nftConfig.nftbridge, randomGoodRPC, casperConfig.chainName)
-                    console.log(indexOfRequestBridge)
-                    const requestData = await bridgeContactInstance.getter.requestIds(indexOfRequestBridge.toString(), true)
-                    console.log("requestData", requestData)
-                    let retData = CasperHelper.parseRequestBridgeDataFromContract(requestData)
-                    let nftPackageHash = retData.nftPackageHash.toLowerCase()
-                    let tokenIds = retData.tokenIds // For identifier_mode == 0
-                    let identifierMode = retData.identifierMode
-                    let toChainId = retData.toChainId
-                    let index = retData.requestIndex
-                    let txCreator = retData.from
-                    let receiverAddress = retData.to
-
-
-                    console.log("Requesting tokenIds", tokenIds)
-
-                    if (parseInt(index) == 0) {
-                        throw "RPC error";
-                    }
-                    let _tokenData = nftConfig.tokens.find(
-                        (e) => e.originContractAddress.toLowerCase() == nftPackageHash
-                    );
-                    if (_tokenData.originChainId != casperConfig.networkId || _tokenData.originContractAddress != nftPackageHash) {
-                        logger.warn("invalid or unsupported token hash %s to bridge.", nftPackageHash)
-                        return;
-                    }
-                    console.log("_tokenData: ", _tokenData)
-
-                    let nftSymbolFromConfigFile = _tokenData.originSymbol
-                    let nftNameFromConfigFile = _tokenData.originName
-                    let nftContract = {}
-                    console.log("Before create instance")
-                    console.log("nftPackageHash", nftPackageHash)
-                    const nftContractHashActive = await CWeb3.Contract.getActiveContractHash(nftPackageHash, casperConfig.chainName)
-
-                    nftContract = await DTOWrappedNFT.createInstance(nftContractHashActive, randomGoodRPC, casperConfig.chainName)
-                    console.log("After create instance")
-
-                    let nftSymbol = await nftContract.collectionSymbol()
-                    console.log(" ============")
-                    console.log("nftSymbol: ", nftSymbol, nftSymbolFromConfigFile)
-                    let nftName = await nftContract.collectionName()
-                    console.log("nftName: ", nftName, nftNameFromConfigFile)
-                    if (nftSymbolFromConfigFile != nftSymbol || nftNameFromConfigFile != nftName) {
-                        throw "WRONG CONFIG nftSymbol OR nftName !!!!!";
-                    }
-                    //}
-
-                    let tokenMetadatas = []
-                    for (var i = 0; i < tokenIds.length; i++) {
-                        let tokenId = tokenIds[i]
-                        while (true) {
-                            try {
-                                //read metadata
-                                let metadata = await nftContract.getTokenMetadata(tokenId)
-                                console.log("metadata: ", metadata)
-                                tokenMetadatas.push(metadata)
-                                break
-                            } catch (e) {
-                                nftContract.nodeAddress = randomGoodRPC
-                                console.error(e.toString())
-                            }
-                        }
-                    }
-
-                    logger.info("Casper Network Request: %s", deploy.hash);
-
-                    let ret =
-                    {
-                        index,
-                        fromChainId: casperConfig.networkId,
-                        toChainId,
-                        originChainId: casperConfig.networkId,
-                        originToken: nftPackageHash,
-                        deployHash: deploy.hash,
-                        height: height,
-                        receiverAddress: receiverAddress,
-                        txCreator,
-                        originSymbol: nftSymbol,
-                        originName: nftName,
-                        tokenIds,
-                        identifierMode,
-                        tokenMetadatas
-                    }
-                    console.log("RET: ", ret)
-
-                    return ret
-                }
-            }
-        }
-
-        return null
-    },
     getAllWrapCep78ContractOnCasper: () => {
         let casperConfig = CasperHelper.getNFTConfig()
         let tokens = casperConfig.tokens
@@ -432,41 +249,6 @@ const CasperHelper = {
         let casperConfig = CasperHelper.getNFTConfig()
         let nftBridge = casperConfig.nftBridgePackageHash
         return nftBridge
-    },
-    getBridgeRequestData: async (height, requestId, randomGoodRPC) => {
-        randomGoodRPC = await CasperHelper.getRandomGoodCasperRPCLink(height, randomGoodRPC)
-        let casperConfig = CasperHelper.getNFTConfig()
-        const nftBridge = new NFTBridge(casperConfig.nftbridge, randomGoodRPC, casperConfig.chainName)
-        await nftBridge.init()
-        let requestData = await nftBridge.getIndexFromRequestId(requestId)
-        console.log('requestData', requestData)
-
-        requestData = JSON.parse(requestData)
-
-        let tokenIds = requestData.token_ids // For identifier_mode == 0
-        let identifierMode = requestData.identifier_mode
-        if (identifierMode != 0) {
-            tokenIds = requestData.token_hashes // For identifier_mode != 0
-        }
-
-        console.log("Requesting tokenIds", tokenIds)
-
-        let index = requestData.request_index
-        if (parseInt(index) == 0) {
-            throw "RPC error";
-        }
-        console.log("requestData", requestData, requestData.nft_package_hash.Hash)
-        return {
-            request_id: requestData.request_id,
-            request_index: requestData.request_index,
-            nft_contract: requestData.nft_package_hash.Hash,
-            identifier_mode: requestData.identifier_mode,
-            from: requestData.from,
-            to: requestData.to,
-            token_ids: requestData.token_ids.map((e) => e.toString()),
-            to_chainid: requestData.to_chainid ? requestData.to_chainid : null,
-            from_chainid: requestData.from_chainid ? requestData.from_chainid : null
-        }
     },
     getHashFromKeyString: (k) => {
         const prefixIndex = k.startsWith('Key::Account(') ? 'Key::Account('.length : 'Key::Hash('.length
