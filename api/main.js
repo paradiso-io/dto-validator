@@ -382,8 +382,8 @@ router.post('/verify-transaction-full/:requestHash/:fromChainId/:index/:amount',
     }
 
     if (fromChainId !== casperConfig.networkId) {
-        await fetchTransactionFromEVMIfNot(fromChainId, requestHash)
-        transaction = await eventHelper.getRequestEvent(fromChainId, requestHash)
+        await fetchTransactionFromEVMIfNot(fromChainId, requestHash, true)
+        transaction = await db.Transaction.findOne({ requestHash: requestHash, fromChainId: fromChainId })
     }
     if (!transaction || (fromChainId !== casperConfig.networkId && !transaction.requestHash)) {
         return res.json({ success: false })
