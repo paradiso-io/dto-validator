@@ -15,6 +15,7 @@ const tokenHelper = require("../helpers/token");
 const { getPastEventForBatch, getPastEventForBatchForWrapNonEVM } = require('../requestEventHelper')
 const GeneralHelper = require('../helpers/general')
 const { fetchTransactionFromCasperIfNot } = require('../casper/caspercrawlerHelper')
+const CWeb3 = require('casper-web3')
 
 router.get('/status', [], async function (req, res) {
     return res.json({ status: 'ok' })
@@ -472,7 +473,11 @@ router.post('/verify-transaction-full/:requestHash/:fromChainId/:index/:amount',
         }
 
         if (parseInt(dataToVerifyAgainst.originChainId) == parseInt(casperConfig.networkId)) {
-            return res.json({ success: false, reason: "unsupported tokens issued on casper" })
+            const custodianContractPackageHash = casperConfig.pairedTokensToEthereum.custodianContractPackageHash
+            const custodialContractHash = await CWeb3.Contract.getActiveContractHash(custodianContractPackageHash, casperConfig.chainName)
+            if (custodialContractHash != verifyingData.destinationContractHash) {
+                return res.json({ success: false, reason: "invalid destinationContractHash" })
+            }
         } else {
             const tokenData = CasperHelper.getCasperTokenInfoFromOriginToken(dataToVerifyAgainst.originToken, dataToVerifyAgainst.originChainId)
             if (!tokenData) {
