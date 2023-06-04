@@ -192,7 +192,7 @@ async function startSignForToken() {
                 let custodialContractHash
                 if (req.originChainId == casperChainId) {
                     const custodianContractPackageHash = casperConfig.pairedTokensToEthereum.custodianContractPackageHash
-                    const custodialContractHash = await Contract.getActiveContractHash(custodianContractPackageHash, casperConfig.chainName)
+                    custodialContractHash = await Contract.getActiveContractHash(custodianContractPackageHash, casperConfig.chainName)
                     const contractInstance = await Contract.createInstanceWithRemoteABI(custodialContractHash, selectedGoodRPC, casperConfig.chainName)
                     deploy = await contractInstance.contractCalls.unlockErc20.makeUnsignedDeploy({
                         publicKey: mpcPubkey,
