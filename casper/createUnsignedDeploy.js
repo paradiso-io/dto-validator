@@ -64,9 +64,10 @@ async function startSignForToken() {
             let deploy
             let ttl = 300000
             let deployJson
+            let custodialContractHash
             if (tx.originChainId == casperChainId) {
                 const custodianContractPackageHash = casperConfig.pairedTokensToEthereum.custodianContractPackageHash
-                const custodialContractHash = await Contract.getActiveContractHash(custodianContractPackageHash, casperConfig.chainName)
+                custodialContractHash = await Contract.getActiveContractHash(custodianContractPackageHash, casperConfig.chainName)
                 const contractInstance = await Contract.createInstanceWithRemoteABI(custodialContractHash, selectedGoodRPC, casperConfig.chainName)
                 logger.info('creating deploy for casper issued erc20')
                 deploy = await contractInstance.contractCalls.unlockErc20.makeUnsignedDeploy({
@@ -135,7 +136,7 @@ async function startSignForToken() {
                         toChainId: tx.toChainId,
                         originChainId: tx.originChainId,
                         originToken: tx.originToken.toLowerCase(),
-                        destinationContractHash: token.contractHash ? token.contractHash : token.contractPackageHash,
+                        destinationContractHash: tx.originChainId == casperChainId ? custodialContractHash : token.contractHash,
                         timestamp: Math.floor(deploy.header.timestamp / 1000),
                         ttl: Math.floor(deploy.header.ttl / 1000),
                         deadline: Math.floor((deploy.header.timestamp + deploy.header.ttl) / 1000),
@@ -188,6 +189,7 @@ async function startSignForToken() {
                 let ttl = 300000
                 let deploy
                 let deployJson
+                let custodialContractHash
                 if (req.originChainId == casperChainId) {
                     const custodianContractPackageHash = casperConfig.pairedTokensToEthereum.custodianContractPackageHash
                     const custodialContractHash = await Contract.getActiveContractHash(custodianContractPackageHash, casperConfig.chainName)
@@ -256,7 +258,7 @@ async function startSignForToken() {
                             toChainId: req.toChainId,
                             originChainId: req.originChainId,
                             originToken: req.originToken.toLowerCase(),
-                            destinationContractHash: token.contractHash ? token.contractHash : token.contractPackageHash,
+                            destinationContractHash: req.originChainId == casperChainId ? custodialContractHash : token.contractHash,
                             timestamp: Math.floor(deploy.header.timestamp / 1000),
                             ttl: Math.floor(deploy.header.ttl / 1000),
                             deadline: Math.floor((deploy.header.timestamp + deploy.header.ttl) / 1000),
