@@ -46,7 +46,7 @@ async function start() {
                 if (tx.originChainId == casperChainId) { // nft bridge from Casper to EVM => now bridge back => unlock 
                     //verify format of  account address must be account hash
                     let toAddress = tx.account // NFT account owner 
-                    logger.info("NEW REQUEST UNSIGNED TO UNLOCK toAddress = %s", toAddress)
+                    logger.info("NEW REQUEST UNSIGNED TO UNLOCK toAddress = %s, request hash = %s", toAddress, tx.requestHash)
                     let splits = toAddress.split("-")
                     var re = /[0-9A-Fa-f]{6}/g;
                     if (splits.length != 3 || splits[0] != "account" || splits[1] != "hash" || !re.test(splits[2])) {
