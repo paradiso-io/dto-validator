@@ -460,18 +460,18 @@ router.post('/verify-transaction-full/:requestHash/:fromChainId/:index/:amount',
     logger.info("data to verify %s", dataToVerifyAgainst)
     if (parseInt(dataToVerifyAgainst.toChainId) == parseInt(casperConfig.networkId)) {
         if (
-            dataToVerifyAgainst.index != verifyingData.index ||
+            parseInt(dataToVerifyAgainst.index) != parseInt(verifyingData.index) ||
             dataToVerifyAgainst.account != verifyingData.toWallet ||
-            dataToVerifyAgainst.fromChainId != verifyingData.fromChainId ||
-            dataToVerifyAgainst.originChainId != verifyingData.originChainId ||
+            parseInt(dataToVerifyAgainst.fromChainId) != parseInt(verifyingData.fromChainId) ||
+            parseInt(dataToVerifyAgainst.originChainId) != parseInt(verifyingData.originChainId) ||
             dataToVerifyAgainst.originToken != verifyingData.originToken ||
-            dataToVerifyAgainst.toChainId != verifyingData.toChainId ||
+            parseInt(dataToVerifyAgainst.toChainId) != parseInt(verifyingData.toChainId) ||
             dataToVerifyAgainst.amount != verifyingData.amount
         ) {
             return res.json({ success: false, reason: "invalid verifyingData" })
         }
 
-        if (dataToVerifyAgainst.originChainId == casperConfig.networkId) {
+        if (parseInt(dataToVerifyAgainst.originChainId) == parseInt(casperConfig.networkId)) {
             return res.json({ success: false, reason: "unsupported tokens issued on casper" })
         } else {
             const tokenData = CasperHelper.getCasperTokenInfoFromOriginToken(dataToVerifyAgainst.originToken, dataToVerifyAgainst.originChainId)
