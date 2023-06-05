@@ -267,7 +267,7 @@ router.get('/verify-transaction/:requestHash/:fromChainId/:index', [
             if (!CasperHelper.isDeploySuccess(deployResult)) {
                 return res.json({ success: false })
             }
-            let eventData = await CasperNFTCrawlerHook.parseRequestFromTransaction(deployResult, transaction.requestBlock, transaction.index) 
+            let eventData = await CasperNFTCrawlerHook.parseRequestFromTransaction(deployResult, transaction.requestBlock, transaction.index)
             if (eventData.receiverAddress.toLowerCase() != transaction.account.toLowerCase()
                 || eventData.originToken.toLowerCase() != transaction.originToken.toLowerCase()
                 || eventData.tokenIds != transaction.tokenIds
@@ -367,7 +367,7 @@ router.post('/verify-transaction-full/:requestHash/:fromChainId/:index', [
             if (!CasperHelper.isDeploySuccess(deployResult)) {
                 return res.json({ success: false })
             }
-            let eventData = await CasperNFTCrawlerHook.parseRequestFromTransaction(deployResult, transaction.requestBlock, transaction.index) 
+            let eventData = await CasperNFTCrawlerHook.parseRequestFromTransaction(deployResult, transaction.requestBlock, transaction.index)
             if (eventData.receiverAddress.toLowerCase() != transaction.account.toLowerCase()
                 || eventData.originToken.toLowerCase() != transaction.originToken.toLowerCase()
                 || eventData.tokenIds != transaction.tokenIds
@@ -390,7 +390,7 @@ router.post('/verify-transaction-full/:requestHash/:fromChainId/:index', [
         dataToVerifyAgainst.toChainId != verifyingData.toChainId ||
         dataToVerifyAgainst.index != verifyingData.index ||
         dataToVerifyAgainst.originToken != verifyingData.originToken ||
-        dataToVerifyAgainst.originChainId != verifyingData.originChainId 
+        dataToVerifyAgainst.originChainId != verifyingData.originChainId
     ) {
         return res.json({ success: false, reason: "invalid verifyingData" })
     }
@@ -443,6 +443,7 @@ router.post('/request-withdraw', [
         }
 
         if (!config.checkTxOnChain || fromChainId == casperConfig.networkId) {
+            await fetchTransactionFromEVMIfNot(fromChainId, requestHash)
             transaction = await db.Nft721Transaction.findOne({ requestHash: requestHash, fromChainId: fromChainId, toChainId: toChainId, index: index })
         } else {
             await fetchTransactionFromEVMIfNot(fromChainId, requestHash)
@@ -536,7 +537,7 @@ router.post('/request-withdraw', [
                 if (!CasperHelper.isDeploySuccess(deployResult)) {
                     return res.status(400).json({ errors: 'request transaction failed' })
                 }
-                let eventData = await CasperNFTCrawlerHook.parseRequestFromTransaction(deployResult, transaction.requestBlock, transaction.index) 
+                let eventData = await CasperNFTCrawlerHook.parseRequestFromTransaction(deployResult, transaction.requestBlock, transaction.index)
                 if (eventData.receiverAddress.toLowerCase() != transaction.account.toLowerCase()
                     || eventData.originToken.toLowerCase() != transaction.originToken.toLowerCase()
                     || eventData.fromChainId != transaction.fromChainId
