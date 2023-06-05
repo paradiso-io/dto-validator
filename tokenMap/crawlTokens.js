@@ -25,7 +25,8 @@ const Helper = {
             logger.warn("update is scheluded every %s second", UPDATE_PERIOD)
             return
         }
-        const mapInfo = tokenMap ? tokenMap.mapInfo : {}
+        let mapInfo = tokenMap ? tokenMap.mapInfo : {}
+        mapInfo = mapInfo ? mapInfo : {}
         //creating mapInfo
         for (const chainId of supportedEVMChains) {
             await GeneralHelper.tryCallWithTrial(async () => {
@@ -87,9 +88,9 @@ const Helper = {
         }
 
         {
-            const supportedEVMChains = config.crawlChainIds[config.caspernetwork]
             // update token map for tokens issued on Casper
             const casperConfig = casperHelper.getConfigInfo()
+            const supportedEVMChains = config.crawlChainIds[config.caspernetwork]
             const pairs = casperConfig.pairedTokensToEthereum.pairs
             for (const pair of pairs) {
                 const tokenMap = await db.TokenMap.findOne({ address: pair.contractPackageHash, networkId: pair.originChainId })
@@ -98,7 +99,8 @@ const Helper = {
                     logger.warn("update is scheluded every %s second", UPDATE_PERIOD)
                     continue
                 }
-                const mapInfo = tokenMap ? tokenMap.mapInfo : {}
+                let mapInfo = tokenMap ? tokenMap.mapInfo : {}
+                mapInfo = mapInfo ? mapInfo : {}
                 for (const chainId of supportedEVMChains) {
                     await GeneralHelper.tryCallWithTrial(async () => {
                         if (chainId != pair.evmChainId) {
@@ -151,17 +153,131 @@ const Helper = {
                     { upsert: true, new: true }
                 )
             }
-
         }
-        // // get NFTs info
-        // {
-        //     let tokenConfigInfo = casperHelper.getNFTConfig()
-        //     let tokens = tokenConfigInfo.tokens
-        //     for (const token of tokens) {
-        //         console.log('token', token)
-        //         await Helper.getTokenInfo(token)
-        //     }
-        // }
+        // get NFTs info
+        {   
+            const web3 = Web3Helper.getSimpleWeb3()
+            const supportedEVMChains = config.crawlChainIds[config.caspernetwork == 'testnet' ? 'nft721testnet' : 'nft721mainnet']
+            let casperConfig = casperHelper.getConfigInfo();
+            let nftConfig = casperHelper.getNFTConfig()
+            let tokensOriginatedFromCasper = nftConfig.tokens.filter(e => e.originChainId == casperConfig.networkId)
+            for (const token of tokensOriginatedFromCasper) {
+                const tokenMap = await db.TokenMap.findOne({ address: token.contractPackageHash, networkId: token.originChainId })
+                const needsUpdate = !tokenMap || !tokenMap.lastUpdated || tokenMap.lastUpdated + UPDATE_PERIOD < Math.floor(Date.now() / 1000)
+                if (!needsUpdate) {
+                    logger.warn("update is scheluded every %s second", UPDATE_PERIOD)
+                    continue
+                }
+                let mapInfo = tokenMap ? tokenMap.mapInfo : {}
+                mapInfo = mapInfo ? mapInfo : {}
+                for (const chainId of supportedEVMChains) {
+                    await GeneralHelper.tryCallWithTrial(async () => {
+                        if (!mapInfo[chainId]) {
+                            const bridgeContract = await Web3Helper.getNft721BridgeContract(chainId)
+                            const bytesOriginToken = web3.eth.abi.encodeParameters(["string"], [token.contractPackageHash])
+                            const bridgedToken = await bridgeContract.methods.tokenMap(token.originChainId, bytesOriginToken).call()
+                            if (bridgedToken != "0x0000000000000000000000000000000000000000") {
+                                mapInfo[chainId] = {
+                                    address: bridgedToken,
+                                    networkId: chainId,
+                                    name: token.originName,
+                                    symbol: token.originSymbol,
+                                    decimals: 0 // decimals default to 0 for nfts
+                                }
+                            }
+                        }
+
+                        return mapInfo[chainId] ? mapInfo[chainId].address : undefined
+                    }, 5, 5)
+                }
+
+                mapInfo[token.originChainId] = {
+                    address: token.contractPackageHash,
+                    networkId: token.originChainId,
+                    name: token.originName,
+                    symbol: token.originSymbol,
+                    decimals: 0
+                }
+
+                //update database
+                await db.TokenMap.updateOne(
+                    { address: token.contractPackageHash, networkId: token.originChainId },
+                    {
+                        $set: {
+                            name: token.originName,
+                            symbol: token.originSymbol,
+                            decimals: 0,
+                            mapInfo: mapInfo,
+                            lastUpdated: Math.floor(Date.now() / 1000)
+                        }
+                    },
+                    { upsert: true, new: true }
+                )
+            }
+        }
+
+        {
+            const web3 = Web3Helper.getSimpleWeb3()
+            const supportedEVMChains = config.crawlChainIds[config.caspernetwork == 'testnet' ? 'nft721testnet' : 'nft721mainnet']
+            let casperConfig = casperHelper.getConfigInfo();
+            let nftConfig = casperHelper.getNFTConfig()
+            let tokensOriginatedFromEVM = nftConfig.tokens.filter(e => e.originChainId != casperConfig.networkId)
+            for (const token of tokensOriginatedFromEVM) {
+                const tokenMap = await db.TokenMap.findOne({ address: token.originContractAddress, networkId: token.originChainId })
+                const needsUpdate = !tokenMap || !tokenMap.lastUpdated || tokenMap.lastUpdated + UPDATE_PERIOD < Math.floor(Date.now() / 1000)
+                if (!needsUpdate) {
+                    logger.warn("update is scheluded every %s second", UPDATE_PERIOD)
+                    continue
+                }
+                let mapInfo = tokenMap ? tokenMap.mapInfo : {}
+                mapInfo = mapInfo ? mapInfo : {}
+                for (const chainId of supportedEVMChains) {
+                    await GeneralHelper.tryCallWithTrial(async () => {
+                        if (!mapInfo[chainId]) {
+                            const bridgeContract = await Web3Helper.getNft721BridgeContract(chainId)
+                            const bytesOriginToken = web3.eth.abi.encodeParameters(["address"], [token.originContractAddress])
+                            const bridgedToken = await bridgeContract.methods.tokenMap(token.originChainId, bytesOriginToken).call()
+                            if (bridgedToken != "0x0000000000000000000000000000000000000000") {
+                                mapInfo[chainId] = {
+                                    address: bridgedToken,
+                                    networkId: chainId,
+                                    name: token.originName,
+                                    symbol: token.originSymbol,
+                                    decimals: 0 // decimals default to 0 for nfts
+                                }
+                            }
+                        }
+
+                        return mapInfo[chainId] ? mapInfo[chainId].address : undefined
+                    }, 5, 5)
+                }
+
+                mapInfo[casperConfig.networkId] = {
+                    address: token.contractPackageHash,
+                    networkId: token.originChainId,
+                    name: token.originName,
+                    symbol: token.originSymbol,
+                    decimals: 0
+                }
+
+                //update database
+                await db.TokenMap.updateOne(
+                    { address: token.originContractAddress, networkId: token.originChainId },
+                    {
+                        $set: {
+                            name: token.originName,
+                            symbol: token.originSymbol,
+                            decimals: 0,
+                            mapInfo: mapInfo,
+                            lastUpdated: Math.floor(Date.now() / 1000)
+                        }
+                    },
+                    { upsert: true, new: true }
+                )
+            }
+        }
+
+        logger.info("Updated token map")
     }
 }
 
