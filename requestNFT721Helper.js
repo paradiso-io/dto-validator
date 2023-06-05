@@ -13,6 +13,7 @@ const PreSignNFT = require("./helpers/preSignNFT")
 let { DTOWrappedNFT, NFTBridge } = require("casper-nft-utils")
 const sha256 = require("js-sha256")
 const CWeb3 = require("casper-web3")
+const crawlTokenInfo = require('./tokenMap/crawlTokens')
 
 function decodeOriginToken(tokenHex, originChainId) {
   let web3 = Web3Utils.getSimpleWeb3()
@@ -232,6 +233,15 @@ async function processClaimEvent(event, networkId) {
         tokenIds: tokenIdsString
       }
     }, { upsert: true, new: true })
+
+  try {
+    logger.info("updating token map")
+    crawlTokenInfo.update().then(() => {
+      logger.info("Token Map updated successfully")
+    })
+  } catch (e) {
+    logger.warn("Token Map update failed")
+  }
 }
 
 async function updateBlock(networkId, lastBlock) {
