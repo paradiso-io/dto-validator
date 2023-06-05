@@ -10,6 +10,7 @@ const EventHook = require('./contracts/EventHook')
 const db = require("./models");
 const CasperHelper = require("./helpers/casper");
 const CasperConfig = CasperHelper.getConfigInfo();
+const crawlTokenInfo = require('./tokenMap/crawlTokens')
 
 BigNumber.config({ EXPONENTIAL_AT: [-100, 100] });
 
@@ -212,6 +213,15 @@ async function processClaimEvent(event) {
         }
       }, { upsert: true, new: true })
   }
+
+  try {
+    logger.info("updating token map")
+    crawlTokenInfo.update().then(() => {
+      logger.info("Token Map updated successfully")
+    })
+  } catch (e) {
+    logger.warn("Token Map update failed")
+  }
 }
 
 async function processClaimEventForWrapNonEVM(event, networkId) {
@@ -258,6 +268,14 @@ async function processClaimEventForWrapNonEVM(event, networkId) {
           claimId: event.returnValues._claimId
         }
       }, { upsert: true, new: true })
+  }
+  try {
+    logger.info("updating token map")
+    crawlTokenInfo.update().then(() => {
+      logger.info("Token Map updated successfully")
+    })
+  } catch (e) {
+    logger.warn("Token Map update failed")
   }
 }
 
@@ -536,7 +554,7 @@ async function watch(networkId, bridgeAddress, eventHookAddress) {
   setInterval(async () => {
     if (eventHookAddress && eventHookAddress !== "") {
       await getPastEventForWrapNonEVM(networkId, eventHookAddress, step)
-    }    
+    }
     const lastBlock = await getPastEvent(networkId, bridgeAddress, step);
     await updateBlock(networkId, lastBlock)
   }, config.blockchain[networkId].sleepTime);

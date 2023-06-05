@@ -1,4 +1,5 @@
 const config = require('config')
+const logger = require('./logger')
 
 /* A helper function that is used to help with the code. */
 let GeneralHelper = {
@@ -37,12 +38,26 @@ let GeneralHelper = {
           let ret = await func()
           return ret
         } catch (e) {
-          console.warn(e.toString())
+          logger.warn(e.toString())
           await GeneralHelper.sleep(waitTime)
         }
         trial--
       }
       return undefined
+    },
+    tryCallWithTrialWithCallback: async (func, trial = 10, waitTime = 2000, callback) => {
+      let ret = undefined
+      while(trial > 0) {
+        try {
+          ret = await func()
+          break
+        } catch (e) {
+          logger.warn(e.toString())
+          await GeneralHelper.sleep(waitTime)
+        }
+        trial--
+      }
+      return await callback(ret)
     }
   }
   
