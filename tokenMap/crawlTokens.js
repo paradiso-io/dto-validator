@@ -254,7 +254,7 @@ const Helper = {
 
                 mapInfo[casperConfig.networkId] = {
                     address: token.contractPackageHash,
-                    networkId: token.originChainId,
+                    networkId: casperConfig.networkId,
                     name: token.originName,
                     symbol: token.originSymbol,
                     decimals: 0
