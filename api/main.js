@@ -590,7 +590,7 @@ router.post('/request-withdraw', [
 
     logger.info('0')
     const nativeAddress = config.get('nativeAddress')
-    let name, decimals, symbol
+    let name, decimals, symbol, pair
     if (transaction.originToken.toLowerCase() === nativeAddress.toLowerCase()) {
         logger.info('0.1')
         name = config.blockchain[transaction.originChainId].nativeName
@@ -602,7 +602,7 @@ router.post('/request-withdraw', [
 
         if (transaction.originChainId == casperConfig.networkId) {
             // originally from casper, take metadata from config for easier access
-            const pair = casperConfig.pairedTokensToEthereum.pairs.find(e => e.contractPackageHash == transaction.originToken)
+            pair = casperConfig.pairedTokensToEthereum.pairs.find(e => e.contractPackageHash == transaction.originToken)
             if (!pair) {
                 if (token.name != name || token.symbol != symbol || token.decimals != decimals) {
                     return res.status(400).json({ errors: 'unsupported token' })
@@ -702,7 +702,12 @@ router.post('/request-withdraw', [
 
         logger.info("msgHash = %s ", msgHash)
         //reading required number of signature
-        let approver = await Web3Utils.getApprovers(transaction.toChainId)
+        let approver
+        if (transaction.originChainId == casperConfig.networkId) {
+            approver = await Web3Utils.getApprovers(transaction.toChainId)
+        } else {
+            approver = await Web3Utils.getApproversFromWrapNonEVMToken(transaction.toChainId, pair.contractAddress)
+        }
         let minApprovers = approver.number
         let approverList = approver.list
         logger.info('approverList = %s', approverList)

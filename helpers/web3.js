@@ -1,6 +1,7 @@
 const Web3 = require('web3')
 const config = require('config')
 const GenericBridgeABI = require('../contracts/GenericBridge.json')
+const WrapNonEVMERC20 = require('../contracts/WrapNonEVMERC20.json')
 const Nft721BridgeABI = require('../contracts/NFT721Bridge.json')
 const PrivateKeyProvider = require("truffle-privatekey-provider");
 const DTOBridgeNFT721ABI = require('../contracts/DTOBridgeNFT721.json')
@@ -22,6 +23,10 @@ let Web3Util = {
   getBridgeContract: async (networkId) => {
     let web3 = await Web3Util.getWeb3(networkId)
     return new web3.eth.Contract(GenericBridgeABI, config.contracts[`${networkId}`].bridge)
+  },
+  getWrapNonEVMTokenContract: async (networkId, tokenContract) => {
+    let web3 = await Web3Util.getWeb3(networkId)
+    return new web3.eth.Contract(WrapNonEVMERC20, tokenContract)
   },
   getNft721BridgeContract: async (networkId) => {
     let web3 = await Web3Util.getWeb3(networkId)
@@ -167,6 +172,33 @@ let Web3Util = {
             }
           }, {upsert: true, new: true})
 
+          return {number: parseInt(minApprovers), list: approverList}
+        } catch(e) {
+          logger.log("error in reading approver: %s", e.toString())
+          await GeneralHelper.sleep(5 * 1000)
+        }
+        retry--
+      }
+      if (approver) {
+        return {number: approver.minNumber, list: approver.list}
+      }
+      return {number: 0, list: []}
+    } else {
+      return {number: approver.minNumber, list: approver.list}
+    }
+  },
+  getApproversFromWrapNonEVMToken: async (chainId, tokenContract) => {
+    let approver = null
+    // if not found or expired (in 24 hours - fetch again every 24 hours)
+    if (!approver || approver.fetchedAt < GeneralHelper.now() - 24 * 3600) {
+      let retry = 10
+      while(retry > 0) {
+        try {
+          let wrapNonEVMTokenContract = await Web3Util.getWrapNonEVMTokenContract(chainId, tokenContract)
+          let minApprovers = await wrapNonEVMTokenContract.methods.minApprovers().call()
+          let approverListFromBridge = await Web3Util.getApprovers(chainId)
+          let approverList = approverListFromBridge.list
+          approverList = approverList.map(e => e.toLowerCase())
           return {number: parseInt(minApprovers), list: approverList}
         } catch(e) {
           logger.log("error in reading approver: %s", e.toString())
