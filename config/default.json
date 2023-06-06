@@ -229,7 +229,8 @@
       "firstBlockCrawl": 14895882,
       "wrapToken": "",
       "usdt": "0xdac17f958d2ee523a2206206994597c13d831ec7",
-      "usdc": "0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48"
+      "usdc": "0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48",
+      "wrapNonEVMEventHook": "0xF8F394fBe68d96f9Ef39FB0C09D2B4135bBfe96c"
     },
     "4": {
       "bridge": "",
