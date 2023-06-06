@@ -203,7 +203,7 @@ async function startSignForToken() {
                                 unlockId: mintid,
                                 amount: req.amount
                             },
-                            paymentAmount: 10000000000,
+                            paymentAmount: 6500000000,
                             ttl: ttl
                         })
                         deployJson = JSON.stringify(Contract.deployToJson(deploy));
