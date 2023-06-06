@@ -79,7 +79,7 @@ async function startSignForToken() {
                             unlockId: mintid,
                             amount: tx.amount
                         },
-                        paymentAmount: 10000000000,
+                        paymentAmount: 6500000000,
                         ttl: ttl
                     })
                     deployJson = JSON.stringify(Contract.deployToJson(deploy));
@@ -95,7 +95,7 @@ async function startSignForToken() {
                             mintid: mintid,
                             swapFee: swapFee
                         },
-                        paymentAmount: '6000000000',
+                        paymentAmount: token.paymentAmount ? token.paymentAmount : '400000000',
                         ttl
                     })
                     logger.info('deploy %s', deploy)
@@ -217,7 +217,7 @@ async function startSignForToken() {
                                 mintid: mintid,
                                 swapFee: '0'
                             },
-                            paymentAmount: '6000000000',
+                            paymentAmount: token.paymentAmount ? token.paymentAmount : '400000000',
                             ttl
                         })
 
