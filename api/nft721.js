@@ -22,7 +22,7 @@ async function fetchTransactionFromEVMIfNot(fromChainId, requestHash) {
     // dont re-index if this is a proxy as the proxy node already index all events in requestEvent and requestNFT721
     if (config.proxy) return
 
-    let transaction = await db.Transaction.findOne({ requestHash: requestHash, fromChainId: fromChainId })
+    let transaction = await db.Nft721Transaction.findOne({ requestHash: requestHash, fromChainId: fromChainId })
     if (!transaction) {
         const web3 = await Web3Utils.getWeb3(fromChainId)
         let onChainTx = await GeneralHelper.tryCallWithTrial(async () => {
