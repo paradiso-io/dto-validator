@@ -703,14 +703,14 @@ router.post('/request-withdraw', [
         logger.info("msgHash = %s ", msgHash)
         //reading required number of signature
         let approver
-        if (transaction.originChainId == casperConfig.networkId) {
+        if (parseInt(transaction.originChainId) != parseInt(casperConfig.networkId)) {
             approver = await Web3Utils.getApprovers(transaction.toChainId)
         } else {
             approver = await Web3Utils.getApproversFromWrapNonEVMToken(transaction.toChainId, pair.contractAddress)
         }
         let minApprovers = approver.number
         let approverList = approver.list
-        logger.info('approverList = %s', approverList)
+        logger.info('approverList = %s', approver)
 
         let goodR = []
         let goodS = []
