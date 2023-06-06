@@ -246,7 +246,8 @@
     },
     "56": {
       "bridge": "0x328A523B71545ddE8CD12a685318F2777D68798D",
-      "firstBlockCrawl": 18934638
+      "firstBlockCrawl": 18934638,
+      "wrapNonEVMEventHook": "0x929dB33E7Ee3D0F98Be820338D90940Fe123bDb0"
     },
     "66": {
       "bridge": "0x328A523B71545ddE8CD12a685318F2777D68798D",
