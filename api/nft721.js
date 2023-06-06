@@ -443,7 +443,9 @@ router.post('/request-withdraw', [
         }
 
         if (!config.checkTxOnChain || fromChainId == casperConfig.networkId) {
-            await fetchTransactionFromEVMIfNot(fromChainId, requestHash)
+            if (fromChainId != casperConfig.networkId) {
+                await fetchTransactionFromEVMIfNot(fromChainId, requestHash)
+            }
             transaction = await db.Nft721Transaction.findOne({ requestHash: requestHash, fromChainId: fromChainId, toChainId: toChainId, index: index })
         } else {
             await fetchTransactionFromEVMIfNot(fromChainId, requestHash)
