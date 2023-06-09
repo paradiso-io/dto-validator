@@ -99,7 +99,7 @@ let Web3Util = {
     let web3 = new Web3()
     for (var i = 0; i < Rs.length; i++) {
       let signer = Web3Util.recoverSignerFromSignature(msgHash, Rs[i], Ss[i], Vs[i])
-      signer = web3.utils.toChecksumAddress(signer)
+      signer = web3.utils.toChecksumAddress(signer).toLowerCase()
       if (signers.length == 0) {
         signers.push(signer)
         r.push(Rs[i])
@@ -108,7 +108,7 @@ let Web3Util = {
       } else {
         // find index
         let found = -1
-        for(var j = 0; j < signers.length; j++) {
+        for (var j = 0; j < signers.length; j++) {
           if (signer < signers[j]) {
             found = j
             break
@@ -154,37 +154,37 @@ let Web3Util = {
     return { minApprovers, approverList }
   },
   getApprovers: async (chainId) => {
-    let approver = await db.Approver.findOne({chainId: String(chainId)})
+    let approver = await db.Approver.findOne({ chainId: String(chainId) })
     // if not found or expired (in 24 hours - fetch again every 24 hours)
     if (!approver || approver.fetchedAt < GeneralHelper.now() - 24 * 3600) {
       let retry = 10
-      while(retry > 0) {
+      while (retry > 0) {
         try {
           let bridgeContract = await Web3Util.getBridgeContract(chainId)
           let minApprovers = await bridgeContract.methods.minApprovers().call()
           let approverList = await bridgeContract.methods.getBridgeApprovers().call()
           approverList = approverList.map(e => e.toLowerCase())
-          await db.Approver.updateOne({chainId: String(chainId)}, {
+          await db.Approver.updateOne({ chainId: String(chainId) }, {
             $set: {
               minNumber: parseInt(minApprovers),
               list: approverList,
               fetchedAt: GeneralHelper.now()
             }
-          }, {upsert: true, new: true})
+          }, { upsert: true, new: true })
 
-          return {number: parseInt(minApprovers), list: approverList}
-        } catch(e) {
+          return { number: parseInt(minApprovers), list: approverList }
+        } catch (e) {
           logger.log("error in reading approver: %s", e.toString())
           await GeneralHelper.sleep(5 * 1000)
         }
         retry--
       }
       if (approver) {
-        return {number: approver.minNumber, list: approver.list}
+        return { number: approver.minNumber, list: approver.list }
       }
-      return {number: 0, list: []}
+      return { number: 0, list: [] }
     } else {
-      return {number: approver.minNumber, list: approver.list}
+      return { number: approver.minNumber, list: approver.list }
     }
   },
   getApproversFromWrapNonEVMToken: async (chainId, tokenContract) => {
@@ -192,26 +192,26 @@ let Web3Util = {
     // if not found or expired (in 24 hours - fetch again every 24 hours)
     if (!approver || approver.fetchedAt < GeneralHelper.now() - 24 * 3600) {
       let retry = 10
-      while(retry > 0) {
+      while (retry > 0) {
         try {
           let wrapNonEVMTokenContract = await Web3Util.getWrapNonEVMTokenContract(chainId, tokenContract)
           let minApprovers = await wrapNonEVMTokenContract.methods.minApprovers().call()
           let approverListFromBridge = await Web3Util.getApprovers(chainId)
           let approverList = approverListFromBridge.list
           approverList = approverList.map(e => e.toLowerCase())
-          return {number: parseInt(minApprovers), list: approverList}
-        } catch(e) {
+          return { number: parseInt(minApprovers), list: approverList }
+        } catch (e) {
           logger.log("error in reading approver: %s", e.toString())
           await GeneralHelper.sleep(5 * 1000)
         }
         retry--
       }
       if (approver) {
-        return {number: approver.minNumber, list: approver.list}
+        return { number: approver.minNumber, list: approver.list }
       }
-      return {number: 0, list: []}
+      return { number: 0, list: [] }
     } else {
-      return {number: approver.minNumber, list: approver.list}
+      return { number: approver.minNumber, list: approver.list }
     }
   }
 }

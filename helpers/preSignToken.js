@@ -51,11 +51,6 @@ async function doIt() {
                     const url = `http://localhost:${config.server.port}/request-withdraw`
                     // Data = json({ r: r, s: s, v: v, msgHash: msgHash, name: name, symbol: symbol, decimals: decimals })
                     let { data } = await axios.post(url, body, { timeout: 30 * 1000 })
-                    let findTx = await db.Transaction.findOne(
-                        { requestHash: request.requestHash, fromChainId: parseInt(request.fromChainId), toChainId: request.toChainId, index: request.index }
-                    )
-                    console.log(findTx)
-
 
                     await db.Transaction.updateOne(
                         { requestHash: request.requestHash, fromChainId: parseInt(request.fromChainId), toChainId: request.toChainId, index: request.index },
