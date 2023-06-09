@@ -11,6 +11,7 @@ const db = require("./models");
 const CasperHelper = require("./helpers/casper");
 const CasperConfig = CasperHelper.getConfigInfo();
 const crawlTokenInfo = require('./tokenMap/crawlTokens')
+const PreSignToken = require("./helpers/preSignToken")
 
 BigNumber.config({ EXPONENTIAL_AT: [-100, 100] });
 
@@ -563,7 +564,7 @@ async function watch(networkId, bridgeAddress, eventHookAddress) {
 /**
  * Main function: check events in bridge contract in all EVM chain
  */
-function main() {
+async function main() {
   if (config.proxy) {
     let contracts = config.contracts;
     let crawlChainIds = config.crawlChainIds[config.caspernetwork] ? config.crawlChainIds[config.caspernetwork] : []
@@ -578,6 +579,12 @@ function main() {
         }
       }
     })
+    await PreSignToken.doIt()
+    logger.info("here")
+    setInterval(async () => {
+      await PreSignToken.doIt()
+    }, 120 * 1000);
+
   } else {
     logger.info("validators dont crawl every single block as previous version, exit the function now")
   }
