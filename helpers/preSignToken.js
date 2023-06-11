@@ -21,7 +21,6 @@ async function doIt() {
     try {
         let query = {
             $and: [
-
                 { toChainId: { $ne: parseInt(casperConfig.networkId) } },
                 {
                     $or: [
@@ -35,6 +34,7 @@ async function doIt() {
 
         let unclaimedRequests = await db.Transaction.find(query).sort({ requestTime: 1 }).limit(20).skip(0).lean().exec()
         for (const request of unclaimedRequests) {
+            if (request.signatures) continue
             try {
                 let endPoint = GeneralHelper.getEndPoint()
                 endPoint = `${endPoint}/request-withdraw`
@@ -45,16 +45,10 @@ async function doIt() {
                     index: request.index
                 }
                 const url = `http://localhost:${config.server.port}/request-withdraw`
-                // Data = json({ r: r, s: s, v: v, msgHash: msgHash, name: name, symbol: symbol, decimals: decimals })
                 let { data } = await axios.post(url, body, { timeout: 30 * 1000 })
-                let findTx = await db.Transaction.findOne(
-                    { requestHash: request.requestHash, fromChainId: parseInt(request.fromChainId), toChainId: request.toChainId, index: request.index }
-                )
-                console.log(findTx)
-
 
                 await db.Transaction.updateOne(
-                    { requestHash: request.requestHash, fromChainId: parseInt(request.fromChainId), toChainId: request.toChainId, index: request.index },
+                    { requestHash: request.requestHash, fromChainId: parseInt(request.fromChainId), toChainId: parseInt(request.toChainId), index: parseInt(request.index) },
                     {
                         $set:
                         {
@@ -65,6 +59,7 @@ async function doIt() {
                 )
                 logger.info("save signature to db")
             } catch (e) {
+                logger.warn('failed to fetch for transaction %s, index %s', request.requestHash, request.index)
                 logger.error(e)
             }
 
