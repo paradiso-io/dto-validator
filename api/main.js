@@ -253,7 +253,7 @@ router.get('/history', [
             const pair = pairedTokensToEthereum.pairs.find(e => e.contractPackageHash == t.originToken)
             if (pair) {
                 t.originDecimals = pair.decimals
-            } 
+            }
         }
     }
     return res.json({
@@ -622,7 +622,7 @@ router.post('/request-withdraw', [
                 await db.Token.updateOne({ hash: transaction.originToken, networkId: transaction.originChainId }, {
                     $set: { name, symbol, decimals }
                 }, { upsert: true, new: true })
-            } 
+            }
             if (token) {
                 if (token.name != name || token.symbol != symbol || token.decimals != decimals) {
                     return res.status(400).json({ errors: 'Chain state of token ' + token.hash + ' and local database mismatch, dont sign!' })
@@ -645,103 +645,123 @@ router.post('/request-withdraw', [
     let s = []
     let v = []
     if (config.proxy) {
-        let msgHash = ""
-
-        let otherSignature = []
-        if (config.signatureServer.length > 0) {
+        let thisTransaction = await db.Transaction.findOne({ requestHash: requestHash, fromChainId: fromChainId, toChainId: toChainId, index: index })
+        if (thisTransaction.signatures != null) {
             try {
-                let body = {
-                    requestHash: req.body.requestHash,
-                    fromChainId: req.body.fromChainId,
-                    toChainId: req.body.toChainId,
-                    index: req.body.index
-                }
-                let r = []
-                const requestSignatureFromOther = async function (i) {
-                    let trial = 2;
-                    while (trial > 0) {
-                        try {
-                            logger.info("requesting signature from %s", config.signatureServer[i])
-                            let ret = await axios.post(config.signatureServer[i] + '/request-withdraw', body, { timeout: 20 * 1000 })
-                            let recoveredAddress = Web3Utils.recoverSignerFromSignature(ret.data.msgHash, ret.data.r[0], ret.data.s[0], ret.data.v[0])
-                            logger.info("signature data ok signatureServer=%s, recoveredAddress=%s, msgHash=%s", config.signatureServer[i], recoveredAddress, ret.data.msgHash)
-                            return ret
-                        } catch (e) {
-                            trial--
-                        }
-                    }
-                    logger.warn("failed to get signature from %s", config.signatureServer[i])
-                    return { data: {} }
-                }
-                for (let i = 0; i < config.signatureServer.length; i++) {
-                    r.push(requestSignatureFromOther(i))
-                }
-
-                const responses = await Promise.all(r)
-
-                for (let i = 0; i < config.signatureServer.length; i++) {
-                    otherSignature.push(responses[i].data)
-                }
-
+                logger.info("already has signatures from db")
+                let signatureFromDb = thisTransaction.signatures
+                let r = signatureFromDb.r
+                let s = signatureFromDb.s
+                let v = signatureFromDb.v
+                let msgHash = signatureFromDb.msgHash
+                let name = signatureFromDb.name
+                let symbol = signatureFromDb.symbol
+                let decimals = signatureFromDb.decimals
+                return res.json({ r: r, s: s, v: v, msgHash: msgHash, name: name, symbol: symbol, decimals: decimals })
             } catch (e) {
                 logger.error(e)
             }
-        }
+        } else {
+            logger.info("There is no signatures from db, start request to get get signature")
 
-        //dont sign
-        if (otherSignature.length > 0) {
-            for (let i = 0; i < otherSignature.length; i++) {
-                if (otherSignature[i].r) {
-                    msgHash = msgHash == "" ? otherSignature[i].msgHash : msgHash
-                    r.push(otherSignature[i].r[0])
-                    s.push(otherSignature[i].s[0])
-                    v.push(otherSignature[i].v[0])
+            let msgHash = ""
+
+            let otherSignature = []
+            if (config.signatureServer.length > 0) {
+                try {
+                    let body = {
+                        requestHash: req.body.requestHash,
+                        fromChainId: req.body.fromChainId,
+                        toChainId: req.body.toChainId,
+                        index: req.body.index
+                    }
+                    let r = []
+                    const requestSignatureFromOther = async function (i) {
+                        let trial = 2;
+                        while (trial > 0) {
+                            try {
+                                logger.info("requesting signature from %s", config.signatureServer[i])
+                                let ret = await axios.post(config.signatureServer[i] + '/request-withdraw', body, { timeout: 20 * 1000 })
+                                let recoveredAddress = Web3Utils.recoverSignerFromSignature(ret.data.msgHash, ret.data.r[0], ret.data.s[0], ret.data.v[0])
+                                logger.info("signature data ok signatureServer=%s, recoveredAddress=%s, msgHash=%s", config.signatureServer[i], recoveredAddress, ret.data.msgHash)
+                                return ret
+                            } catch (e) {
+                                trial--
+                            }
+                        }
+                        logger.warn("failed to get signature from %s", config.signatureServer[i])
+                        return { data: {} }
+                    }
+                    for (let i = 0; i < config.signatureServer.length; i++) {
+                        r.push(requestSignatureFromOther(i))
+                    }
+
+                    const responses = await Promise.all(r)
+
+                    for (let i = 0; i < config.signatureServer.length; i++) {
+                        otherSignature.push(responses[i].data)
+                    }
+
+                } catch (e) {
+                    logger.error(e)
                 }
             }
-        }
 
-        logger.info("msgHash = %s ", msgHash)
-        //reading required number of signature
-        let approver
-        if (parseInt(transaction.originChainId) != parseInt(casperConfig.networkId)) {
-            approver = await Web3Utils.getApprovers(transaction.toChainId)
-        } else {
-            approver = await Web3Utils.getApproversFromWrapNonEVMToken(transaction.toChainId, pair.contractAddress)
-        }
-        let minApprovers = approver.number
-        let approverList = approver.list
-        logger.info('approverList = %s', approver)
-
-        let goodR = []
-        let goodS = []
-        let goodV = []
-        for (var i = 0; i < r.length; i++) {
-            let recoveredAddress = Web3Utils.recoverSignerFromSignature(msgHash, r[i], s[i], v[i])
-            if (approverList.includes(recoveredAddress.toLowerCase())) {
-                goodR.push(r[i])
-                goodS.push(s[i])
-                goodV.push(v[i])
+            //dont sign
+            if (otherSignature.length > 0) {
+                for (let i = 0; i < otherSignature.length; i++) {
+                    if (otherSignature[i].r) {
+                        msgHash = msgHash == "" ? otherSignature[i].msgHash : msgHash
+                        r.push(otherSignature[i].r[0])
+                        s.push(otherSignature[i].s[0])
+                        v.push(otherSignature[i].v[0])
+                    }
+                }
             }
+
+            logger.info("msgHash = %s ", msgHash)
+            //reading required number of signature
+            let approver
+            if (parseInt(transaction.originChainId) != parseInt(casperConfig.networkId)) {
+                approver = await Web3Utils.getApprovers(transaction.toChainId)
+            } else {
+                approver = await Web3Utils.getApproversFromWrapNonEVMToken(transaction.toChainId, pair.contractAddress)
+            }
+            let minApprovers = approver.number
+            let approverList = approver.list
+            logger.info('approverList = %s', approver)
+
+            let goodR = []
+            let goodS = []
+            let goodV = []
+            for (var i = 0; i < r.length; i++) {
+                let recoveredAddress = Web3Utils.recoverSignerFromSignature(msgHash, r[i], s[i], v[i])
+                if (approverList.includes(recoveredAddress.toLowerCase())) {
+                    goodR.push(r[i])
+                    goodS.push(s[i])
+                    goodV.push(v[i])
+                }
+            }
+            r = goodR
+            s = goodS
+            v = goodV
+            logger.info('r.length = %s', r.length)
+            if (r.length < minApprovers) {
+                logger.warn('Validators data are not fully synced yet, please try again later')
+                return res.status(400).json({ errors: 'Validators data are not fully synced yet, please try again later' })
+            }
+
+            r = r.slice(0, minApprovers + 2)
+            s = s.slice(0, minApprovers + 2)
+            v = v.slice(0, minApprovers + 2)
+
+            const sorted = Web3Utils.sortSignaturesBySigner(msgHash, r, s, v)
+            r = sorted.r
+            s = sorted.s
+            v = sorted.v
+
+            return res.json({ r: r, s: s, v: v, msgHash: msgHash, name: name, symbol: symbol, decimals: decimals })
         }
-        r = goodR
-        s = goodS
-        v = goodV
-        logger.info('r.length = %s', r.length)
-        if (r.length < minApprovers) {
-            logger.warn('Validators data are not fully synced yet, please try again later')
-            return res.status(400).json({ errors: 'Validators data are not fully synced yet, please try again later' })
-        }
-
-        r = r.slice(0, minApprovers + 2)
-        s = s.slice(0, minApprovers + 2)
-        v = v.slice(0, minApprovers + 2)
-
-        const sorted = Web3Utils.sortSignaturesBySigner(msgHash, r, s, v)
-        r = sorted.r
-        s = sorted.s
-        v = sorted.v
-
-        return res.json({ r: r, s: s, v: v, msgHash: msgHash, name: name, symbol: symbol, decimals: decimals })
     } else {
         let txHashToSign = transaction.requestHash.includes("0x") ? transaction.requestHash : ("0x" + transaction.requestHash)
         logger.info("txHashToSign %s", txHashToSign)
