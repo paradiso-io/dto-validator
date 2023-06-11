@@ -213,6 +213,23 @@ let Web3Util = {
     } else {
       return { number: approver.minNumber, list: approver.list }
     }
+  },
+  getValidSignatures: (approverList, msgHash, Rs, Ss, Vs) => {
+    const goodR = []
+    const goodS = []
+    const goodV = []
+    for (var i = 0; i < Rs.length; i++) {
+      let recoveredAddress = Web3Util.recoverSignerFromSignature(msgHash, Rs[i], Ss[i], Vs[i])
+      if (approverList.includes(recoveredAddress.toLowerCase())) {
+        goodR.push(Rs[i])
+        goodS.push(Ss[i])
+        goodV.push(Vs[i])
+      }
+    }
+    let r = goodR
+    let s = goodS
+    let v = goodV
+    return { r, s, v }
   }
 }
 

@@ -656,9 +656,28 @@ router.post('/request-withdraw', [
             let name = signatureFromDb.name
             let symbol = signatureFromDb.symbol
             let decimals = signatureFromDb.decimals
-            return res.json({ r: r, s: s, v: v, msgHash: msgHash, name: name, symbol: symbol, decimals: decimals })
-
-        } else {
+            //need to verify whether the signature is valid as validators set might be changed that make signatures set invalid
+            let approver
+            if (parseInt(thisTransaction.originChainId) != parseInt(casperConfig.networkId)) {
+                approver = await Web3Utils.getApprovers(thisTransaction.toChainId)
+            } else {
+                approver = await Web3Utils.getApproversFromWrapNonEVMToken(thisTransaction.toChainId, pair.contractAddress)
+            }
+            let minApprovers = approver.number
+            let approverList = approver.list
+            
+            const validSignatures = Web3Utils.getValidSignatures(approverList, msgHash, r, s, v)
+            r = validSignatures.r
+            s = validSignatures.s
+            v = validSignatures.v
+            
+            logger.info('r.length = %s', r.length)
+            if (r.length >= minApprovers) {
+                return res.json({ r: r, s: s, v: v, msgHash: msgHash, name: name, symbol: symbol, decimals: decimals })
+            }
+        } 
+        // fetch signature otherwise
+        {
             logger.info("There is no signatures from db, start request to get get signature")
 
             let msgHash = ""
@@ -728,20 +747,10 @@ router.post('/request-withdraw', [
             let approverList = approver.list
             logger.info('approverList = %s', approver)
 
-            let goodR = []
-            let goodS = []
-            let goodV = []
-            for (var i = 0; i < r.length; i++) {
-                let recoveredAddress = Web3Utils.recoverSignerFromSignature(msgHash, r[i], s[i], v[i])
-                if (approverList.includes(recoveredAddress.toLowerCase())) {
-                    goodR.push(r[i])
-                    goodS.push(s[i])
-                    goodV.push(v[i])
-                }
-            }
-            r = goodR
-            s = goodS
-            v = goodV
+            const validSignatures = Web3Utils.getValidSignatures(approverList, msgHash, r, s, v)
+            r = validSignatures.r
+            s = validSignatures.s
+            v = validSignatures.v
             logger.info('r.length = %s', r.length)
             if (r.length < minApprovers) {
                 logger.warn('Validators data are not fully synced yet, please try again later')
@@ -795,7 +804,6 @@ router.post('/request-withdraw', [
         let r = [sig.r]
         let s = [sig.s]
         let v = [sig.v]
-
 
         return res.json({ r: r, s: s, v: v, msgHash: sig.msgHash, name: name, symbol: symbol, decimals: decimals })
     }
