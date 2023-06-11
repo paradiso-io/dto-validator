@@ -33,11 +33,9 @@ async function doIt() {
         }
 
         let unclaimedRequests = await db.Transaction.find(query).sort({ requestTime: 1 }).limit(20).skip(0).lean().exec()
-        for (const request of unclaimedRequests) {
-            if (request.signatures) continue
+        const fetchSignature = async (request) => {
+            if (request.signatures) return
             try {
-                let endPoint = GeneralHelper.getEndPoint()
-                endPoint = `${endPoint}/request-withdraw`
                 let body = {
                     requestHash: request.requestHash,
                     fromChainId: request.fromChainId,
@@ -45,7 +43,7 @@ async function doIt() {
                     index: request.index
                 }
                 const url = `http://localhost:${config.server.port}/request-withdraw`
-                let { data } = await axios.post(url, body, { timeout: 30 * 1000 })
+                let { data } = await axios.post(url, body, { timeout: 300 * 1000 })
 
                 await db.Transaction.updateOne(
                     { requestHash: request.requestHash, fromChainId: parseInt(request.fromChainId), toChainId: parseInt(request.toChainId), index: parseInt(request.index) },
@@ -62,9 +60,17 @@ async function doIt() {
                 logger.warn('failed to fetch for transaction %s, index %s', request.requestHash, request.index)
                 logger.error(e)
             }
-
-
         }
+        const requestPerBatch = 8
+        for(var i = 0; i < Math.floor(unclaimedRequests.length / requestPerBatch) + 1; i++) {
+            const fetchTasks = []
+            for (var k = 0; k < unclaimedRequests.length; k++) {
+                fetchTasks.push(fetchSignature(unclaimedRequests[i * requestPerBatch + k]))
+            }
+            await Promise.all(fetchTasks)
+            logger.info("done this batch %s", i)
+        }
+        logger.info("done for this round")
     } catch (e) {
         console.error(e)
     }
