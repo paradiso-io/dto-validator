@@ -42,6 +42,7 @@ async function doIt() {
                     toChainId: request.toChainId,
                     index: request.index
                 }
+                logger.info("fetching signature for transaction %s", body)
                 const url = `http://localhost:${config.server.port}/request-withdraw`
                 let { data } = await axios.post(url, body, { timeout: 300 * 1000 })
 
