@@ -583,7 +583,7 @@ async function main() {
     logger.info("here")
     setInterval(async () => {
       await PreSignToken.doIt()
-    }, 120 * 1000);
+    }, 180 * 1000);
 
   } else {
     logger.info("validators dont crawl every single block as previous version, exit the function now")
