@@ -673,6 +673,14 @@ router.post('/request-withdraw', [
             
             logger.info('r.length = %s', r.length)
             if (r.length >= minApprovers) {
+                r = r.slice(0, minApprovers + 2)
+                s = s.slice(0, minApprovers + 2)
+                v = v.slice(0, minApprovers + 2)
+
+                const sorted = Web3Utils.sortSignaturesBySigner(msgHash, r, s, v)
+                r = sorted.r
+                s = sorted.s
+                v = sorted.v
                 return res.json({ r: r, s: s, v: v, msgHash: msgHash, name: name, symbol: symbol, decimals: decimals })
             }
         } 
