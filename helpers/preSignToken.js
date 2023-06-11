@@ -22,6 +22,7 @@ async function doIt() {
         let query = {
             $and: [
                 { toChainId: { $ne: parseInt(casperConfig.networkId) } },
+                { signatures: null },
                 {
                     $or: [
                         { claimed: false },
