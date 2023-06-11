@@ -34,7 +34,7 @@ async function doIt() {
 
         let unclaimedRequests = await db.Transaction.find(query).sort({ requestTime: 1 }).limit(20).skip(0).lean().exec()
         const fetchSignature = async (request) => {
-            if (request.signatures) return
+            if (!request || request.signatures) return
             try {
                 let body = {
                     requestHash: request.requestHash,
@@ -64,8 +64,9 @@ async function doIt() {
         const requestPerBatch = 8
         for(var i = 0; i < Math.floor(unclaimedRequests.length / requestPerBatch) + 1; i++) {
             const fetchTasks = []
-            for (var k = 0; k < unclaimedRequests.length; k++) {
-                fetchTasks.push(fetchSignature(unclaimedRequests[i * requestPerBatch + k]))
+            const requests = unclaimedRequests.slice(i * requestPerBatch, (i + 1) * requestPerBatch)
+            for (var k = 0; k < requests.length; k++) {
+                fetchTasks.push(fetchSignature(requests[k]))
             }
             await Promise.all(fetchTasks)
             logger.info("done this batch %s", i)
