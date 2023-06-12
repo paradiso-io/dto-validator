@@ -67,9 +67,9 @@ async function doIt() {
                     },
                     { upsert: true, new: true }
                 )
-                logger.info("save signature to db")
+                logger.info("save signature to db for transaction %s", request.requestHash)
             } catch (e) {
-                logger.warn('failed to fetch for transaction %s, index %s', request.requestHash, request.index)
+                logger.warn('failed to fetch for transaction %s, index %s, fromChainId = %s, toChainId = %s', request.requestHash, request.index, request.fromChainId, request.toChainId)
                 logger.error(e)
             }
         }
