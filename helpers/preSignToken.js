@@ -5,6 +5,7 @@ const axios = require('axios')
 const CasperHelper = require('./casper')
 let submitDone = true
 const logger = require('./logger')
+const Web3Util = require('./web3')
 const casperConfig = CasperHelper.getConfigInfo()
 
 async function doIt() {
@@ -46,6 +47,15 @@ async function doIt() {
                 logger.info("fetching signature for transaction %s", body)
                 const url = `http://localhost:${config.server.port}/request-withdraw`
                 let { data } = await axios.post(url, body, { timeout: 300 * 1000 })
+
+                if (data.r) {
+                    const validators = []
+                    for(var i = 0; i < data.r.length; i++) {
+                        const recoveredAddress = Web3Util.recoverSignerFromSignature(data.msgHash, data.r[i], data.s[i], data.v[i])
+                        validators.push(recoveredAddress)
+                    }
+                    data.validators = validators
+                }
 
                 await db.Transaction.updateOne(
                     { requestHash: request.requestHash, fromChainId: parseInt(request.fromChainId), toChainId: parseInt(request.toChainId), index: parseInt(request.index) },
