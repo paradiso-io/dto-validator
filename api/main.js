@@ -48,8 +48,8 @@ router.get('/bridgeSupportConfig', [], async function (req, res) {
 
 async function fetchTransactionFromEVMIfNot(fromChainId, requestHash, forced = false) {
     // dont re-index if this is a proxy as the proxy node already index all events in requestEvent and requestNFT721
-    if (config.proxy) return
     let transaction = await db.Transaction.findOne({ requestHash: requestHash, fromChainId: fromChainId })
+    if (config.proxy && transaction) return
     if (!transaction || forced) {
         logger.info("fetching transcation from chain %s", fromChainId)
         const web3 = await Web3Utils.getWeb3(fromChainId)
