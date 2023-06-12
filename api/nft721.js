@@ -295,24 +295,31 @@ router.post('/verify-transaction-full/:requestHash/:fromChainId/:index', [
         return res.status(400).json({ errors: errors.array() })
     }
 
+    const verifyingData = req.body.verifyingData
     const requestHash = req.params.requestHash
     const fromChainId = req.params.fromChainId
     const index = req.params.index
-    const verifyingData = req.body.verifyingData
+    let tokenIds = req.params.tokenIds
     let transaction = {}
     logger.info('verify-transaction-full fromChainId = %s', fromChainId)
 
     if (fromChainId == casperConfig.networkId) {
-        await fetchTransactionFromCasperIfNot(requestHash)
+        await fetchNFTTransactionFromCasperIfNot(requestHash)
+        transaction = await db.Nft721Transaction.findOne({ requestHash: requestHash, fromChainId: fromChainId })
+
     }
 
     if (fromChainId != casperConfig.networkId) {
+        logger.info("0.1")
         await fetchTransactionFromEVMIfNot(fromChainId, requestHash)
-        transaction = await eventHelper.getRequestNft721Event(fromChainId, requestHash, index)
+        transaction = await db.Nft721Transaction.findOne({ requestHash: requestHash, fromChainId: fromChainId })
     }
+    logger.info("sc fetch")
+    logger.info("tx %s", transaction)
     if (!transaction || (fromChainId != casperConfig.networkId && !transaction.requestHash)) {
         return res.json({ success: false })
     }
+    logger.info("1")
 
     let dataToVerifyAgainst = {}
 
@@ -331,6 +338,12 @@ router.post('/verify-transaction-full/:requestHash/:fromChainId/:index', [
         if (transaction.claimed === true) {
             return res.json({ success: true, claimed: true })
         }
+
+        //compare array tokenIds
+        // logger.log("tx tokenIds %s vs %s ", transaction.tokenIds.map(e => parseInt(e)), tokenIds)
+        // if (transaction.tokenIds.map(e => parseInt(e)) != tokenIds) {
+        //     return res.json({ success: false })
+        // }
 
         //re-verify whether tx still in the chain and confirmed (enough confirmation)
         let onChainTx = await web3.eth.getTransaction(transaction.requestHash)
@@ -384,19 +397,21 @@ router.post('/verify-transaction-full/:requestHash/:fromChainId/:index', [
         }
     }
 
+    logger.info("data to verify %s ", dataToVerifyAgainst)
+
     if (
-        dataToVerifyAgainst.fromChainId != verifyingData.fromChainId ||
+        parseInt(dataToVerifyAgainst.fromChainId) != parseInt(verifyingData.fromChainId) ||
         dataToVerifyAgainst.account != verifyingData.toWallet ||
-        dataToVerifyAgainst.toChainId != verifyingData.toChainId ||
-        dataToVerifyAgainst.index != verifyingData.index ||
+        parseInt(dataToVerifyAgainst.toChainId) != parseInt(verifyingData.toChainId) ||
+        parseInt(dataToVerifyAgainst.index) != parseInt(verifyingData.index) ||
         dataToVerifyAgainst.originToken != verifyingData.originToken ||
-        dataToVerifyAgainst.originChainId != verifyingData.originChainId
+        parseInt(dataToVerifyAgainst.originChainId) != parseInt(verifyingData.originChainId)
     ) {
         return res.json({ success: false, reason: "invalid verifyingData" })
     }
 
-    if (dataToVerifyAgainst.toChainId == casperConfig.networkId) {
-        if (dataToVerifyAgainst.originChainId == casperConfig.networkId) {
+    if (parseInt(dataToVerifyAgainst.toChainId) == parseInt(casperConfig.networkId)) {
+        if (parseInt(dataToVerifyAgainst.originChainId) == parseInt(casperConfig.networkId)) {
             // destination contract hash must be active contract hash of nft bridge custodian contract
             const nftConfig = CasperHelper.getNFTConfig()
             const nftBridgePackageHash = nftConfig.nftBridgePackageHash
