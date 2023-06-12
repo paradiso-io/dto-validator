@@ -421,7 +421,8 @@ router.post('/verify-transaction-full/:requestHash/:fromChainId/:index', [
             }
         } else {
             const nftConfig = CasperHelper.getNFTConfig()
-            const tokenData = nftConfig.tokens.find(e => e.originContractAddress == dataToVerifyAgainst.originToken)
+            logger.info("dataToVerifyAgainst.originToken %s", dataToVerifyAgainst.originToken)
+            const tokenData = nftConfig.tokens.find(e => e.originContractAddress.toLowerCase() == dataToVerifyAgainst.originToken.toLowerCase())
             if (!tokenData) {
                 return res.json({ success: false, reason: "invalid originToken" })
             }
