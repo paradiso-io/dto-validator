@@ -465,7 +465,7 @@ router.post('/request-withdraw', [
             transaction = await db.Nft721Transaction.findOne({ requestHash: requestHash, fromChainId: fromChainId, toChainId: toChainId, index: index })
         } else {
             await fetchTransactionFromEVMIfNot(fromChainId, requestHash)
-            transaction = await eventHelper.getRequestNft721Event(fromChainId, requestHash, index)
+            transaction = await db.Nft721Transaction.findOne({ requestHash: requestHash, fromChainId: fromChainId, toChainId: toChainId, index: index })
         }
         if (!transaction) {
             return res.status(400).json({ errors: "invalid transaction hash" })
