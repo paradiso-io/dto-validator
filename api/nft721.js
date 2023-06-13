@@ -481,6 +481,52 @@ router.post('/request-withdraw', [
         minApprovers = validators.minApprovers
         approverList = validators.approverList
 
+        // if there is signatures on DB - start here to save time
+        if (config.proxy) {
+            let thisTransaction = await db.Nft721Transaction.findOne({ requestHash: requestHash, fromChainId: fromChainId, toChainId: toChainId, index: index })
+
+            if (thisTransaction.signatures && thisTransaction.signatures[0]) {
+                logger.info(" NFT : already has signatures from db ")
+                let signatureFromDb = thisTransaction.signatures[0]
+                let r = signatureFromDb.r
+                let s = signatureFromDb.s
+                let v = signatureFromDb.v
+                let msgHash = signatureFromDb.msgHash
+                let name = signatureFromDb.name
+                let symbol = signatureFromDb.symbol
+                let tokenUris = signatureFromDb.tokenUris
+                let originToken = signatureFromDb.originToken
+                let chainIdsIndex = signatureFromDb.chainIdsIndex
+                let tokenIds = signatureFromDb.tokenIds
+                let originTokenIds = signatureFromDb.originTokenIds
+
+                //need to verify whether the signature is valid as validators set might be changed that make signatures set invalid
+                logger.info("minApprovers %s", minApprovers)
+                logger.info("approverList %s", approverList)
+
+                const validSignatures = Web3Utils.getValidSignatures(approverList, msgHash, r, s, v)
+                r = validSignatures.r
+                s = validSignatures.s
+                v = validSignatures.v
+
+                logger.info('r.length = %s', r.length)
+                if (r.length >= minApprovers) {
+                    r = r.slice(0, minApprovers + 2)
+                    s = s.slice(0, minApprovers + 2)
+                    v = v.slice(0, minApprovers + 2)
+
+                    const sorted = Web3Utils.sortSignaturesBySigner(msgHash, r, s, v)
+                    r = sorted.r
+                    s = sorted.s
+                    v = sorted.v
+                    let retThisObject = { r: r, s: s, v: v, msgHash: msgHash, name: name, symbol: symbol, tokenUris: tokenUris, originToken: originToken, chainIdsIndex: chainIdsIndex, tokenIds: tokenIds, originTokenIds: originTokenIds }
+                    return res.json(retThisObject)
+                }
+            }
+
+
+        }
+
         if (fromChainId != casperConfig.networkId) {
             let web3 = await Web3Utils.getWeb3(fromChainId)
 
@@ -602,52 +648,6 @@ router.post('/request-withdraw', [
         let s = []
         let v = []
         if (config.proxy) {
-
-            // start here
-            let thisTransaction = await db.Nft721Transaction.findOne({ requestHash: requestHash, fromChainId: fromChainId, toChainId: toChainId, index: index })
-
-            if (thisTransaction.signatures && thisTransaction.signatures[0]) {
-                logger.info(" NFT : already has signatures from db ")
-                let signatureFromDb = thisTransaction.signatures[0]
-                let r = signatureFromDb.r
-                let s = signatureFromDb.s
-                let v = signatureFromDb.v
-                let msgHash = signatureFromDb.msgHash
-                let name = signatureFromDb.name
-                let symbol = signatureFromDb.symbol
-                let tokenUris = signatureFromDb.tokenUris
-                let originToken = signatureFromDb.originToken
-                let chainIdsIndex = signatureFromDb.chainIdsIndex
-                let tokenIds = signatureFromDb.tokenIds
-                let originTokenIds = signatureFromDb.originTokenIds
-
-                //need to verify whether the signature is valid as validators set might be changed that make signatures set invalid
-                logger.info("minApprovers %s", minApprovers)
-                logger.info("approverList %s", approverList)
-
-                const validSignatures = Web3Utils.getValidSignatures(approverList, msgHash, r, s, v)
-                r = validSignatures.r
-                s = validSignatures.s
-                v = validSignatures.v
-
-                logger.info('r.length = %s', r.length)
-                if (r.length >= minApprovers) {
-                    r = r.slice(0, minApprovers + 2)
-                    s = s.slice(0, minApprovers + 2)
-                    v = v.slice(0, minApprovers + 2)
-
-                    const sorted = Web3Utils.sortSignaturesBySigner(msgHash, r, s, v)
-                    r = sorted.r
-                    s = sorted.s
-                    v = sorted.v
-                    let retThisObject = { r: r, s: s, v: v, msgHash: msgHash, name: name, symbol: symbol, tokenUris: tokenUris, originToken: originToken, chainIdsIndex: chainIdsIndex, tokenIds: tokenIds, originTokenIds: originTokenIds }
-                    return res.json(retThisObject)
-                }
-            }
-
-
-
-
             // fetch signature otherwise
 
             {
