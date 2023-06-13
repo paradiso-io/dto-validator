@@ -477,7 +477,7 @@ router.post('/request-withdraw', [
 
         let minApprovers = 0
         let approverList = []
-        const validators = await Web3Utils.readValidators(transaction.toChainId)
+        const validators = await Web3Utils.getApproversNFT(transaction.toChainId)
         minApprovers = validators.minApprovers
         approverList = validators.approverList
 
@@ -606,16 +606,16 @@ router.post('/request-withdraw', [
             // start here
             let thisTransaction = await db.Nft721Transaction.findOne({ requestHash: requestHash, fromChainId: fromChainId, toChainId: toChainId, index: index })
 
-            if (thisTransaction.signatures && thisTransaction.signatures[0].r) {
+            if (thisTransaction.signatures && thisTransaction.signatures[0]) {
                 logger.info(" NFT : already has signatures from db %s")
-                let signatureFromDb = thisTransaction.signatures
-                let r = signatureFromDb[0].r
-                let s = signatureFromDb[0].s
-                let v = signatureFromDb[0].v
-                let msgHash = signatureFromDb[0].msgHash
-                let name = signatureFromDb[0].name
-                let symbol = signatureFromDb[0].symbol
-                let decimals = signatureFromDb[0].decimals
+                let signatureFromDb = thisTransaction.signatures[0]
+                let r = signatureFromDb.r
+                let s = signatureFromDb.s
+                let v = signatureFromDb.v
+                let msgHash = signatureFromDb.msgHash
+                let name = signatureFromDb.name
+                let symbol = signatureFromDb.symbol
+                let decimals = signatureFromDb.decimals
                 //need to verify whether the signature is valid as validators set might be changed that make signatures set invalid
                 logger.info("minApprovers %s", minApprovers)
                 logger.info("approverList %s", approverList)
