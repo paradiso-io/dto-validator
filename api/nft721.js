@@ -607,7 +607,7 @@ router.post('/request-withdraw', [
             let thisTransaction = await db.Nft721Transaction.findOne({ requestHash: requestHash, fromChainId: fromChainId, toChainId: toChainId, index: index })
 
             if (thisTransaction.signatures && thisTransaction.signatures[0]) {
-                logger.info(" NFT : already has signatures from db %s")
+                logger.info(" NFT : already has signatures from db ")
                 let signatureFromDb = thisTransaction.signatures[0]
                 let r = signatureFromDb.r
                 let s = signatureFromDb.s
@@ -615,7 +615,12 @@ router.post('/request-withdraw', [
                 let msgHash = signatureFromDb.msgHash
                 let name = signatureFromDb.name
                 let symbol = signatureFromDb.symbol
-                let decimals = signatureFromDb.decimals
+                let tokenUris = signatureFromDb.tokenUris
+                let bytesOriginToken = signatureFromDb.bytesOriginToken
+                let chainIdsIndex = signatureFromDb.chainIdsIndex
+                let tokenIds = signatureFromDb.tokenIds
+                let originTokenIds = signatureFromDb.originTokenIds
+
                 //need to verify whether the signature is valid as validators set might be changed that make signatures set invalid
                 logger.info("minApprovers %s", minApprovers)
                 logger.info("approverList %s", approverList)
@@ -635,7 +640,8 @@ router.post('/request-withdraw', [
                     r = sorted.r
                     s = sorted.s
                     v = sorted.v
-                    return res.json({ r: r, s: s, v: v, msgHash: msgHash, name: name, symbol: symbol, decimals: decimals })
+                    let retThisObject = { r, s, v, msgHash, name, symbol, tokenUris, originToken: bytesOriginToken, chainIdsIndex, tokenIds, originTokenIds }
+                    return res.json(retThisObject)
                 }
             }
 
