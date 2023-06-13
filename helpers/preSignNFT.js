@@ -94,7 +94,7 @@ async function doIt() {
             ]
         }
 
-        let unclaimedRequests = await db.Nft721Transaction.find(query).sort({ requestTime: 1 }).limit(20).skip(0).lean().exec()
+        let unclaimedRequests = await db.Nft721Transaction.find(query).sort({ requestTime: 1 }).skip(0).lean().exec()
         const fetchSignature = async (request) => {
             if (!request || request.signatures) return
             try {
