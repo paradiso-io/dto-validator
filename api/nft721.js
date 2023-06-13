@@ -616,7 +616,7 @@ router.post('/request-withdraw', [
                 let name = signatureFromDb.name
                 let symbol = signatureFromDb.symbol
                 let tokenUris = signatureFromDb.tokenUris
-                let bytesOriginToken = signatureFromDb.bytesOriginToken
+                let originToken = signatureFromDb.originToken
                 let chainIdsIndex = signatureFromDb.chainIdsIndex
                 let tokenIds = signatureFromDb.tokenIds
                 let originTokenIds = signatureFromDb.originTokenIds
@@ -640,7 +640,7 @@ router.post('/request-withdraw', [
                     r = sorted.r
                     s = sorted.s
                     v = sorted.v
-                    let retThisObject = { r, s, v, msgHash, name, symbol, tokenUris, originToken: bytesOriginToken, chainIdsIndex, tokenIds, originTokenIds }
+                    let retThisObject = { r: r, s: s, v: v, msgHash: msgHash, name: name, symbol: symbol, tokenUris: tokenUris, originToken: originToken, chainIdsIndex: chainIdsIndex, tokenIds: tokenIds, originTokenIds: originTokenIds }
                     return res.json(retThisObject)
                 }
             }
