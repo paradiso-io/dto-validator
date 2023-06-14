@@ -34,7 +34,7 @@ async function doIt() {
             ]
         }
 
-        let unclaimedRequests = await db.Transaction.find(query).sort({ requestTime: 1 }).limit(20).skip(0).lean().exec()
+        let unclaimedRequests = await db.Transaction.find(query).sort({ requestTime: 1 }).skip(0).lean().exec()
         const fetchSignature = async (request) => {
             if (!request || request.signatures) return
             try {
@@ -50,7 +50,7 @@ async function doIt() {
 
                 if (data.r) {
                     const validators = []
-                    for(var i = 0; i < data.r.length; i++) {
+                    for (var i = 0; i < data.r.length; i++) {
                         const recoveredAddress = Web3Util.recoverSignerFromSignature(data.msgHash, data.r[i], data.s[i], data.v[i])
                         validators.push(recoveredAddress)
                     }
@@ -74,7 +74,7 @@ async function doIt() {
             }
         }
         const requestPerBatch = 8
-        for(var i = 0; i < Math.floor(unclaimedRequests.length / requestPerBatch) + 1; i++) {
+        for (var i = 0; i < Math.floor(unclaimedRequests.length / requestPerBatch) + 1; i++) {
             const fetchTasks = []
             const requests = unclaimedRequests.slice(i * requestPerBatch, (i + 1) * requestPerBatch)
             for (var k = 0; k < requests.length; k++) {
