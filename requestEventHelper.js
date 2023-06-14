@@ -2,7 +2,7 @@ const events = require("events");
 const BigNumber = require("bignumber.js");
 const config = require("config");
 
-const logger = require("./helpers/logger");
+const logger = require("./helpers/logger")(module);
 const Web3Utils = require("./helpers/web3");
 const tokenHelper = require("./helpers/token");
 const GenericBridge = require("./contracts/GenericBridge");

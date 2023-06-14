@@ -1,8 +1,7 @@
 const BigNumber = require("bignumber.js");
 const CasperHelper = require("../helpers/casper");
-const logger = require("../helpers/logger");
+const logger = require("../helpers/logger")(module);
 const db = require("../models");
-const { CLU256BytesParser, CLKeyBytesParser, CLStringBytesParser } = require("casper-js-sdk");
 const CWeb3 = require('casper-web3')
 const blake = require("blakejs");
 BigNumber.config({ EXPONENTIAL_AT: [-100, 100] });
@@ -171,8 +170,8 @@ const HOOK = {
             const requestBridgeRawData = await contract.getter.requestIds(requestIndex, true)
 
             // parse raw
-            let ret = new CLKeyBytesParser().fromBytesWithRemainder(requestBridgeRawData)
-            let erc20ContractPackageHash = ret.result.val.value()
+            const parsedResults = CWeb3.Contract.decodeData(requestBridgeRawData, ['Key', 'U256', 'U256', 'String', 'Key'])
+            let erc20ContractPackageHash = parsedResults[0]
             erc20ContractPackageHash = Buffer.from(erc20ContractPackageHash.data).toString('hex')
             if (!originContractPackageHashes.includes(erc20ContractPackageHash)) {
               logger.warn("unsupported origin ERC20 contract package hash %s", erc20ContractPackageHash)
@@ -181,21 +180,14 @@ const HOOK = {
 
             const pair = pairedTokensToEthereum.pairs.find(e => e.contractPackageHash == erc20ContractPackageHash)
 
-            ret = new CLU256BytesParser().fromBytesWithRemainder(ret.remainder)
-            let requestIndexParsed = ret.result.val.value().toString()
-
+            let requestIndexParsed = parsedResults[1].toString()
             if (requestIndexParsed != requestIndex) {
               logger.warn("conflicting request index")
               return
             }
 
-            ret = new CLU256BytesParser().fromBytesWithRemainder(ret.remainder)
-            let amount = ret.result.val.value().toString()
-
-            ret = new CLStringBytesParser().fromBytesWithRemainder(ret.remainder)
-            let receiverAddress = ret.result.val.value().toString()
-
-            ret = new CLKeyBytesParser().fromBytesWithRemainder(ret.remainder)
+            let amount = parsedResults[2].toString()
+            let receiverAddress = parsedResults[3]
 
             let timestamp = Date.parse(block.block.header.timestamp);
             let eventData = {

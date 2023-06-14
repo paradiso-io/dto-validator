@@ -11,7 +11,7 @@ const {
     helpers,
     CasperContractClient,
 } = require("casper-js-client-helper");
-const logger = require('../helpers/logger')
+const logger = require('../helpers/logger')(module)
 const { setClient, contractSimpleGetter, createRecipientAddress } = helpers;
 const { concat } = require("@ethersproject/bytes");
 const blake = require("blakejs");

@@ -2,7 +2,7 @@ const db = require('../models')
 const generalHelper = require('../helpers/general')
 const CasperHelper = require('../helpers/casper')
 const { sha256 } = require("ethereum-cryptography/sha256");
-const logger = require("../helpers/logger");
+const logger = require("../helpers/logger")(module);
 const { Contract } = require('casper-web3');
 const {
     DeployUtil,
