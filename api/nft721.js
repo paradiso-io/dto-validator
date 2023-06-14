@@ -295,24 +295,31 @@ router.post('/verify-transaction-full/:requestHash/:fromChainId/:index', [
         return res.status(400).json({ errors: errors.array() })
     }
 
+    const verifyingData = req.body.verifyingData
     const requestHash = req.params.requestHash
     const fromChainId = req.params.fromChainId
     const index = req.params.index
-    const verifyingData = req.body.verifyingData
+    let tokenIds = req.params.tokenIds
     let transaction = {}
     logger.info('verify-transaction-full fromChainId = %s', fromChainId)
 
     if (fromChainId == casperConfig.networkId) {
-        await fetchTransactionFromCasperIfNot(requestHash)
+        await fetchNFTTransactionFromCasperIfNot(requestHash)
+        transaction = await db.Nft721Transaction.findOne({ requestHash: requestHash, fromChainId: fromChainId })
+
     }
 
     if (fromChainId != casperConfig.networkId) {
+        logger.info("0.1")
         await fetchTransactionFromEVMIfNot(fromChainId, requestHash)
-        transaction = await eventHelper.getRequestNft721Event(fromChainId, requestHash, index)
+        transaction = await db.Nft721Transaction.findOne({ requestHash: requestHash, fromChainId: fromChainId })
     }
+    logger.info("sc fetch")
+    logger.info("tx %s", transaction)
     if (!transaction || (fromChainId != casperConfig.networkId && !transaction.requestHash)) {
         return res.json({ success: false })
     }
+    logger.info("1")
 
     let dataToVerifyAgainst = {}
 
@@ -331,6 +338,12 @@ router.post('/verify-transaction-full/:requestHash/:fromChainId/:index', [
         if (transaction.claimed === true) {
             return res.json({ success: true, claimed: true })
         }
+
+        //compare array tokenIds
+        // logger.log("tx tokenIds %s vs %s ", transaction.tokenIds.map(e => parseInt(e)), tokenIds)
+        // if (transaction.tokenIds.map(e => parseInt(e)) != tokenIds) {
+        //     return res.json({ success: false })
+        // }
 
         //re-verify whether tx still in the chain and confirmed (enough confirmation)
         let onChainTx = await web3.eth.getTransaction(transaction.requestHash)
@@ -384,19 +397,21 @@ router.post('/verify-transaction-full/:requestHash/:fromChainId/:index', [
         }
     }
 
+    logger.info("data to verify %s ", dataToVerifyAgainst)
+
     if (
-        dataToVerifyAgainst.fromChainId != verifyingData.fromChainId ||
+        parseInt(dataToVerifyAgainst.fromChainId) != parseInt(verifyingData.fromChainId) ||
         dataToVerifyAgainst.account != verifyingData.toWallet ||
-        dataToVerifyAgainst.toChainId != verifyingData.toChainId ||
-        dataToVerifyAgainst.index != verifyingData.index ||
+        parseInt(dataToVerifyAgainst.toChainId) != parseInt(verifyingData.toChainId) ||
+        parseInt(dataToVerifyAgainst.index) != parseInt(verifyingData.index) ||
         dataToVerifyAgainst.originToken != verifyingData.originToken ||
-        dataToVerifyAgainst.originChainId != verifyingData.originChainId
+        parseInt(dataToVerifyAgainst.originChainId) != parseInt(verifyingData.originChainId)
     ) {
         return res.json({ success: false, reason: "invalid verifyingData" })
     }
 
-    if (dataToVerifyAgainst.toChainId == casperConfig.networkId) {
-        if (dataToVerifyAgainst.originChainId == casperConfig.networkId) {
+    if (parseInt(dataToVerifyAgainst.toChainId) == parseInt(casperConfig.networkId)) {
+        if (parseInt(dataToVerifyAgainst.originChainId) == parseInt(casperConfig.networkId)) {
             // destination contract hash must be active contract hash of nft bridge custodian contract
             const nftConfig = CasperHelper.getNFTConfig()
             const nftBridgePackageHash = nftConfig.nftBridgePackageHash
@@ -406,7 +421,8 @@ router.post('/verify-transaction-full/:requestHash/:fromChainId/:index', [
             }
         } else {
             const nftConfig = CasperHelper.getNFTConfig()
-            const tokenData = nftConfig.tokens.find(e => e.originContractAddress == dataToVerifyAgainst.originToken)
+            logger.info("dataToVerifyAgainst.originToken %s", dataToVerifyAgainst.originToken)
+            const tokenData = nftConfig.tokens.find(e => e.originContractAddress.toLowerCase() == dataToVerifyAgainst.originToken.toLowerCase())
             if (!tokenData) {
                 return res.json({ success: false, reason: "invalid originToken" })
             }
@@ -449,7 +465,7 @@ router.post('/request-withdraw', [
             transaction = await db.Nft721Transaction.findOne({ requestHash: requestHash, fromChainId: fromChainId, toChainId: toChainId, index: index })
         } else {
             await fetchTransactionFromEVMIfNot(fromChainId, requestHash)
-            transaction = await eventHelper.getRequestNft721Event(fromChainId, requestHash, index)
+            transaction = await db.Nft721Transaction.findOne({ requestHash: requestHash, fromChainId: fromChainId, toChainId: toChainId, index: index })
         }
         if (!transaction) {
             return res.status(400).json({ errors: "invalid transaction hash" })
@@ -461,43 +477,54 @@ router.post('/request-withdraw', [
 
         let minApprovers = 0
         let approverList = []
-        {
-            let validSignature = preSignNFT.getValidSignature(transaction.signatures)
-            if (transaction.signatures) {
-                if (validSignature && !config.proxy) {
-                    return validSignature
-                }
-                //reading required number of signature
-                const validators = await Web3Utils.readValidators(transaction.toChainId)
-                minApprovers = validators.minApprovers
-                approverList = validators.approverList
-                if (approverList.length > 0) {
-                    let alreadySubmitters = transaction.signatures.map(s => s.msgHash && preSignNFT.isValidSignature(s) ? Web3Utils.recoverSignerFromSignature(s.msgHash, s.r[0], s.s[0], s.v[0]) : "invalid signer")
-                    alreadySubmitters = alreadySubmitters.map(e => e.toLowerCase())
-                    let uniqueSubmitters = {}
-                    for (var i = 0; i < alreadySubmitters.length; i++) {
-                        let e = alreadySubmitters[i]
-                        if (!uniqueSubmitters[e]) {
-                            uniqueSubmitters[e] = transaction.signatures[i]
-                        }
-                    }
-                    const uniqueSignatures = Object.values(uniqueSubmitters)
-                    uniqueSubmitters = Object.keys(uniqueSubmitters)
-                    logger.log('uniqueSignatures %s', uniqueSignatures)
-                    let validSigCount = uniqueSubmitters.filter(e => approverList.includes(e)).length
-                    if (validSigCount >= minApprovers) {
-                        let r = uniqueSignatures.map(e => e.r[0])
-                        r = r.slice(0, minApprovers)
-                        let s = uniqueSignatures.map(e => e.s[0])
-                        s = s.slice(0, minApprovers)
-                        let v = uniqueSignatures.map(e => e.v[0])
-                        v = v.slice(0, minApprovers)
-                        let sig0 = uniqueSignatures[0]
-                        let retObject = { r, s, v, msgHash: sig0.msgHash, name: sig0.name, symbol: sig0.symbol, tokenUris: sig0.tokenUris, originToken: sig0.originToken, chainIdsIndex: sig0.chainIdsIndex, tokenIds: sig0.tokenIds, originTokenIds: sig0.originTokenIds }
-                        return res.json(retObject)
-                    }
+        const validators = await Web3Utils.getApproversNFT(transaction.toChainId)
+        minApprovers = validators.minApprovers
+        approverList = validators.approverList
+
+        // if there is signatures on DB - start here to save time
+        if (config.proxy) {
+            let thisTransaction = await db.Nft721Transaction.findOne({ requestHash: requestHash, fromChainId: fromChainId, toChainId: toChainId, index: index })
+
+            if (thisTransaction.signatures && thisTransaction.signatures[0]) {
+                logger.info(" NFT : already has signatures from db ")
+                let signatureFromDb = thisTransaction.signatures[0]
+                let r = signatureFromDb.r
+                let s = signatureFromDb.s
+                let v = signatureFromDb.v
+                let msgHash = signatureFromDb.msgHash
+                let name = signatureFromDb.name
+                let symbol = signatureFromDb.symbol
+                let tokenUris = signatureFromDb.tokenUris
+                let originToken = signatureFromDb.originToken
+                let chainIdsIndex = signatureFromDb.chainIdsIndex
+                let tokenIds = signatureFromDb.tokenIds
+                let originTokenIds = signatureFromDb.originTokenIds
+
+                //need to verify whether the signature is valid as validators set might be changed that make signatures set invalid
+                logger.info("minApprovers %s", minApprovers)
+                logger.info("approverList %s", approverList)
+
+                const validSignatures = Web3Utils.getValidSignatures(approverList, msgHash, r, s, v)
+                r = validSignatures.r
+                s = validSignatures.s
+                v = validSignatures.v
+
+                logger.info('r.length = %s', r.length)
+                if (r.length >= minApprovers) {
+                    r = r.slice(0, minApprovers + 2)
+                    s = s.slice(0, minApprovers + 2)
+                    v = v.slice(0, minApprovers + 2)
+
+                    const sorted = Web3Utils.sortSignaturesBySigner(msgHash, r, s, v)
+                    r = sorted.r
+                    s = sorted.s
+                    v = sorted.v
+                    let retThisObject = { r: r, s: s, v: v, msgHash: msgHash, name: name, symbol: symbol, tokenUris: tokenUris, originToken: originToken, chainIdsIndex: chainIdsIndex, tokenIds: tokenIds, originTokenIds: originTokenIds }
+                    return res.json(retThisObject)
                 }
             }
+
+
         }
 
         if (fromChainId != casperConfig.networkId) {
@@ -621,106 +648,111 @@ router.post('/request-withdraw', [
         let s = []
         let v = []
         if (config.proxy) {
-            let msgHash = ""
-            //dont sign
+            // fetch signature otherwise
 
-            let otherSignature = []
-            if (config.signatureServer.length > 0) {
-                try {
-                    let body = {
-                        requestHash: req.body.requestHash,
-                        fromChainId: req.body.fromChainId,
-                        toChainId: req.body.toChainId,
-                        index: req.body.index
+            {
+                logger.info(" NFT : There is no signatures from db, start request to get get signature")
+                let msgHash = ""
+                //dont sign
+
+                let otherSignature = []
+                if (config.signatureServer.length > 0) {
+                    try {
+                        let body = {
+                            requestHash: req.body.requestHash,
+                            fromChainId: req.body.fromChainId,
+                            toChainId: req.body.toChainId,
+                            index: req.body.index
+                        }
+                        let r = []
+                        const requestSignatureFromOther = async function (i) {
+                            try {
+                                logger.info("requesting signature from %s", config.signatureServer[i])
+                                let ret = await axios.post(config.signatureServer[i] + '/nft721/request-withdraw', body, { timeout: 60 * 1000 })
+                                let recoveredAddress = Web3Utils.recoverSignerFromSignature(ret.data.msgHash, ret.data.r[0], ret.data.s[0], ret.data.v[0])
+                                logger.info("signature data ok %s, recovered address = %s", config.signatureServer[i], recoveredAddress)
+                                return ret
+                            } catch (e) {
+                                logger.error("failed to get signature from %s, error = %s", config.signatureServer[i], e.toString())
+                                return { data: {} }
+                            }
+                        }
+                        for (let i = 0; i < config.signatureServer.length; i++) {
+                            r.push(requestSignatureFromOther(i))
+                        }
+
+                        const responses = await Promise.all(r)
+
+                        for (let i = 0; i < config.signatureServer.length; i++) {
+                            otherSignature.push(responses[i].data)
+                        }
+
+                    } catch (e) {
+                        logger.error(e.toString())
                     }
-                    let r = []
-                    const requestSignatureFromOther = async function (i) {
-                        try {
-                            logger.info("requesting signature from %s", config.signatureServer[i])
-                            let ret = await axios.post(config.signatureServer[i] + '/nft721/request-withdraw', body, { timeout: 60 * 1000 })
-                            let recoveredAddress = Web3Utils.recoverSignerFromSignature(ret.data.msgHash, ret.data.r[0], ret.data.s[0], ret.data.v[0])
-                            logger.info("signature data ok %s, recovered address = %s", config.signatureServer[i], recoveredAddress)
-                            return ret
-                        } catch (e) {
-                            logger.error("failed to get signature from %s, error = %s", config.signatureServer[i], e.toString())
-                            return { data: {} }
+                }
+                let originTokenIds = null
+                if (otherSignature.length > 0) {
+                    for (let i = 0; i < otherSignature.length; i++) {
+                        if (otherSignature[i].r) {
+                            msgHash = otherSignature[i].msgHash
+                            r.push(otherSignature[i].r[0])
+                            s.push(otherSignature[i].s[0])
+                            v.push(otherSignature[i].v[0])
+                            originTokenIds = otherSignature[i].originTokenIds
                         }
                     }
-                    for (let i = 0; i < config.signatureServer.length; i++) {
-                        r.push(requestSignatureFromOther(i))
-                    }
-
-                    const responses = await Promise.all(r)
-
-                    for (let i = 0; i < config.signatureServer.length; i++) {
-                        otherSignature.push(responses[i].data)
-                    }
-
-                } catch (e) {
-                    logger.error(e.toString())
                 }
-            }
-            let originTokenIds = null
-            if (otherSignature.length > 0) {
-                for (let i = 0; i < otherSignature.length; i++) {
-                    if (otherSignature[i].r) {
-                        msgHash = otherSignature[i].msgHash
-                        r.push(otherSignature[i].r[0])
-                        s.push(otherSignature[i].s[0])
-                        v.push(otherSignature[i].v[0])
-                        originTokenIds = otherSignature[i].originTokenIds
+
+                //reading required number of signature
+                if (approverList.length == 0) {
+                    let retry = 10
+                    logger.info("reading minApprovers %s", minApprovers)
+                    while (retry > 0) {
+                        try {
+                            let bridgeContract = await Web3Utils.getNft721BridgeContract(transaction.toChainId)
+                            minApprovers = await bridgeContract.methods.minApprovers().call()
+                            approverList = await bridgeContract.methods.getBridgeApprovers().call()
+                            minApprovers = parseInt(minApprovers)
+                            break
+                        } catch (e) {
+                            logger.error("error in reading approver %s", minApprovers)
+                            await GeneralHelper.sleep(5 * 1000)
+                        }
+                        retry--
                     }
                 }
-            }
-
-            //reading required number of signature
-            if (approverList.length == 0) {
-                let retry = 10
-                logger.info("reading minApprovers %s", minApprovers)
-                while (retry > 0) {
-                    try {
-                        let bridgeContract = await Web3Utils.getNft721BridgeContract(transaction.toChainId)
-                        minApprovers = await bridgeContract.methods.minApprovers().call()
-                        approverList = await bridgeContract.methods.getBridgeApprovers().call()
-                        minApprovers = parseInt(minApprovers)
-                        break
-                    } catch (e) {
-                        logger.error("error in reading approver %s", minApprovers)
-                        await GeneralHelper.sleep(5 * 1000)
+                approverList = approverList.map(e => e.toLowerCase())
+                logger.info("done reading minApprovers %s", minApprovers)
+                let goodR = []
+                let goodS = []
+                let goodV = []
+                for (var i = 0; i < r.length; i++) {
+                    let recoveredAddress = Web3Utils.recoverSignerFromSignature(msgHash, r[i], s[i], v[i])
+                    logger.info("recoveredAddress = %s, msgHash = %s", recoveredAddress, msgHash)
+                    if (approverList.includes(recoveredAddress.toLowerCase())) {
+                        goodR.push(r[i])
+                        goodS.push(s[i])
+                        goodV.push(v[i])
                     }
-                    retry--
                 }
-            }
-            approverList = approverList.map(e => e.toLowerCase())
-            logger.info("done reading minApprovers %s", minApprovers)
-            let goodR = []
-            let goodS = []
-            let goodV = []
-            for (var i = 0; i < r.length; i++) {
-                let recoveredAddress = Web3Utils.recoverSignerFromSignature(msgHash, r[i], s[i], v[i])
-                logger.info("recoveredAddress = %s, msgHash = %s", recoveredAddress, msgHash)
-                if (approverList.includes(recoveredAddress.toLowerCase())) {
-                    goodR.push(r[i])
-                    goodS.push(s[i])
-                    goodV.push(v[i])
+                r = goodR
+                s = goodS
+                v = goodV
+                logger.info("signature length = %s", r.length)
+
+                if (r.length < minApprovers) {
+                    logger.warn('Validators data are not fully synced yet, please try again later')
+                    return res.status(400).json({ errors: 'Validators data are not fully synced yet, please try again later' })
                 }
+
+                r = r.slice(0, minApprovers + 2)
+                s = s.slice(0, minApprovers + 2)
+                v = v.slice(0, minApprovers + 2)
+
+                let retObject = { r, s, v, msgHash, name, symbol, tokenUris, originToken: bytesOriginToken, chainIdsIndex, tokenIds, originTokenIds }
+                return res.json(retObject)
             }
-            r = goodR
-            s = goodS
-            v = goodV
-            logger.info("signature length = %s", r.length)
-
-            if (r.length < minApprovers) {
-                logger.warn('Validators data are not fully synced yet, please try again later')
-                return res.status(400).json({ errors: 'Validators data are not fully synced yet, please try again later' })
-            }
-
-            r = r.slice(0, minApprovers + 2)
-            s = s.slice(0, minApprovers + 2)
-            v = v.slice(0, minApprovers + 2)
-
-            let retObject = { r, s, v, msgHash, name, symbol, tokenUris, originToken: bytesOriginToken, chainIdsIndex, tokenIds, originTokenIds }
-            return res.json(retObject)
         } else {
             let txHashToSign = transaction.requestHash.includes("0x") ? transaction.requestHash : ("0x" + transaction.requestHash)
             let originTokenIds = []

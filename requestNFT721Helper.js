@@ -391,7 +391,7 @@ async function watch(networkId, bridgeAddress) {
   }, 10000)
 }
 
-function main() {
+async function main() {
   if (config.proxy) {
     let contracts = config.contracts;
     let crawlChainIds = config.crawlChainIds['nft721' + config.caspernetwork]
@@ -404,10 +404,10 @@ function main() {
         }
       }
     })
-    PreSignNFT.doIt()
+    await PreSignNFT.doIt()
     setInterval(async () => {
       await PreSignNFT.doIt()
-    }, 120 * 1000);
+    }, 180 * 1000);
   } else {
     logger.info("validators dont crawl every single block as previous version, exit the function now")
   }

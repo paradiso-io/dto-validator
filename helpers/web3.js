@@ -132,7 +132,7 @@ let Web3Util = {
 
     return { r, s, v }
   },
-  readValidators: async (networkId) => {
+  getApproversNFT: async (networkId) => {
     let minApprovers = 0
     let approverList = []
     let retry = 10
