@@ -304,7 +304,7 @@ router.post('/verify-transaction-full/:requestHash/:fromChainId/:index', [
     logger.info('verify-transaction-full fromChainId = %s', fromChainId)
 
     if (fromChainId == casperConfig.networkId) {
-        await fetchNFTTransactionFromCasperIfNot(requestHash)
+        await fetchNFTTransactionFromCasperIfNot(requestHash, true)
         transaction = await db.Nft721Transaction.findOne({ requestHash: requestHash, fromChainId: fromChainId })
 
     }
@@ -455,7 +455,7 @@ router.post('/request-withdraw', [
         let transaction = {}
 
         if (fromChainId == casperConfig.networkId) {
-            await fetchNFTTransactionFromCasperIfNot(requestHash)
+            await fetchNFTTransactionFromCasperIfNot(requestHash, true)
         }
 
         if (!config.checkTxOnChain || fromChainId == casperConfig.networkId) {

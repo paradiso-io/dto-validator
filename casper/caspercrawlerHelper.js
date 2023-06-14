@@ -316,10 +316,13 @@ const fetchTransactionFromCasperIfNot = async (deployHash) => {
   await crawl(blockHeight, blockHeight + 1, blockHeight + 1, selectedRPC)
   logger.info('done crawl casper')
 }
-const fetchNFTTransactionFromCasperIfNot = async (deployHash) => {
+const fetchNFTTransactionFromCasperIfNot = async (deployHash, force) => {
   const casperConfig = CasperHelper.getConfigInfo();
   const transaction = await db.Nft721Transaction.findOne({ requestHash: CasperHelper.toNormalTxHash(deployHash), fromChainId: casperConfig.networkId })
-  if (transaction) {
+  if (config.proxy && transaction) {
+    return
+  }
+  if (!force && !transaction) {
     logger.info('transaction already crawled, moved on without re-indexing')
     return
   }
