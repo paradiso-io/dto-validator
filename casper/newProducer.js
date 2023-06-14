@@ -24,7 +24,7 @@ const Gossipsub = require("libp2p-gossipsub");
 const config = require("config");
 const generalHelper = require("../helpers/general");
 const db = require("../models");
-const logger = require("../helpers/logger");
+const logger = require("../helpers/logger")(module);
 const { DeployUtil } = require("casper-js-sdk");
 const { sleep } = require("../helpers/general");
 (

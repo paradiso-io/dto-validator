@@ -1,7 +1,7 @@
 const db = require('../models')
 const crypto = require('crypto')
 const generalHelper = require('../helpers/general')
-const logger = require('../helpers/logger')
+const logger = require('../helpers/logger')(module)
 let i = 1
 /**
  * It creates a random request to casper and saves it to the database

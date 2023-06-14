@@ -5,9 +5,7 @@ const app = express()
 const morgan = require('morgan')
 const cors = require('cors')
 const compression = require('compression')
-const logger = require('./helpers/logger')
-//const limitRequest = require('./middlewares/limitRequest')
-
+const logger = require('./helpers/logger')(module)
 const server = require('http').Server(app)
 
 app.use(compression())

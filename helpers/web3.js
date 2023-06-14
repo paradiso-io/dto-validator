@@ -7,7 +7,7 @@ const PrivateKeyProvider = require("truffle-privatekey-provider");
 const DTOBridgeNFT721ABI = require('../contracts/DTOBridgeNFT721.json')
 const GeneralHelper = require('./general')
 const db = require('../models');
-const logger = require('./logger');
+const logger = require('./logger')(module);
 
 let Web3Util = {
   getWeb3: async (networkId) => {

@@ -1,7 +1,7 @@
 const events = require('events')
 const config = require('config')
 
-const logger = require('./helpers/logger')
+const logger = require('./helpers/logger')(module)
 const Web3Utils = require('./helpers/web3')
 const NFT721Bridge = require('./contracts/NFT721Bridge.json')
 const ERC721 = require('./contracts/ERC721.json')
@@ -10,10 +10,10 @@ const CasperHelper = require('./helpers/casper')
 const CasperConfig = CasperHelper.getConfigInfo()
 const nftConfig = CasperHelper.getNFTConfig()
 const PreSignNFT = require("./helpers/preSignNFT")
-let { DTOWrappedNFT, NFTBridge } = require("casper-nft-utils")
 const sha256 = require("js-sha256")
 const CWeb3 = require("casper-web3")
 const crawlTokenInfo = require('./tokenMap/crawlTokens')
+const NFTHook = require('./casper/casperNFTCrawlerHook')
 
 function decodeOriginToken(tokenHex, originChainId) {
   let web3 = Web3Utils.getSimpleWeb3()
@@ -92,8 +92,8 @@ async function processEvent(event, networkId) {
         try {
           //read metadata
           const nftContractHashActive = await CWeb3.Contract.getActiveContractHash(tokenAddress, CasperConfig.chainName)
-          nftContract = await DTOWrappedNFT.createInstance(nftContractHashActive, randomGoodRPC, CasperConfig.chainName)
-          let metadata = await nftContract.getTokenMetadata(tokenId)
+          nftContract = await CWeb3.Contract.createInstanceWithRemoteABI(nftContractHashActive, randomGoodRPC, CasperConfig.chainName)
+          let metadata = await NFTHook.getCep78TokenMetadata(nftContract, tokenId)
           logger.info("metadata: %s", metadata)
           tokenMetadatas.push(metadata)
           break
@@ -117,7 +117,7 @@ async function processEvent(event, networkId) {
       let metadata = {
         name: tokenName,
         token_uri: uri,
-        checksum: sha256(uri) // "940bffb3f2bba35f84313aa26da09ece3ad47045c6a1292c2bbd2df4ab1a55fb"
+        checksum: sha256(uri) 
       }
       metadata = JSON.stringify(metadata)
       tokenMetadatas.push(metadata)
@@ -131,8 +131,8 @@ async function processEvent(event, networkId) {
   if (originChainId == CasperConfig.networkId) {
     let randomGoodRPC = await CasperHelper.getRandomGoodCasperRPCLink(1)
     const nftContractHashActive = await CWeb3.Contract.getActiveContractHash(tokenAddress, CasperConfig.chainName)
-    nftContract = await DTOWrappedNFT.createInstance(nftContractHashActive, randomGoodRPC, CasperConfig.chainName)
-    identifierMode = await nftContract.identifierMode()
+    nftContract = await CWeb3.Contract.createInstanceWithRemoteABI(nftContractHashActive, randomGoodRPC, CasperConfig.chainName)
+    identifierMode = await nftContract.getter.identifierMode()
     logger.info("identifierMode: %s", identifierMode)
   } else {
     // NFT originally issued on EVM chains is always mapped to CEP78 with ordinal mode

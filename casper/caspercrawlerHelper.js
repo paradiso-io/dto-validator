@@ -4,7 +4,7 @@ const BigNumber = require("bignumber.js");
 
 const CasperHelper = require("../helpers/casper");
 const generalHelper = require("../helpers/general");
-const logger = require("../helpers/logger");
+const logger = require("../helpers/logger")(module);
 const db = require("../models");
 const TokenHook = require('./casperTokenCrawlerHook')
 const NFTHook = require('./casperNFTCrawlerHook')

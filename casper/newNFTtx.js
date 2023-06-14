@@ -1,7 +1,7 @@
 const db = require('../models')
 const crypto = require('crypto')
 const generalHelper = require('../helpers/general')
-const logger = require('../helpers/logger')
+const logger = require('../helpers/logger')(module)
 let i = 1
 async function main() {
     let name = ['cam1', 'cam2', 'cam3', 'cam4', 'cam5', 'cam6']

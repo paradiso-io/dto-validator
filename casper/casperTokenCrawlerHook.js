@@ -1,7 +1,7 @@
 const BigNumber = require("bignumber.js");
 const CasperHelper = require("../helpers/casper");
 const tokenHelper = require("../helpers/token");
-const logger = require("../helpers/logger");
+const logger = require("../helpers/logger")(module);
 const db = require("../models");
 const { ERC20Client } = require("casper-erc20-js-client");
 let findArg = CasperHelper.findArg;
