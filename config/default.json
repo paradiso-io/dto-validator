@@ -44,7 +44,10 @@
       43113,
       97
     ],
-    "nft721mainnet": []
+    "nft721mainnet": [
+      56,
+      43114
+    ]
   },
   "blockchain": {
     "1": {
@@ -243,12 +246,16 @@
     },
     "43114": {
       "bridge": "0x328A523B71545ddE8CD12a685318F2777D68798D",
-      "firstBlockCrawl": 16366110
+      "firstBlockCrawl": 16366110,
+      "nft721": "0x7a32b2362e73Cb9dD51F5c232c575fce862FE161",
+      "firstBlockNft721": 31322651
     },
     "56": {
       "bridge": "0x328A523B71545ddE8CD12a685318F2777D68798D",
       "firstBlockCrawl": 18934638,
-      "wrapNonEVMEventHook": "0x929dB33E7Ee3D0F98Be820338D90940Fe123bDb0"
+      "wrapNonEVMEventHook": "0x929dB33E7Ee3D0F98Be820338D90940Fe123bDb0",
+      "nft721": "0x415c6649E2e8B7a40bb4F1EdFD504738693220d4",
+      "firstBlockNft721": 29096064
     },
     "66": {
       "bridge": "0x328A523B71545ddE8CD12a685318F2777D68798D",
@@ -333,5 +340,5 @@
   "checkTxOnChain": false,
   "proxy": true,
   "signatureServer": [],
-  "nftBridgeEnabled": false
+  "nftBridgeEnabled": true
 }

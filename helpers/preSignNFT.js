@@ -4,9 +4,8 @@ const config = require('config')
 const axios = require('axios')
 const CasperHelper = require('./casper')
 let submitDone = true
-let eventHelper = require('./event')
 const Web3Util = require('./web3')
-const logger = require("./logger");
+const logger = require("./logger")(module);
 const casperConfig = CasperHelper.getConfigInfo()
 
 
