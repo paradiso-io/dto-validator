@@ -36,7 +36,7 @@ async function doIt() {
 
         let unclaimedRequests = await db.Transaction.find(query).sort({ requestTime: 1 }).skip(0).lean().exec()
         const fetchSignature = async (request) => {
-            if (!request || request.signatures) return
+            if (!request || request.signatures || (request.failureCount && request.failureCount > 100)) return
             try {
                 let body = {
                     requestHash: request.requestHash,
@@ -71,6 +71,19 @@ async function doIt() {
             } catch (e) {
                 logger.warn('failed to fetch for transaction %s, index %s, fromChainId = %s, toChainId = %s', request.requestHash, request.index, request.fromChainId, request.toChainId)
                 logger.error(e)
+                let failureCount = request.failureCount ? request.failureCount : '0'
+                failureCount++
+                logger.warn('increase failure count for this request')
+                await db.Transaction.updateOne(
+                    { requestHash: request.requestHash, fromChainId: parseInt(request.fromChainId), toChainId: parseInt(request.toChainId), index: parseInt(request.index) },
+                    {
+                        $set:
+                        {
+                            failureCount: failureCount
+                        }
+                    },
+                    { upsert: true, new: true }
+                )
             }
         }
         const requestPerBatch = 8
@@ -85,7 +98,7 @@ async function doIt() {
         }
         logger.info("done for this round")
     } catch (e) {
-        console.error(e)
+        logger.error(e)
     }
     submitDone = true
     return

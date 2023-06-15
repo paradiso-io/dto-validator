@@ -34,6 +34,7 @@ const Nft721Transaction = new Schema({
     txInvalidTarget: Boolean,
     isCasperApproveToClaim: Boolean,
     isCasperClaimed: Boolean,
+    failureCount: { type: Number, index: true }
 }, { timestamps: false, versionKey: false })
 
 module.exports = mongoose.model('Nft721Transaction', Nft721Transaction)
