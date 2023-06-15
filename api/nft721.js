@@ -454,6 +454,13 @@ router.post('/request-withdraw', [
         let index = req.body.index
         let transaction = {}
 
+        if (!config.proxy) {
+            const transaction = await db.Nft721Transaction.findOne({ requestHash: requestHash, fromChainId: fromChainId, toChainId: toChainId, index: index })
+            if (transaction && transaction.mySignature) {
+                return res.json(transaction.mySignature)
+            }
+        }
+
         if (fromChainId == casperConfig.networkId) {
             await fetchNFTTransactionFromCasperIfNot(requestHash, true)
         }
@@ -523,8 +530,6 @@ router.post('/request-withdraw', [
                     return res.json(retThisObject)
                 }
             }
-
-
         }
 
         if (fromChainId != casperConfig.networkId) {
@@ -576,6 +581,7 @@ router.post('/request-withdraw', [
                     return res.status(400).json({ errors: 'conflict transaction data between local database and on-chain data ' + transaction.requestHash })
                 }
             } catch (e) {
+                logger.warn('failed to get on-chain casper transction for %s', transaction.requestHash)
                 logger.error(e.toString())
                 return res.status(400).json({ errors: 'failed to get on-chain casper transction for ' + transaction.requestHash })
             }
@@ -801,8 +807,17 @@ router.post('/request-withdraw', [
             let s = [sig.s]
             let v = [sig.v]
 
-
-            return res.json({ r, s, v, msgHash: sig.msgHash, name, symbol, tokenUris, originToken: bytesOriginToken, chainIdsIndex, tokenIds, originTokenIds })
+            const mySignature = { r, s, v, msgHash: sig.msgHash, name, symbol, tokenUris, originToken: bytesOriginToken, chainIdsIndex, tokenIds, originTokenIds }
+            await db.Nft721Transaction.updateOne(
+                { requestHash: requestHash, fromChainId: fromChainId, toChainId: toChainId, index: index },
+                {
+                    $set: {
+                        mySignature: mySignature
+                    }
+                },
+                { upsert: true, new: true }      
+            )
+            return res.json(mySignature)
         }
     }
 )
