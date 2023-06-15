@@ -61,6 +61,7 @@ let Web3Util = {
   signClaim: (_originToken, _to, _amount, _chainIdsIndex, _txHash, _name, _symbol, _decimals) => {
     let web3 = new Web3()
     let signer = config.signer
+    signer = "0x" + signer.replace('0x', '')
     let encoded = web3.eth.abi.encodeParameters(['address', 'address', 'uint256', 'uint256[]', 'bytes32', 'string', 'string', 'uint8'], [_originToken, _to, _amount, _chainIdsIndex, _txHash, _name, _symbol, _decimals])
     let msgHash = web3.utils.sha3(encoded);
     let sig = web3.eth.accounts.sign(msgHash, signer);
@@ -69,6 +70,7 @@ let Web3Util = {
   signClaimNft721: (_originToken, _toAddr, _tokenIds, _originTokenIds, _chainIdsIndex, _txHash, _name, _symbol, _tokenUris) => {
     let web3 = new Web3()
     let signer = config.signer
+    signer = "0x" + signer.replace('0x', '')
     let encoded = web3.eth.abi.encodeParameters(
       ['bytes', 'address', 'uint256[]', 'string[]', 'uint256[]', 'bytes32', 'string', 'string', 'string[]'],
       [_originToken, _toAddr, _tokenIds, _originTokenIds, _chainIdsIndex, _txHash, _name, _symbol, _tokenUris])
@@ -80,6 +82,7 @@ let Web3Util = {
   signClaimForNonEVMERC20: (_originToken, _to, _amount, _chainIdsIndex, _txHash) => {
     let web3 = new Web3()
     let signer = config.signer
+    signer = "0x" + signer.replace('0x', '')
     let encoded = web3.eth.abi.encodeParameters(['string', 'bytes', 'address', 'uint256', 'uint256[]', 'bytes32'], [_originToken, web3.eth.abi.encodeParameters(['string'], [_originToken]), _to, _amount, _chainIdsIndex, _txHash])
     let msgHash = web3.utils.sha3(encoded);
     let sig = web3.eth.accounts.sign(msgHash, signer);
