@@ -676,7 +676,7 @@ router.post('/request-withdraw', [
                                 logger.info("requesting signature from %s", config.signatureServer[i])
                                 let ret = await axios.post(config.signatureServer[i] + '/nft721/request-withdraw', body, { timeout: 60 * 1000 })
                                 let recoveredAddress = Web3Utils.recoverSignerFromSignature(ret.data.msgHash, ret.data.r[0], ret.data.s[0], ret.data.v[0])
-                                logger.info("signature data ok %s, recovered address = %s", config.signatureServer[i], recoveredAddress)
+                                logger.info("signature data ok %s, recovered address = %s, msgHash = %s", config.signatureServer[i], recoveredAddress, ret.data.msgHash)
                                 return ret
                             } catch (e) {
                                 logger.error("failed to get signature from %s, error = %s", config.signatureServer[i], e.toString())
@@ -690,7 +690,9 @@ router.post('/request-withdraw', [
                         const responses = await Promise.all(r)
 
                         for (let i = 0; i < config.signatureServer.length; i++) {
-                            otherSignature.push(responses[i].data)
+                            if (responses[i].data.r) {
+                                otherSignature.push(responses[i].data)
+                            }
                         }
 
                     } catch (e) {
@@ -709,7 +711,7 @@ router.post('/request-withdraw', [
                         }
                     }
                 }
-
+                logger.info("msgHash = %s ", msgHash)
                 //reading required number of signature
                 if (approverList.length == 0) {
                     let retry = 10
