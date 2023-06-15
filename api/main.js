@@ -723,7 +723,9 @@ router.post('/request-withdraw', [
                     const responses = await Promise.all(r)
 
                     for (let i = 0; i < config.signatureServer.length; i++) {
-                        otherSignature.push(responses[i].data)
+                        if (responses[i].data.r) {
+                            otherSignature.push(responses[i].data)
+                        }
                     }
 
                 } catch (e) {
