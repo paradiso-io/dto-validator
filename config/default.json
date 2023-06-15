@@ -340,5 +340,5 @@
   "checkTxOnChain": false,
   "proxy": true,
   "signatureServer": [],
-  "nftBridgeEnabled": false
+  "nftBridgeEnabled": true
 }
