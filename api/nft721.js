@@ -701,7 +701,7 @@ router.post('/request-withdraw', [
                 if (otherSignature.length > 0) {
                     for (let i = 0; i < otherSignature.length; i++) {
                         if (otherSignature[i].r) {
-                            msgHash = otherSignature[i].msgHash
+                            msgHash = msgHash == "" ? otherSignature[i].msgHash : msgHash
                             r.push(otherSignature[i].r[0])
                             s.push(otherSignature[i].s[0])
                             v.push(otherSignature[i].v[0])
