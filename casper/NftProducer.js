@@ -29,7 +29,7 @@ const { sleep } = require('../helpers/general')
         const libp2p = await Libp2p.create({
             addresses: {
                 listen: [
-                    '/ip4/0.0.0.0/tcp/6666'
+                    `/ip4/0.0.0.0/tcp/${config.nftProducerport[config.caspernetwork]}`,
                 ]
             },
             modules: {
@@ -71,7 +71,7 @@ const { sleep } = require('../helpers/general')
         while (true) {
             // let tx = await db.RequestToCasper.find({isProcessed: false}).sort({ timestamp: 1 }).limit(1)
             let tx = await db.Nft721RequestToCasper.findOne({ isProcessed: false })
-            
+
             if (tx) {
 
                 // Create our PubsubChat client 
