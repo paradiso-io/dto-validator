@@ -7,7 +7,8 @@ const TokenMap = new Schema({
     name: String,
     symbol: String,
     decimals: Number,
-    mapInfo: Object
+    mapInfo: Object,
+    lastUpdated: Number
 }, { timestamps: false, v: false })
 
 module.exports = mongoose.model('TokenMap', TokenMap)

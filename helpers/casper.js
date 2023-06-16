@@ -1,7 +1,8 @@
 const config = require('config')
-const { CLPublicKey, CLPublicKeyTag, CasperServiceByJsonRPC } = require("casper-js-sdk");
+const { CLPublicKey, CLPublicKeyTag, CasperServiceByJsonRPC, CLListBytesParser, CLListType, CLType, CLStringType, CLU8BytesParser, CLStringBytesParser, CLKeyBytesParser, CLU256BytesParser } = require("casper-js-sdk");
 const { ERC20Client } = require('casper-erc20-js-client')
 const BigNumber = require("bignumber.js");
+const logger = require("./logger")(module);
 
 const CasperHelper = {
     /* Getting the config info from the config file. */
@@ -11,6 +12,11 @@ const CasperHelper = {
         return CasperContractConfig[network]
     },
     /* Getting the RPC link from the config file. */
+    getNFTConfig: () => {
+        let network = config.caspernetwork;
+        const CasperContractConfig = require("../casper-contract-hash/nftconfig.json")
+        return CasperContractConfig[network]
+    },
     getRandomCasperRPCLink: () => {
         let casperConfigInfo = CasperHelper.getConfigInfo();
         let rpcList = []
@@ -29,7 +35,6 @@ const CasperHelper = {
                 rpcList.push(casperConfigInfo.rpcs)
             }
         }
-
         let random = Math.floor(Math.random() * rpcList.length)
         return rpcList[random]
     },
@@ -65,7 +70,7 @@ const CasperHelper = {
                     currentBlock.block.header.height.toString()
                 );
                 if (currentBlockHeight >= minLastBlockHeight) {
-                    console.warn("selecting RPC", rpc)
+                    logger.warn("selecting RPC %s", rpc)
                     return rpc
                 }
             } catch (e) {
@@ -79,7 +84,7 @@ const CasperHelper = {
     getBridgeFee: (originTokenAddress) => {
         let casperConfig = CasperHelper.getConfigInfo()
         let tokens = casperConfig.tokens
-        for(const t of tokens) {
+        for (const t of tokens) {
             if (t.originContractAddress.toLowerCase() == originTokenAddress.toLowerCase()) {
                 return t.fee
             }
@@ -102,12 +107,29 @@ const CasperHelper = {
     },
     getCasperTokenInfoFromOriginToken: (originTokenAddress, originChainId) => {
         let casperConfig = CasperHelper.getConfigInfo()
+        let token
+        if (originChainId != casperConfig.networkId) {
+            let tokens = casperConfig.tokens
+            token = tokens.find((e) => e.originContractAddress.toLowerCase() == originTokenAddress.toLowerCase() && e.originChainId == originChainId)
+        } else {
+            let pairs = casperConfig.pairedTokensToEthereum.pairs
+            token = pairs.find((e) => e.contractPackageHash.toLowerCase() == originTokenAddress.toLowerCase())
+        }
+        return token
+    },
+    getCasperNFTTokenInfoFromOriginToken: (originTokenAddress, originChainId) => {
+        let casperConfig = CasperHelper.getNFTConfig()
         let tokens = casperConfig.tokens
         let token = tokens.find((e) => e.originContractAddress.toLowerCase() == originTokenAddress.toLowerCase() && e.originChainId == originChainId)
         return token
     },
     findArg: (args, argName) => {
         return args.find((e) => e[0] == argName);
+    },
+    findArgParsed: function (args, argName) {
+        let arg = CasperHelper.findArg(args, argName)
+        logger.log("args: %s, argName: %s, arg: %s", args, argName, arg)
+        return arg[1].parsed
     },
     getCasperRPC: async (height = 1) => {
         let rpc = await CasperHelper.getRandomGoodCasperRPCLink(height)
@@ -183,7 +205,94 @@ const CasperHelper = {
             }
         }
         return null
+    },
+    getTokenIdsFromArgs: (identifierMode, args) => {
+        let tokenIds
+        if (identifierMode == 0) {
+            tokenIds = CasperHelper.findArgParsed(args, "token_ids")
+            tokenIds = tokenIds.map(e => e.toString())
+        } else {
+            tokenIds = CasperHelper.findArgParsed(args, "token_hashes")
+            tokenIds = tokenIds.map(e => e.toString())
+        }
+        return tokenIds
+    },
+    getTokenHashesFromArgs: (args) => {
+        let tokenIds = CasperHelper.findArgParsed(args, "token_hashes")
+        return tokenIds
+    },
+    isDeploySuccess: (deployResult) => {
+        if (deployResult.execution_results) {
+            let result = deployResult.execution_results[0];
+            if (result.result.Success) {
+                return true
+            }
+            return false
+        }
+    },
+    getAllWrapCep78ContractOnCasper: () => {
+        let casperConfig = CasperHelper.getNFTConfig()
+        let tokens = casperConfig.tokens
+        let array = []
+        for (var token of tokens) {
+            let wrapContract = token.contractHash.toLowerCase()
+            logger.info("wrap contract for networkId %s is %s ", token.originChainId, wrapContract)
+            array.push(wrapContract)
+        }
+        return array
+    },
+    getNftBridgePkgAddress: () => {
+        let casperConfig = CasperHelper.getNFTConfig()
+        let nftBridge = casperConfig.nftBridgePackageHash
+        return nftBridge
+    },
+    getHashFromKeyString: (k) => {
+        const prefixIndex = k.startsWith('Key::Account(') ? 'Key::Account('.length : 'Key::Hash('.length
+        return k.substring(prefixIndex, k.length - 1)
+    },
+    parseRequestBridgeDataFromContract: (rawData) => {
+        // desearlize it
+        let ret = new CLKeyBytesParser().fromBytesWithRemainder(rawData)
+        let nftPackageHash = ret.result.val.value()
+        nftPackageHash = Buffer.from(nftPackageHash.data).toString('hex')
+
+        ret = new CLU8BytesParser().fromBytesWithRemainder(ret.remainder)
+        let identifierMode = parseInt(ret.result.val.value().toString())
+
+        ret = new CLU256BytesParser().fromBytesWithRemainder(ret.remainder)
+        let toChainId = parseInt(ret.result.val.value().toString())
+
+        ret = new CLU256BytesParser().fromBytesWithRemainder(ret.remainder)
+        let requestIndex = parseInt(ret.result.val.value().toString())
+
+        ret = new CLKeyBytesParser().fromBytesWithRemainder(ret.remainder)
+        let from = ret.result.val.value()
+        from = from.data ? Buffer.from(from.data).toString('hex') : ""
+        from = `account-hash-${from}`
+        ret = new CLStringBytesParser().fromBytesWithRemainder(ret.remainder)
+
+        let to = ret.result.val.value()
+
+        ret = new CLListBytesParser().fromBytesWithRemainder(ret.remainder, new CLListType(new CLStringType()))
+
+        const tokenIds = ret.result.val.value().map(e => e.data)
+
+        let retData = {
+            nftPackageHash: nftPackageHash,
+            identifierMode: identifierMode,
+            toChainId: toChainId,
+            requestIndex: requestIndex,
+            from: from,
+            to: to,
+            tokenIds: tokenIds
+        }
+        return retData
     }
+
+
+
+
+
 }
 
 module.exports = CasperHelper;

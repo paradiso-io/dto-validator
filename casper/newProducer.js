@@ -24,11 +24,10 @@ const Gossipsub = require("libp2p-gossipsub");
 const config = require("config");
 const generalHelper = require("../helpers/general");
 const db = require("../models");
-const logger = require("../helpers/logger");
+const logger = require("../helpers/logger")(module);
 const { DeployUtil } = require("casper-js-sdk");
 const { sleep } = require("../helpers/general");
 (
-  //console.log(config.get(rabbitmq.hostname))
   async () => {
     // Create the Node
     const libp2p = await Libp2p.create({
@@ -61,12 +60,12 @@ const { sleep } = require("../helpers/general");
 
     // Listen on libp2p for `peer:connect` and log the provided connection.remotePeer.toB58String() peer id string.
     libp2p.connectionManager.on("peer:connect", (connection) => {
-      console.info(`Connected to ${connection.remotePeer.toB58String()}!`);
+      logger.info(`Connected to ${connection.remotePeer.toB58String()}!`);
     });
 
     // Start libp2p
     await libp2p.start();
-    console.log("ID  node PRODUCER : ", libp2p.peerId.toB58String());
+    logger.info("ID  node PRODUCER : %s", libp2p.peerId.toB58String());
 
     //Create our PubsubChat client
     const pubsubChat = new PubsubChat(
@@ -78,7 +77,7 @@ const { sleep } = require("../helpers/general");
         if (pubsubChat.userHandles.has(from)) {
           user = pubsubChat.userHandles.get(from);
         }
-        console.info(
+        logger.info(
           `${fromMe ? PubsubChat.CLEARLINE : ""}${user}(${new Date(
             message.created
           ).toLocaleTimeString()}): ${message.data}`
@@ -98,7 +97,7 @@ const { sleep } = require("../helpers/general");
             if (pubsubChat.userHandles.has(from)) {
               user = pubsubChat.userHandles.get(from);
             }
-            console.info(
+            logger.info(
               `${fromMe ? PubsubChat.CLEARLINE : ""}${user}(${new Date(
                 message.created
               ).toLocaleTimeString()}): ${message.data}`
@@ -110,9 +109,8 @@ const { sleep } = require("../helpers/general");
 
         try {
           await pubsubChat.send(JSON.stringify(tx));
-          // console.log("send sucessed")
         } catch (err) {
-          console.error("Could not publish chat", err);
+          logger.error("Could not publish chat = %s", err);
         }
 
         //  if (success != null) {
@@ -120,9 +118,7 @@ const { sleep } = require("../helpers/general");
         // }
 
         await tx.save();
-        //console.log('sleep 60 seconds before continue')
         await sleep(60000);
-        // await generalHelper.sleep(60000)
       }
     }
   }

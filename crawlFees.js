@@ -1,7 +1,7 @@
 const events = require("events");
 const config = require("config");
 
-const logger = require("./helpers/logger");
+const logger = require("./helpers/logger")(module);
 const Web3Utils = require("./helpers/web3");
 const generalHelper = require("./helpers/general");
 const GenericBridge = require("./contracts/GenericBridge.json");
